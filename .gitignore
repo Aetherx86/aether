@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+.DS_Store
+
+# Secret environment
+.env
+
+# Workspace submodules / archives
+ladybird-master/
+QRDrop/
+ShakeAndSound/
+TACC/
+VMP_DEVIRT/
+antigravity/
+hopper_full_code_dump.txt
+
+# OS / Temporary
+*.log
+/tmp/

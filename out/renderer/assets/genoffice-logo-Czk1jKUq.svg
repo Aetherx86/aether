@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1091" height="240" viewBox="0 0 1091 240" fill="none">
+  <g transform="translate(10, 10)">
+    <rect width="220" height="220" rx="48" fill="black"/>
+    <path d="M110 44 L176 166 L44 166 Z" fill="none" stroke="white" stroke-width="18" stroke-linejoin="round"/>
+    <line x1="68" y1="130" x2="152" y2="130" stroke="white" stroke-width="18" stroke-linecap="round"/>
+    <circle cx="110" cy="98" r="14" fill="white"/>
+  </g>
+  <text x="270" y="162" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif" font-size="126" font-weight="800" letter-spacing="-1.5" fill="black">Aether</text>
+</svg>
