@@ -181,12 +181,12 @@
       <div class="status-pill"><span class="status-dot"></span><span>Active</span></div>
     </div>
     <div class="quick-bar">
-      <button class="pill-btn" onclick="openRatatoskr()">🐿️ Ratatoskr API/DB</button>
-      <button class="pill-btn" onclick="openMimisbrunnr()">🧠 Mímisbrunnr AI</button>
-      <button class="pill-btn" onclick="sendCmd('aether --help')">aether --help</button>
-      <button class="pill-btn" onclick="sendCmd('git status')">git status</button>
-      <button class="pill-btn" onclick="sendCmd('curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip')">tor check</button>
-      <button class="pill-btn" onclick="clearTerm()">clear</button>
+      <button class="pill-btn" id="btnTermRatatoskr" onclick="openRatatoskr()">🐿️ Ratatoskr API/DB</button>
+      <button class="pill-btn" id="btnTermMimisbrunnr" onclick="openMimisbrunnr()">🧠 Mímisbrunnr AI</button>
+      <button class="pill-btn" id="btnTermHelp" onclick="sendCmd('aether --help')">aether --help</button>
+      <button class="pill-btn" id="btnTermGit" onclick="sendCmd('git status')">git status</button>
+      <button class="pill-btn" id="btnTermTor" onclick="sendCmd('curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip')">tor check</button>
+      <button class="pill-btn" id="btnTermClear" onclick="clearTerm()">clear</button>
     </div>
   </div>
 
@@ -371,6 +371,13 @@
         appendOutput("^C\n");
       }
     });
+
+    document.getElementById("btnTermRatatoskr")?.addEventListener("click", () => openRatatoskr());
+    document.getElementById("btnTermMimisbrunnr")?.addEventListener("click", () => openMimisbrunnr());
+    document.getElementById("btnTermHelp")?.addEventListener("click", () => sendCmd("aether --help"));
+    document.getElementById("btnTermGit")?.addEventListener("click", () => sendCmd("git status"));
+    document.getElementById("btnTermTor")?.addEventListener("click", () => sendCmd("curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip"));
+    document.getElementById("btnTermClear")?.addEventListener("click", () => clearTerm());
 
     document.addEventListener("click", () => cmdInput.focus());
   </script>

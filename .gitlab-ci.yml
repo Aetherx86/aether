@@ -12,7 +12,10 @@ variables:
 
 test_modules:
   stage: test
+  before_script:
+    - apk add --no-cache sqlite
   script:
+    - npm install --silent
     - node test/run-tests.js
     - echo "All Aether tests and integrity checks passed."
 

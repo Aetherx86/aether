@@ -18,7 +18,11 @@ function getHardwareInfo() {
   let chip = "Apple Silicon";
   let memoryGb = Math.round(os.totalmem() / (1024 * 1024 * 1024));
   try {
-    chip = execSync("sysctl -n machdep.cpu.brand_string", { encoding: "utf8" }).trim();
+    if (process.platform === "darwin") {
+      chip = execSync("sysctl -n machdep.cpu.brand_string 2>/dev/null", { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] }).trim();
+    } else {
+      chip = os.cpus()[0]?.model || "Standard CPU";
+    }
   } catch {}
   return {
     chip,

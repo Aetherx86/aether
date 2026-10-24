@@ -362,6 +362,9 @@
       document.getElementById("viewDb").style.display = tab === "db" ? "flex" : "none";
     }
 
+    document.getElementById("btnTabApi").addEventListener("click", () => switchView("api"));
+    document.getElementById("btnTabDb").addEventListener("click", () => switchView("db"));
+
     function getRatatoskrApi() {
       return window.hyperOffice?.ratatoskr || (typeof window !== "undefined" && window.parent?.hyperOffice?.ratatoskr);
     }
@@ -489,8 +492,6 @@
         }
       } else {
         outEl.innerHTML = '<div style="color:#ef4444;padding:20px;">Ratatoskr IPC bridge not connected.</div>';
-      }
-    });
       }
     });
   </script>

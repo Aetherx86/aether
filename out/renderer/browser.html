@@ -644,6 +644,7 @@
     };
 
     window.addEventListener("click", () => closeDropdowns());
+    document.addEventListener("click", () => closeDropdowns());
 
     window.openMimisbrunnrPrompt = function() {
       if (window.hyperOffice && window.hyperOffice.mimisbrunnr && window.hyperOffice.mimisbrunnr.openTab) {
@@ -696,9 +697,10 @@
 
     // Tor Status Initialization
     async function initTorStatus() {
-      if (window.hyperOffice && window.hyperOffice.browser && window.hyperOffice.browser.getTorStatus) {
+      const browserApi = window.hyperOffice?.browser || window.parent?.hyperOffice?.browser;
+      if (browserApi && browserApi.getTorStatus) {
         try {
-          const status = await window.hyperOffice.browser.getTorStatus();
+          const status = await browserApi.getTorStatus();
           updateTorUi(status.torEnabled, status.active);
         } catch (e) {
           console.error("Tor status lookup failed:", e);
@@ -719,8 +721,9 @@
 
     torToggle.addEventListener("click", async () => {
       const nextState = !torEnabled;
-      if (window.hyperOffice && window.hyperOffice.browser && window.hyperOffice.browser.setTor) {
-        const res = await window.hyperOffice.browser.setTor(nextState);
+      const browserApi = window.hyperOffice?.browser || window.parent?.hyperOffice?.browser;
+      if (browserApi && browserApi.setTor) {
+        const res = await browserApi.setTor(nextState);
         updateTorUi(res.torEnabled, res.active);
         if (localFrame.style.display !== "block") {
           webview.reload();
@@ -898,10 +901,35 @@
       const currentUrl = urlInput.value;
       const targetName = "webpage_capture_" + Date.now() + ".docx";
       const outPath = "/Users/sushikim/Desktop/" + targetName;
-      if (window.hyperOffice && window.hyperOffice.browser) {
-        const res = await window.hyperOffice.browser.saveDoc(currentUrl, outPath);
-        if (res.ok) alert("바탕화면에 워드 문서로 저장되었습니다: " + targetName);
-        else alert("저장 실패: " + res.error);
+      const api = window.hyperOffice?.browser || window.parent?.hyperOffice?.browser;
+      const originalText = btnSaveDoc.textContent;
+      if (api && api.saveDoc) {
+        btnSaveDoc.textContent = "⏳ Saving...";
+        try {
+          const res = await api.saveDoc(currentUrl, outPath);
+          if (res && res.ok) {
+            btnSaveDoc.textContent = "✓ Saved!";
+            btnSaveDoc.style.background = "#15803d";
+            setTimeout(() => {
+              btnSaveDoc.textContent = originalText;
+              btnSaveDoc.style.background = "";
+            }, 2500);
+          } else {
+            btnSaveDoc.textContent = "❌ Failed";
+            btnSaveDoc.style.background = "#b91c1c";
+            setTimeout(() => {
+              btnSaveDoc.textContent = originalText;
+              btnSaveDoc.style.background = "";
+            }, 2500);
+          }
+        } catch (err) {
+          btnSaveDoc.textContent = "❌ Error";
+          btnSaveDoc.style.background = "#b91c1c";
+          setTimeout(() => {
+            btnSaveDoc.textContent = originalText;
+            btnSaveDoc.style.background = "";
+          }, 2500);
+        }
       }
     });
 

@@ -534,11 +534,11 @@
         appendMessage("assistant", `Error: ${err.message}`);
       }
     }
-        appendMessage("assistant", `Error: ${err.message}`);
-      }
-    }
 
     btnSend.addEventListener("click", handleSend);
+    document.querySelectorAll(".mode-btn").forEach(b => {
+      b.addEventListener("click", () => selectMode(b, b.dataset.task));
+    });
     promptInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();

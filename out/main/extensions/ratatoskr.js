@@ -136,7 +136,13 @@ async function executeApiRequest({ method = "GET", url, headers = {}, body = nul
 
 function querySqliteDb(dbPath, sql) {
   if (!fs.existsSync(dbPath)) {
-    throw new Error(`Database file not found: ${dbPath}`);
+    if (/^\s*CREATE\b/i.test(sql)) {
+      const dir = require("node:path").dirname(dbPath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(dbPath, "");
+    } else {
+      throw new Error(`Database file not found: ${dbPath}`);
+    }
   }
   try {
     // Execute via macOS built-in sqlite3 CLI tool for fast, dependency-free execution

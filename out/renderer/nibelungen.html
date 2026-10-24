@@ -624,18 +624,37 @@
       scheduleSave();
     });
 
+    let deleteConfirmPending = false;
+    let deleteTimeout = null;
     btnDeleteNote.addEventListener("click", async () => {
       if (!currentNoteId) return;
-      if (confirm("Delete this note from Nibelungen vault?")) {
-        const api = getNibelungenApi();
-        if (api) {
-          await api.deleteNote(currentNoteId);
-          currentNoteId = null;
-          noteTitle.value = "";
-          noteTags.value = "";
-          noteContent.value = "";
-          refreshGraph();
-        }
+      if (!deleteConfirmPending) {
+        deleteConfirmPending = true;
+        btnDeleteNote.textContent = "⚠️ Confirm Delete?";
+        btnDeleteNote.style.background = "#b91c1c";
+        btnDeleteNote.style.color = "#fff";
+        deleteTimeout = setTimeout(() => {
+          deleteConfirmPending = false;
+          btnDeleteNote.textContent = "🗑️ Delete";
+          btnDeleteNote.style.background = "";
+          btnDeleteNote.style.color = "#ef4444";
+        }, 3000);
+        return;
+      }
+      clearTimeout(deleteTimeout);
+      deleteConfirmPending = false;
+      btnDeleteNote.textContent = "🗑️ Delete";
+      btnDeleteNote.style.background = "";
+      btnDeleteNote.style.color = "#ef4444";
+
+      const api = getNibelungenApi();
+      if (api) {
+        await api.deleteNote(currentNoteId);
+        currentNoteId = null;
+        noteTitle.value = "";
+        noteTags.value = "";
+        noteContent.value = "";
+        refreshGraph();
       }
     });
 

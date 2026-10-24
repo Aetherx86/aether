@@ -12,5 +12,8 @@
   },
   "main": "out/main/index.js",
   "desktopName": "aether.desktop",
-  "author": "Jeffrey Kim <jk9576@hanyang.ac.kr>"
+  "author": "Jeffrey Kim <jk9576@hanyang.ac.kr>",
+  "devDependencies": {
+    "jsdom": "^30.1.3"
+  }
 }
