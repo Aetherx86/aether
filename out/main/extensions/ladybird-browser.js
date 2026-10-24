@@ -58,7 +58,7 @@ async function ensureTorRunning() {
       if (await checkTorPort()) return true;
     }
   } catch (e) {
-    console.error("[Aether Tor] Error starting tor daemon:", e.message);
+    console.error("[Aetheum Tor] Error starting tor daemon:", e.message);
   }
   return await checkTorPort();
 }
@@ -89,62 +89,20 @@ async function configureLadybirdSession() {
     await ensureTorRunning();
     if (torModeEnabled) {
       await ses.setProxy({ proxyRules: "socks5://127.0.0.1:9050,socks5://127.0.0.1:9150,direct://" });
-      console.log("[Aether Ladybird] Tor proxy attached: socks5://127.0.0.1:9050");
+      console.log("[Aetheum Browser] Tor proxy attached: socks5://127.0.0.1:9050");
     } else {
       await ses.setProxy({ proxyRules: "" });
-      console.log("[Aether Ladybird] Direct web connection attached.");
+      console.log("[Aetheum Browser] Direct web connection attached.");
     }
   } catch (err) {
-    console.error("[Aether Ladybird] Session configuration error:", err.message);
+    console.error("[Aetheum Browser] Session configuration error:", err.message);
   }
 }
 
+const { getAetheumPage } = require("./aetheum-pages");
+
 function getLadybirdPage(pageName = "welcome") {
-  const safeName = path.basename(pageName).replace(/\.html$/, "");
-  const htmlPath = path.join(ABOUT_PAGES_DIR, `${safeName}.html`);
-  if (!fs.existsSync(htmlPath)) {
-    return `<h2 style="font-family:sans-serif;padding:2rem;">Ladybird page "${safeName}" not found</h2>`;
-  }
-
-  let html = fs.readFileSync(htmlPath, "utf8");
-
-  // Read CSS files to inline them
-  const ladybirdCss = fs.existsSync(path.join(RES_DIR, "ladybird.css"))
-    ? fs.readFileSync(path.join(RES_DIR, "ladybird.css"), "utf8")
-    : "";
-  const webuiCss = fs.existsSync(path.join(ABOUT_PAGES_DIR, "webui.css"))
-    ? fs.readFileSync(path.join(ABOUT_PAGES_DIR, "webui.css"), "utf8")
-    : "";
-  const pageCssPath = path.join(ABOUT_PAGES_DIR, `${safeName}.css`);
-  const pageCss = fs.existsSync(pageCssPath) ? fs.readFileSync(pageCssPath, "utf8") : "";
-
-  // Replace external resource links with inlined CSS
-  const inlinedStyles = `
-    <style>
-      ${ladybirdCss}
-      ${webuiCss}
-      ${pageCss}
-      body {
-        margin: 0;
-        padding: 0;
-        background: var(--surface, #1b1924);
-        color: var(--text, #e2e1e9);
-        font-family: system-ui, -apple-system, sans-serif;
-      }
-      header {
-        padding: 24px 32px 16px;
-      }
-      main {
-        padding: 0 32px 40px;
-      }
-    </style>
-  `;
-
-  html = html.replace(/<link rel="stylesheet"[^>]*>/g, "");
-  html = html.replace(/<script[^>]*welcome\.js[^>]*><\/script>/g, "");
-  html = html.replace("</head>", `${inlinedStyles}</head>`);
-
-  return html;
+  return getAetheumPage(pageName);
 }
 
 function fetchUrlText(urlStr) {
@@ -152,7 +110,7 @@ function fetchUrlText(urlStr) {
     try {
       const url = new URL(urlStr);
       const client = url.protocol === "https:" ? https : http;
-      const req = client.get(url, { headers: { "User-Agent": "Ladybird/1.0 (SerenityOS; LibWeb; Aether Browser)" } }, (res) => {
+      const req = client.get(url, { headers: { "User-Agent": "Ladybird/1.0 (SerenityOS; LibWeb; Aetheum Browser)" } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           return fetchUrlText(res.headers.location).then(resolve, reject);
         }
@@ -189,7 +147,7 @@ ${pageText}
 
   return await executeAiChat({
     provider: "gemini",
-    system: "당신은 Aether Browser에 내장된 웹 분석 AI 도우미입니다. 웹페이지의 본문을 분석하고 간결하며 명확하게 요약합니다.",
+    system: "당신은 Aetheum Browser에 내장된 웹 분석 AI 도우미입니다. 웹페이지의 본문을 분석하고 간결하며 명확하게 요약합니다.",
     user: prompt
   });
 }
@@ -204,7 +162,7 @@ async function saveWebpageAsDoc(urlStr, outputPath) {
 <head><meta charset="utf-8"><title>${title}</title></head>
 <body>
 <h1>Webpage Capture: ${urlStr}</h1>
-<p><em>Captured via Aether Ladybird Browser on ${new Date().toLocaleString()}</em></p>
+<p><em>Captured via Aetheum Browser Browser on ${new Date().toLocaleString()}</em></p>
 <hr/>
 <div>${pageText.split(" ").slice(0, 1000).join(" ")}</div>
 </body>
@@ -216,7 +174,7 @@ async function saveWebpageAsDoc(urlStr, outputPath) {
     await convertDocument(tempHtml, outputPath);
     return { ok: true, path: outputPath };
   } else {
-    const mdContent = `# Webpage Capture: ${urlStr}\n\n*Captured via Aether Ladybird Browser on ${new Date().toLocaleString()}*\n\n---\n\n${pageText}`;
+    const mdContent = `# Webpage Capture: ${urlStr}\n\n*Captured via Aetheum Browser Browser on ${new Date().toLocaleString()}*\n\n---\n\n${pageText}`;
     fs.writeFileSync(outputPath, mdContent, "utf8");
     return { ok: true, path: outputPath };
   }

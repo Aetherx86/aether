@@ -1,37 +1,53 @@
-# Aether - GitLab CI/CD Pipeline
+# Aetheum - GitLab CI/CD Multi-Channel Pipeline (Stable & Beta)
 stages:
-  - build
   - test
+  - build
   - deploy
 
 variables:
-  PRODUCT_NAME: "Aether"
+  PRODUCT_NAME: "Aetheum"
   GITLAB_REGISTRY: "registry.gitlab.com/jk9576/aether"
-
-build_application:
-  stage: build
-  tags:
-    - macos
-  script:
-    - echo "Packaging Aether ASAR bundle..."
-    - npx --yes @electron/asar pack out /tmp/app.asar
-    - echo "Package completed successfully."
-  artifacts:
-    name: "Aether-macOS-bundle"
-    paths:
-      - /tmp/app.asar
-    expire_in: 30 days
 
 test_modules:
   stage: test
   script:
     - node -c out/main/index.js
     - node -c out/preload/index.js
-    - echo "Syntax and integrity checks passed."
+    - echo "Syntax and integrity checks passed for Aetheum."
+
+build_stable:
+  stage: build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - echo "Packaging Aetheum Stable channel..."
+    - npx --yes @electron/asar pack out /tmp/app.asar
+    - echo "Stable build completed."
+  artifacts:
+    name: "Aetheum-Stable-macOS"
+    paths:
+      - /tmp/app.asar
+    expire_in: 30 days
+
+build_beta:
+  stage: build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "beta"'
+  script:
+    - echo "Packaging Aetheum Beta channel..."
+    - npx --yes @electron/asar pack out /tmp/app.asar
+    - echo "Beta build completed."
+  artifacts:
+    name: "Aetheum-Beta-macOS"
+    paths:
+      - /tmp/app.asar
+    expire_in: 30 days
 
 deploy_release:
   stage: deploy
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v/'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "beta"'
   script:
-    - echo "Publishing Aether release $CI_COMMIT_TAG to GitLab..."
+    - echo "Publishing Aetheum $CI_COMMIT_REF_NAME release to GitLab..."

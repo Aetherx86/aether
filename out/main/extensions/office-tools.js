@@ -5,22 +5,22 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const candidateClis = [
-  "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli/aether",
+  "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli/aether",
   "/Applications/dumped.app/Contents/Resources/cli/aether"
 ];
 const CLI_PATH = candidateClis.find(p => fs.existsSync(p)) || candidateClis[0];
-const BUILTIN_SKILLS_PATH = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/builtin-skills")
-  ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/builtin-skills"
+const BUILTIN_SKILLS_PATH = fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/builtin-skills")
+  ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/builtin-skills"
   : "/Applications/dumped.app/Contents/Resources/builtin-skills";
-const VISION_OCR_PATH = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/ocr/vision-ocr")
-  ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/ocr/vision-ocr"
+const VISION_OCR_PATH = fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/ocr/vision-ocr")
+  ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/ocr/vision-ocr"
   : "/Applications/dumped.app/Contents/Resources/ocr/vision-ocr";
 const WORKSPACE_ROOT = "/Users/sushikim/Desktop/app_source";
 
 function runCli(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(CLI_PATH)) {
-      return reject(new Error(`Aether CLI binary not found at ${CLI_PATH}`));
+      return reject(new Error(`Aetheum CLI binary not found at ${CLI_PATH}`));
     }
     const fullArgs = [command, ...args, "--json"];
     execFile(CLI_PATH, fullArgs, { maxBuffer: 50 * 1024 * 1024, ...options }, (err, stdout, stderr) => {

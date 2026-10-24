@@ -1,12 +1,12 @@
 {
-  "name": "aether",
-  "productName": "Aether",
-  "version": "0.12.3",
+  "name": "aetheum",
+  "productName": "Aetheum",
+  "version": "0.0.1",
   "license": "Apache-2.0",
   "homepage": "https://gitlab.com/jk9576/aether",
   "private": true,
-  "description": "Unified Aether shell: one app hosting the docs and sheets modules behind a home/launcher window",
+  "description": "Aetheum — Unified Office & Tor Intelligence Platform by Jeffrey Kim",
   "main": "out/main/index.js",
-  "desktopName": "aether.desktop",
+  "desktopName": "aetheum.desktop",
   "author": "Jeffrey Kim <jk9576@hanyang.ac.kr>"
 }

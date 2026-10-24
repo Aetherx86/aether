@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Aether Browser — Powered by Ladybird & Tor</title>
+  <title>Aetheum Browser — Powered by Tor & LibWeb</title>
   <style>
     :root {
       --bg: #18181b;
       --surface: #27272a;
       --surface-subtle: #3f3f46;
-      --border: #52525b;
+      --border: #3f3f46;
+      --border-light: #52525b;
       --text: #f4f4f5;
       --text-muted: #a1a1aa;
       --accent: #6366f1;
@@ -20,13 +21,14 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
       background: var(--bg);
       color: var(--text);
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* Browser Navbar */
@@ -34,7 +36,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
+      padding: 7px 12px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
@@ -53,19 +55,25 @@
       color: #c7d2fe;
       user-select: none;
     }
+    .badge-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
 
     .btn {
       background: var(--surface-subtle);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-light);
       color: var(--text);
       padding: 5px 10px;
       border-radius: var(--radius);
       cursor: pointer;
       font-size: 13px;
+      font-family: inherit;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      transition: background 0.15s, border-color 0.15s;
+      transition: all 0.15s ease;
     }
     .btn:hover {
       background: #52525b;
@@ -89,7 +97,7 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      border: 1px solid #15803d;
+      border: 1px solid #16a34a;
       background: #14532d;
       color: #86efac;
       transition: all 0.2s ease;
@@ -130,6 +138,7 @@
       outline: none;
       color: var(--text);
       font-size: 13px;
+      font-family: inherit;
       padding: 5px 0;
     }
 
@@ -137,9 +146,9 @@
     .quick-bar {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 6px 14px;
-      background: #1c1c1e;
+      gap: 8px;
+      padding: 5px 12px;
+      background: #18181b;
       border-bottom: 1px solid var(--border);
       font-size: 12px;
       color: var(--text-muted);
@@ -152,14 +161,14 @@
       color: #a5b4fc;
       text-decoration: none;
       cursor: pointer;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
       background: rgba(255,255,255,0.04);
       transition: background 0.15s, color 0.15s;
       white-space: nowrap;
     }
     .quick-link:hover {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.12);
       color: #ffffff;
     }
     .quick-link.highlight {
@@ -183,12 +192,12 @@
       background: #ffffff;
     }
 
-    #ladybirdLocalView {
+    #aetheumLocalView {
       display: none;
       width: 100%;
       height: 100%;
       border: none;
-      background: #1b1924;
+      background: #18181b;
       overflow-y: auto;
     }
 
@@ -233,11 +242,14 @@
 <body>
   <!-- Nav Toolbar -->
   <div class="nav-bar">
-    <div class="badge">🐞 Ladybird</div>
+    <div class="badge">
+      <img src="./assets/app-icon-kcTvUgcs.png" class="badge-icon" alt="">
+      <span>Aetheum</span>
+    </div>
     <button class="btn" id="btnBack" title="Back">←</button>
     <button class="btn" id="btnForward" title="Forward">→</button>
     <button class="btn" id="btnReload" title="Reload">↻</button>
-    <button class="btn" id="btnHome" title="Ladybird Welcome">🏠</button>
+    <button class="btn" id="btnHome" title="Aetheum Welcome">🏠</button>
 
     <div class="url-box">
       <input type="text" class="url-input" id="urlInput" value="https://mail.proton.me" spellcheck="false" />
@@ -257,14 +269,18 @@
 
   <!-- Bookmarks & Quick Links Bar -->
   <div class="quick-bar">
-    <span style="font-weight:600;color:#71717a;">Favorites:</span>
+    <span style="font-weight:600;color:#71717a;font-size:11px;">BOOKMARKS:</span>
     <span class="quick-link highlight" data-url="https://mail.proton.me">✉️ Proton Mail</span>
     <span class="quick-link highlight" data-url="https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion">🧅 DuckDuckGo (.onion)</span>
     <span class="quick-link" data-url="https://check.torproject.org">🛡️ Tor Check</span>
     <span class="quick-link" data-url="https://duckduckgo.com">🔍 DuckDuckGo</span>
-    <span class="quick-link" data-url="ladybird://welcome">🐞 Ladybird Welcome</span>
-    <span class="quick-link" data-url="ladybird://about">ℹ️ Ladybird About</span>
-    <span style="margin-left:auto;font-size:11px;color:#71717a;">Engine: LibWeb & Tor SOCKS5 Tunnel</span>
+    <span style="color:#52525b;margin:0 4px;">|</span>
+    <span class="quick-link" data-url="aetheum://welcome">🏠 Welcome</span>
+    <span class="quick-link" data-url="aetheum://bookmarks">⭐ Bookmarks</span>
+    <span class="quick-link" data-url="aetheum://history">🕒 History</span>
+    <span class="quick-link" data-url="aetheum://settings">⚙️ Settings</span>
+    <span class="quick-link" data-url="aetheum://about">ℹ️ About</span>
+    <span class="quick-link" data-url="aetheum://version">📦 Version</span>
   </div>
 
   <!-- Viewport -->
@@ -276,7 +292,7 @@
              src="https://mail.proton.me">
     </webview>
 
-    <div id="ladybirdLocalView"></div>
+    <div id="aetheumLocalView"></div>
 
     <!-- AI Drawer -->
     <div class="ai-drawer" id="aiDrawer">
@@ -292,7 +308,7 @@
 
   <script>
     const webview = document.getElementById("contentWebview");
-    const localView = document.getElementById("ladybirdLocalView");
+    const localView = document.getElementById("aetheumLocalView");
     const urlInput = document.getElementById("urlInput");
     const btnGo = document.getElementById("btnGo");
     const btnBack = document.getElementById("btnBack");
@@ -325,7 +341,7 @@
       torEnabled = enabled;
       if (enabled) {
         torToggle.classList.remove("off");
-        torLabel.textContent = active ? "🧅 Tor: CONNECTED" : "🧅 Tor: STARTING";
+        torLabel.textContent = active ? "🧅 Tor: CONNECTED" : "🧅 Tor: CONNECTING";
       } else {
         torToggle.classList.add("off");
         torLabel.textContent = "🌐 Tor: OFF (Direct)";
@@ -337,19 +353,38 @@
       if (window.hyperOffice && window.hyperOffice.browser && window.hyperOffice.browser.setTor) {
         const res = await window.hyperOffice.browser.setTor(nextState);
         updateTorUi(res.torEnabled, res.active);
-        // Reload current page with new network routing
         webview.reload();
       }
     });
 
     initTorStatus();
 
+    // Record visited history in localStorage
+    function recordHistory(url, title = "") {
+      try {
+        if (!url || url.startsWith("aetheum://") || url.startsWith("ladybird://")) return;
+        const raw = localStorage.getItem("aetheum_history");
+        const list = raw ? JSON.parse(raw) : [];
+        list.unshift({
+          title: title || url,
+          url,
+          time: new Date().toLocaleTimeString()
+        });
+        localStorage.setItem("aetheum_history", JSON.stringify(list.slice(0, 100)));
+      } catch (e) {}
+    }
+
     // Navigation Logic
-    async function navigateTo(url) {
+    window.navigateTo = async function(url) {
       if (!url) return;
       url = url.trim();
 
-      if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("ladybird://")) {
+      // Normalize protocol
+      if (url.startsWith("ladybird://")) {
+        url = url.replace("ladybird://", "aetheum://");
+      }
+
+      if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("aetheum://")) {
         if (url.includes(".") && !url.includes(" ")) {
           url = "https://" + url;
         } else {
@@ -359,14 +394,14 @@
 
       urlInput.value = url;
 
-      if (url.startsWith("ladybird://")) {
-        const pageName = url.replace("ladybird://", "") || "welcome";
+      if (url.startsWith("aetheum://")) {
+        const pageName = url.replace("aetheum://", "") || "welcome";
         try {
           if (window.hyperOffice && window.hyperOffice.browser) {
             const html = await window.hyperOffice.browser.getLadybirdPage(pageName);
             localView.innerHTML = html;
           } else {
-            localView.innerHTML = `<h1 style="color:#fff;padding:2rem;">Ladybird: ${pageName}</h1>`;
+            localView.innerHTML = `<h1 style="color:#fff;padding:2rem;">Aetheum: ${pageName}</h1>`;
           }
           webview.style.display = "none";
           localView.style.display = "block";
@@ -381,18 +416,19 @@
         } catch (e) {
           webview.src = url;
         }
+        recordHistory(url);
       }
-    }
+    };
 
-    btnGo.addEventListener("click", () => navigateTo(urlInput.value));
+    btnGo.addEventListener("click", () => window.navigateTo(urlInput.value));
     urlInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") navigateTo(urlInput.value);
+      if (e.key === "Enter") window.navigateTo(urlInput.value);
     });
 
-    btnHome.addEventListener("click", () => navigateTo("ladybird://welcome"));
+    btnHome.addEventListener("click", () => window.navigateTo("aetheum://welcome"));
     btnReload.addEventListener("click", () => {
       if (localView.style.display === "block") {
-        navigateTo(urlInput.value);
+        window.navigateTo(urlInput.value);
       } else {
         webview.reload();
       }
@@ -407,7 +443,7 @@
     });
 
     document.querySelectorAll(".quick-link").forEach(link => {
-      link.addEventListener("click", () => navigateTo(link.dataset.url));
+      link.addEventListener("click", () => window.navigateTo(link.dataset.url));
     });
 
     // Webview Events
@@ -421,6 +457,7 @@
 
     webview.addEventListener("did-navigate", (e) => {
       urlInput.value = e.url;
+      recordHistory(e.url);
     });
 
     webview.addEventListener("did-navigate-in-page", (e) => {
@@ -428,12 +465,12 @@
     });
 
     webview.addEventListener("page-title-updated", (e) => {
-      if (e.title) document.title = `${e.title} — Aether Browser`;
+      if (e.title) document.title = `${e.title} — Aetheum Browser`;
     });
 
     webview.addEventListener("new-window", (e) => {
       e.preventDefault();
-      navigateTo(e.url);
+      window.navigateTo(e.url);
     });
 
     // Gemini AI Summary
@@ -441,8 +478,8 @@
       aiDrawer.classList.add("open");
       drawerContent.textContent = "웹페이지 본문을 분석하고 요약하는 중입니다...";
       const currentUrl = urlInput.value;
-      if (currentUrl.startsWith("ladybird://")) {
-        drawerContent.textContent = `[Ladybird Internal Page]\n\nLadybird의 내장 시스템 리소스(${currentUrl})입니다.\n완전 독립 브라우징 엔진의 아키텍처 스펙을 표시하고 있습니다.`;
+      if (currentUrl.startsWith("aetheum://") || currentUrl.startsWith("ladybird://")) {
+        drawerContent.textContent = `[Aetheum System Page]\n\nAetheum의 내장 대시보드(${currentUrl})입니다.\n독립형 브라우징 및 Tor 프록시 제어를 지원합니다.`;
         return;
       }
 
@@ -480,7 +517,7 @@
 
     // Initial navigation
     const initialParam = new URLSearchParams(window.location.search).get("url");
-    navigateTo(initialParam || "https://mail.proton.me");
+    window.navigateTo(initialParam || "https://mail.proton.me");
   </script>
 </body>
 </html>

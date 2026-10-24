@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Aether Terminal</title>
+  <title>Aetheum Terminal</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -19,7 +19,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -32,6 +32,7 @@
 
     /* Terminal Header */
     .term-header {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -90,10 +91,10 @@
       background: #334155;
       border: 1px solid #475569;
       color: var(--text);
-      padding: 3px 9px;
+      padding: 4px 10px;
       border-radius: 4px;
       font-size: 11px;
-      font-family: inherit;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
     }
@@ -105,17 +106,18 @@
     /* Output Scroll View */
     .term-body {
       flex: 1;
-      padding: 12px 16px;
+      padding: 14px 16px;
       overflow-y: auto;
       white-space: pre-wrap;
       word-break: break-all;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
     .banner-box {
       border: 1px solid #334155;
       background: rgba(30, 41, 59, 0.5);
       border-radius: 6px;
-      padding: 10px 14px;
+      padding: 12px 14px;
       margin-bottom: 12px;
       color: #94a3b8;
       font-size: 12px;
@@ -132,6 +134,7 @@
       margin-top: 6px;
       margin-bottom: 2px;
       color: #38bdf8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .cmd-prompt-label {
       color: #4ade80;
@@ -148,6 +151,7 @@
       background: #111827;
       border-top: 1px solid var(--border);
       flex-shrink: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
     .prompt-label {
@@ -173,11 +177,11 @@
   <div class="term-header">
     <div class="term-title">
       <span class="term-badge">zsh</span>
-      <span>Aether Workspace Shell & Terminal</span>
+      <span>Aetheum Workspace Shell & Terminal</span>
       <div class="status-pill"><span class="status-dot"></span><span>Active</span></div>
     </div>
     <div class="quick-bar">
-      <button class="pill-btn" onclick="sendCmd('aether --help')">aether --help</button>
+      <button class="pill-btn" onclick="sendCmd('aetheum --help')">aetheum --help</button>
       <button class="pill-btn" onclick="sendCmd('git status')">git status</button>
       <button class="pill-btn" onclick="sendCmd('ls -la')">ls -la</button>
       <button class="pill-btn" onclick="sendCmd('curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip')">tor check</button>
@@ -187,9 +191,9 @@
 
   <div class="term-body" id="termBody">
     <div class="banner-box">
-      <div class="banner-title">⚡ Aether Interactive Terminal</div>
+      <div class="banner-title">⚡ Aetheum Interactive Terminal</div>
       <div>• Shell: macOS zsh interactive environment with full ANSI color support</div>
-      <div>• CLI Tools: <code>aether</code> (/opt/homebrew/bin/aether v0.12.3)</div>
+      <div>• CLI Tools: <code>aetheum</code> (/opt/homebrew/bin/aetheum v0.0.1)</div>
       <div>• Network Security: Tor SOCKS5 Tunnel on 127.0.0.1:9050</div>
       <div>• Working Directory: /Users/sushikim/Desktop/app_source</div>
     </div>
@@ -197,7 +201,7 @@
   </div>
 
   <div class="term-prompt-row">
-    <span class="prompt-label" id="promptText">aether:app_source sushikim%</span>
+    <span class="prompt-label" id="promptText">aetheum:app_source sushikim%</span>
     <input type="text" class="prompt-input" id="cmdInput" autofocus spellcheck="false" autocomplete="off" />
   </div>
 

@@ -1,0 +1,8 @@
+{
+  "name": "Aetheum",
+  "version": "0.0.1",
+  "channel": "stable",
+  "releaseNotes": "Aetheum v0.0.1 initial release with Ladybird Tor Browser, Proton Mail, interactive zsh terminal, and Gemini AI integration.",
+  "url": "https://gitlab.com/jk9576/aether/-/releases",
+  "updatedAt": "2026-10-25T06:14:00Z"
+}

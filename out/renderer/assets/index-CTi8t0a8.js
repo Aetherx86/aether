@@ -20780,7 +20780,7 @@ function Home({
           "button",
           {
             className: "nav-item",
-            title: "Aether Workspace Terminal",
+            title: "Aetheum Workspace Terminal",
             onClick: () => {
               window.hyperOffice?.terminal?.openTab?.();
             },

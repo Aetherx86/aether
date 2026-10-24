@@ -271,9 +271,9 @@ const menuHwpIcon2x = require$$1$1.join(__dirname, "./chunks/menu-hwp@2x-1tyIsF7
 const menuHomeIcon1x = require$$1$1.join(__dirname, "./chunks/menu-home-IWzaKAPM.png");
 const menuHomeIcon2x = require$$1$1.join(__dirname, "./chunks/menu-home@2x-DklesmJt.png");
 const UPSTREAM_PRODUCT_NAME = "GenOffice";
-const PRODUCT_NAME = "Aether";
+const PRODUCT_NAME = "Aetheum";
 const LOCALIZED_PRODUCT_NAMES = {
-  ko: "Aether"
+  ko: "Aetheum"
 };
 function productName(lang) {
   const base = lang?.trim().toLowerCase().split(/[-_]/)[0] ?? "";
@@ -31142,31 +31142,31 @@ const OFFICE_TYPES = [
     ext: "docx",
     uti: "org.openxmlformats.wordprocessingml.document",
     mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    progId: "Aether.WordDocument"
+    progId: "Aetheum.WordDocument"
   },
   {
     ext: "xlsx",
     uti: "org.openxmlformats.spreadsheetml.sheet",
     mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    progId: "Aether.ExcelWorkbook"
+    progId: "Aetheum.ExcelWorkbook"
   },
   {
     ext: "xlsm",
     uti: "org.openxmlformats.spreadsheetml.sheet.macroenabled",
     mime: "application/vnd.ms-excel.sheet.macroEnabled.12",
-    progId: "Aether.ExcelMacroEnabledWorkbook"
+    progId: "Aetheum.ExcelMacroEnabledWorkbook"
   },
   {
     ext: "xls",
     uti: "com.microsoft.excel.xls",
     mime: "application/vnd.ms-excel",
-    progId: "Aether.Excel972003Workbook"
+    progId: "Aetheum.Excel972003Workbook"
   },
   {
     ext: "pptx",
     uti: "org.openxmlformats.presentationml.presentation",
     mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    progId: "Aether.PowerPointPresentation"
+    progId: "Aetheum.PowerPointPresentation"
   }
 ];
 const LINUX_DESKTOP_ID = "aether.desktop";
@@ -32942,7 +32942,7 @@ function registerResultStoreIpc(ipc, userDataDir) {
   ipc.handle(RESULT_STORE_CHANNELS.size, () => store2().size());
   ipc.handle(RESULT_STORE_CHANNELS.deleteAll, () => store2().deleteAll());
 }
-const FEEDBACK_SURVEY_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfD_dlKfi_ZkcjBJFTH3S2nldTIoW0cMI9d_yDaEe6DwKY47A/viewform";
+const FEEDBACK_SURVEY_URL = "mailto:jk9576@hanyang.ac.kr?subject=Aetheum%20Feedback";
 const zh$8 = {
   menuLabel: "发送反馈",
   dialogTitle: "发送反馈",
@@ -324954,7 +324954,7 @@ class TabManager {
       id: id2,
       kind: "browser",
       view,
-      title: "Aether Browser",
+      title: "Aetheum Browser",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -340815,26 +340815,61 @@ function selectChannel(channel) {
   mainExports.autoUpdater.allowPrerelease = channel === "beta";
 }
 function applyUpdateChannel(channel) {
-  if (!updaterActive) return;
-  resetDownloadFlow?.();
   selectChannel(channel);
   log("channel switched:", channel);
-  mainExports.autoUpdater.checkForUpdates().catch((err) => log("check failed:", err?.message ?? err));
+  void checkForUpdatesNow(channel);
 }
-async function checkForUpdatesNow() {
+async function checkForUpdatesNow(targetChannel = null) {
   if (manualCheckInFlight) return;
   manualCheckInFlight = true;
   try {
-    const { response } = await require$$1$3.dialog.showMessageBox({
-      type: "info",
-      title: "Aether",
-      message: `Aether v${require$$1$3.app.getVersion()} is up to date.`,
-      detail: "Updates are deployed via GitLab CI/CD pipelines.",
-      buttons: ["OK", "View GitLab Repository"],
-      defaultId: 0,
-      cancelId: 0
-    });
-    if (response === 1) void require$$1$3.shell.openExternal("https://gitlab.com/jk9576/aether");
+    const channel = targetChannel || (typeof currentUpdateChannel === "function" ? currentUpdateChannel() : "stable") || "stable";
+    const branch = channel === "beta" ? "beta" : "main";
+    const currentVer = require$$1$3.app.getVersion() || "0.0.1";
+    
+    // Check GitLab version endpoint for the selected channel
+    let remoteInfo = null;
+    try {
+      const httpsClient = require("node:https");
+      const url = `https://gitlab.com/jk9576/aether/-/raw/${branch}/version.json?t=${Date.now()}`;
+      remoteInfo = await new Promise((resolve) => {
+        const req = httpsClient.get(url, { headers: { "User-Agent": "Aetheum-Updater/0.0.1" } }, (res) => {
+          if (res.statusCode !== 200) return resolve(null);
+          let raw = "";
+          res.on("data", c => raw += c);
+          res.on("end", () => {
+            try { resolve(JSON.parse(raw)); } catch { resolve(null); }
+          });
+        });
+        req.on("error", () => resolve(null));
+        req.setTimeout(3000, () => { req.destroy(); resolve(null); });
+      });
+    } catch {}
+
+    const hasUpdate = remoteInfo && remoteInfo.version && remoteInfo.version !== currentVer;
+    if (hasUpdate) {
+      const { response } = await require$$1$3.dialog.showMessageBox({
+        type: "info",
+        title: "Aetheum Update Available",
+        message: `A new version (v${remoteInfo.version}) is available on the ${channel.toUpperCase()} channel!`,
+        detail: remoteInfo.releaseNotes || `Branch: ${branch}\nReady to download from GitLab CI.`,
+        buttons: ["Download / View Release", "Later"],
+        defaultId: 0,
+        cancelId: 1
+      });
+      if (response === 0) void require$$1$3.shell.openExternal(remoteInfo.url || "https://gitlab.com/jk9576/aether/-/releases");
+    } else {
+      const { response } = await require$$1$3.dialog.showMessageBox({
+        type: "info",
+        title: "Aetheum",
+        message: `Aetheum v${currentVer} is up to date.`,
+        detail: `Update Channel: ${channel.toUpperCase()}\nTracking GitLab branch: '${branch}' (CI/CD Pipeline)\nNo new updates found.`,
+        buttons: ["OK", "View GitLab Repository"],
+        defaultId: 0,
+        cancelId: 0
+      });
+      if (response === 1) void require$$1$3.shell.openExternal("https://gitlab.com/jk9576/aether");
+    }
   } finally {
     manualCheckInFlight = false;
   }
@@ -343852,30 +343887,8 @@ function ensureFolderWatchers() {
   }
 }
 async function openFeedbackSurvey() {
-  const lang = currentLang();
-  const detail = feedbackDetails(lang, {
-    version: require$$1$3.app.getVersion(),
-    os: `${platformLabel(process.platform)} ${node_os.release()}`,
-    language: lang
-  });
-  const options = {
-    type: "info",
-    title: feedbackText(lang, "dialogTitle"),
-    message: feedbackText(lang, "dialogTitle"),
-    detail: `${feedbackText(lang, "dialogBody")}
-
-${detail}`,
-    buttons: [feedbackText(lang, "btnOpen"), feedbackText(lang, "btnCancel")],
-    defaultId: 0,
-    cancelId: 1,
-    noLink: true
-  };
-  const win2 = shellWindow ?? require$$1$3.BrowserWindow.getFocusedWindow();
-  const { response } = win2 ? await require$$1$3.dialog.showMessageBox(win2, options) : await require$$1$3.dialog.showMessageBox(options);
-  if (response !== 0) return;
-  require$$1$3.clipboard.writeText(detail);
-  require$$1$3.shell.openExternal(FEEDBACK_SURVEY_URL).catch(() => {
-  });
+  const mailUrl = "mailto:jk9576@hanyang.ac.kr?subject=" + encodeURIComponent("Aetheum Feedback");
+  require$$1$3.shell.openExternal(mailUrl).catch(() => {});
 }
 const FEEDBACK_MENU_ID = "menu-send-feedback";
 function withHelpItems() {
@@ -345661,7 +345674,7 @@ function registerTabsIpc() {
         click: () => tabManager?.openTerminalTab?.()
       },
       {
-        label: "New Ladybird Browser Tab (Web/Docs)",
+        label: "New Aetheum Browser Tab (Tor / Web / Proton)",
         icon: menuIcons().html,
         click: () => newBrowserTab()
       },
@@ -345708,7 +345721,7 @@ function buildHomeMenu() {
         { label: tm("menuNewPdf"), click: () => void newPdfTab() },
         { type: "separator" },
         {
-          label: "New Ladybird Browser Tab (Web / Tor / Proton)",
+          label: "New Aetheum Browser Tab (Tor / Web / Proton)",
           accelerator: "CmdOrCtrl+B",
           click: () => newBrowserTab("https://mail.proton.me")
         },
@@ -346584,7 +346597,7 @@ function installDockMenu() {
       { label: tm("menuNewPdf"), click: () => void newPdfTab() },
       { type: "separator" },
       {
-        label: "New Ladybird Browser Tab (Web / Tor / Proton)",
+        label: "New Aetheum Browser Tab (Tor / Web / Proton)",
         click: () => newBrowserTab("https://mail.proton.me")
       },
       {
