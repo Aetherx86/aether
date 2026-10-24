@@ -31142,31 +31142,31 @@ const OFFICE_TYPES = [
     ext: "docx",
     uti: "org.openxmlformats.wordprocessingml.document",
     mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    progId: "Aetheum.WordDocument"
+    progId: "Aether.WordDocument"
   },
   {
     ext: "xlsx",
     uti: "org.openxmlformats.spreadsheetml.sheet",
     mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    progId: "Aetheum.ExcelWorkbook"
+    progId: "Aether.ExcelWorkbook"
   },
   {
     ext: "xlsm",
     uti: "org.openxmlformats.spreadsheetml.sheet.macroenabled",
     mime: "application/vnd.ms-excel.sheet.macroEnabled.12",
-    progId: "Aetheum.ExcelMacroEnabledWorkbook"
+    progId: "Aether.ExcelMacroEnabledWorkbook"
   },
   {
     ext: "xls",
     uti: "com.microsoft.excel.xls",
     mime: "application/vnd.ms-excel",
-    progId: "Aetheum.Excel972003Workbook"
+    progId: "Aether.Excel972003Workbook"
   },
   {
     ext: "pptx",
     uti: "org.openxmlformats.presentationml.presentation",
     mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    progId: "Aetheum.PowerPointPresentation"
+    progId: "Aether.PowerPointPresentation"
   }
 ];
 const LINUX_DESKTOP_ID = "aether.desktop";
@@ -32942,7 +32942,7 @@ function registerResultStoreIpc(ipc, userDataDir) {
   ipc.handle(RESULT_STORE_CHANNELS.size, () => store2().size());
   ipc.handle(RESULT_STORE_CHANNELS.deleteAll, () => store2().deleteAll());
 }
-const FEEDBACK_SURVEY_URL = "mailto:jk9576@hanyang.ac.kr?subject=Aetheum%20Feedback";
+const FEEDBACK_SURVEY_URL = "mailto:jk9576@hanyang.ac.kr?subject=Aether%20Feedback";
 const zh$8 = {
   menuLabel: "发送反馈",
   dialogTitle: "发送反馈",
@@ -340923,7 +340923,7 @@ async function checkForUpdatesNow(targetChannel = null) {
       const httpsClient = require("node:https");
       const url = `https://gitlab.com/jk9576/aether/-/raw/${branch}/version.json?t=${Date.now()}`;
       remoteInfo = await new Promise((resolve) => {
-        const req = httpsClient.get(url, { headers: { "User-Agent": "Aetheum-Updater/0.0.1" } }, (res) => {
+        const req = httpsClient.get(url, { headers: { "User-Agent": "Aether-Updater/0.0.1" } }, (res) => {
           if (res.statusCode !== 200) return resolve(null);
           let raw = "";
           res.on("data", c => raw += c);
@@ -340940,7 +340940,7 @@ async function checkForUpdatesNow(targetChannel = null) {
     if (hasUpdate) {
       const { response } = await require$$1$3.dialog.showMessageBox({
         type: "info",
-        title: "Aetheum Update Available",
+        title: "Aether Update Available",
         message: `A new version (v${remoteInfo.version}) is available on the ${channel.toUpperCase()} channel!`,
         detail: remoteInfo.releaseNotes || `Branch: ${branch}\nReady to download from GitLab CI.`,
         buttons: ["Download / View Release", "Later"],
@@ -340951,8 +340951,8 @@ async function checkForUpdatesNow(targetChannel = null) {
     } else {
       const { response } = await require$$1$3.dialog.showMessageBox({
         type: "info",
-        title: "Aetheum",
-        message: `Aetheum v${currentVer} is up to date.`,
+        title: "Aether",
+        message: `Aether v${currentVer} is up to date.`,
         detail: `Update Channel: ${channel.toUpperCase()}\nTracking GitLab branch: '${branch}' (CI/CD Pipeline)\nNo new updates found.`,
         buttons: ["OK", "View GitLab Repository"],
         defaultId: 0,
@@ -343977,7 +343977,7 @@ function ensureFolderWatchers() {
   }
 }
 async function openFeedbackSurvey() {
-  const mailUrl = "mailto:jk9576@hanyang.ac.kr?subject=" + encodeURIComponent("Aetheum Feedback");
+  const mailUrl = "mailto:jk9576@hanyang.ac.kr?subject=" + encodeURIComponent("Aether Feedback");
   require$$1$3.shell.openExternal(mailUrl).catch(() => {});
 }
 const FEEDBACK_MENU_ID = "menu-send-feedback";

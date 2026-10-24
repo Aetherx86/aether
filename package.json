@@ -6,6 +6,10 @@
   "homepage": "https://gitlab.com/jk9576/aether",
   "private": true,
   "description": "Unified Aether Platform: Office, Yggdrasil, and Aetherum Tor Browser by Jeffrey Kim",
+  "scripts": {
+    "test": "node test/run-tests.js",
+    "pack": "npx @electron/asar pack out /tmp/app.asar"
+  },
   "main": "out/main/index.js",
   "desktopName": "aether.desktop",
   "author": "Jeffrey Kim <jk9576@hanyang.ac.kr>"

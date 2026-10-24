@@ -12454,9 +12454,9 @@ function requireClient() {
 }
 var clientExports = requireClient();
 const UPSTREAM_PRODUCT_NAME = "GenOffice";
-const PRODUCT_NAME = "Aetheum";
+const PRODUCT_NAME = "Aether";
 const LOCALIZED_PRODUCT_NAMES = {
-  ko: "Aetheum"
+  ko: "Aether"
 };
 function productName(lang) {
   const base = lang?.trim().toLowerCase().split(/[-_]/)[0] ?? "";

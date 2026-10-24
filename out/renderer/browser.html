@@ -15,7 +15,6 @@
       --accent: #6366f1;
       --accent-hover: #4f46e5;
       --tor-green: #10b981;
-      --tor-bg: rgba(16, 185, 129, 0.15);
       --radius: 8px;
     }
 
@@ -95,13 +94,46 @@
       background: var(--accent-hover);
     }
 
+    .shields-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sleipnir-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #c084fc;
+      background: rgba(192, 132, 252, 0.15);
+      color: #e9d5ff;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .sleipnir-toggle.off {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+    .sleipnir-icon {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+      border-radius: 3px;
+    }
+
     .tor-toggle {
       display: flex;
       align-items: center;
-      gap: 7px;
-      padding: 5px 12px;
+      gap: 6px;
+      padding: 5px 10px;
       border-radius: var(--radius);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       border: 1px solid #10b981;
@@ -116,42 +148,15 @@
       color: var(--text-muted);
     }
     .tor-indicator {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: #10b981;
-      box-shadow: 0 0 8px #10b981;
+      box-shadow: 0 0 6px #10b981;
     }
     .tor-toggle.off .tor-indicator {
       background: #64748b;
       box-shadow: none;
-    }
-
-    .sleipnir-toggle {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 5px 12px;
-      border-radius: var(--radius);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid #c084fc;
-      background: rgba(192, 132, 252, 0.18);
-      color: #e9d5ff;
-      transition: all 0.2s ease;
-      user-select: none;
-    }
-    .sleipnir-toggle.off {
-      border-color: rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-muted);
-    }
-    .sleipnir-icon {
-      width: 16px;
-      height: 16px;
-      object-fit: contain;
-      border-radius: 3px;
     }
 
     .url-box {
@@ -184,19 +189,101 @@
       padding: 6px 0;
     }
 
-    /* Sub-nav quick links */
+    /* Dropdown Menus */
+    .dropdown-container {
+      position: relative;
+    }
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 290px;
+      background: #111827;
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+      padding: 6px;
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+    }
+    .dropdown-menu.show {
+      display: flex;
+    }
+    .dropdown-header {
+      padding: 8px 12px 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .dropdown-item:hover {
+      background: rgba(255,255,255,0.06);
+    }
+    .dropdown-icon {
+      font-size: 18px;
+    }
+    .dropdown-text strong {
+      display: block;
+      font-size: 13px;
+      color: #fff;
+    }
+    .dropdown-text span {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* Divided & Spacious Bookmarks Bar */
     .quick-bar {
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
       padding: 6px 14px;
       background: #090d16;
       border-bottom: 1px solid var(--border);
       font-size: 12px;
       color: var(--text-muted);
-      overflow-x: auto;
       flex-shrink: 0;
       z-index: 19;
+    }
+    .bar-section {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .bar-label {
+      font-weight: 700;
+      font-size: 10px;
+      color: #64748b;
+      letter-spacing: 0.06em;
+      margin-right: 2px;
+      user-select: none;
+    }
+    .bar-separator {
+      height: 14px;
+      width: 1px;
+      background: rgba(255,255,255,0.12);
+      margin: 0 6px;
     }
     .quick-link {
       display: inline-flex;
@@ -221,6 +308,29 @@
       font-weight: 500;
       background: rgba(56, 189, 248, 0.08);
       border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    .quick-link.realm-pill {
+      color: #c4b5fd;
+      font-weight: 500;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+    .quick-link.realm-pill:hover {
+      background: rgba(139, 92, 246, 0.2);
+      color: #fff;
+    }
+    .btn-subtle {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .btn-subtle:hover {
+      color: #fff;
     }
 
     /* Progress bar */
@@ -337,40 +447,125 @@
 
     <button class="btn primary" id="btnGo">Go</button>
 
-    <!-- Sleipnir VPN / SNI Packet Splitting Toggle -->
-    <div class="sleipnir-toggle" id="sleipnirToggle" title="Sleipnir HTTPS SNI Packet Splitting (WinDivert/Unicorn HTTPS Anti-DPI engine on Port 8087)">
-      <img src="./assets/sleipnir-logo.png" class="sleipnir-icon" alt="">
-      <span id="sleipnirLabel">Sleipnir: ON</span>
+    <!-- Unified Shields Group -->
+    <div class="shields-group">
+      <!-- Sleipnir VPN / SNI Packet Splitting Toggle -->
+      <div class="sleipnir-toggle" id="sleipnirToggle" title="Sleipnir HTTPS SNI Packet Splitting (WinDivert/Unicorn HTTPS Anti-DPI engine on Port 8087)">
+        <img src="./assets/sleipnir-logo.png" class="sleipnir-icon" alt="">
+        <span id="sleipnirLabel">Sleipnir: ON</span>
+      </div>
+
+      <!-- Tor Mode Toggle -->
+      <div class="tor-toggle" id="torToggle" title="Toggle Tor SOCKS5 Proxy Routing (Port 9050)">
+        <span class="tor-indicator"></span>
+        <span id="torLabel">🧅 Tor: ON</span>
+      </div>
     </div>
 
-    <!-- Tor Mode Toggle -->
-    <div class="tor-toggle" id="torToggle" title="Toggle Tor SOCKS5 Proxy Routing (Port 9050)">
-      <span class="tor-indicator"></span>
-      <span id="torLabel">🧅 Tor: ON</span>
+    <!-- Aether Suite Dropdown Menu -->
+    <div class="dropdown-container">
+      <button class="btn" id="btnSuiteMenu" style="background:#1e1b4b;border-color:var(--accent);color:#c7d2fe;">
+        🗝️ Suite ▾
+      </button>
+      <div class="dropdown-menu" id="suiteDropdown">
+        <div class="dropdown-header">Aether Subsystems</div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://nibelungen'); closeDropdowns();">
+          <span class="dropdown-icon">🗝️</span>
+          <div class="dropdown-text">
+            <strong>Nibelungen</strong>
+            <span>Local-First Knowledge Graph & Wiki</span>
+          </div>
+        </div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://ratatoskr'); closeDropdowns();">
+          <span class="dropdown-icon">🐿️</span>
+          <div class="dropdown-text">
+            <strong>Ratatoskr</strong>
+            <span>Visual API Client & DB Inspector</span>
+          </div>
+        </div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://fafnir'); closeDropdowns();">
+          <span class="dropdown-icon">🐉</span>
+          <div class="dropdown-text">
+            <strong>Fafnir Vault</strong>
+            <span>Zero-Knowledge AES-256 Encrypted Drive</span>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" onclick="openMimisbrunnrPrompt(); closeDropdowns();">
+          <span class="dropdown-icon">🧠</span>
+          <div class="dropdown-text">
+            <strong>Mímisbrunnr AI</strong>
+            <span>Airgapped Local Intelligence Assistant</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <button class="btn" id="btnSummarize" title="Summarize with Gemini AI">✨ Summarize</button>
     <button class="btn" id="btnSaveDoc" title="Export as Word / Markdown">📄 Save</button>
+
+    <!-- Tools Dropdown Menu -->
+    <div class="dropdown-container">
+      <button class="btn" id="btnToolsMenu" title="Browser Settings & Tools">⚙️ ▾</button>
+      <div class="dropdown-menu" id="toolsDropdown">
+        <div class="dropdown-header">Browser Tools</div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://bookmarks'); closeDropdowns();">
+          <span class="dropdown-icon">⭐</span>
+          <div class="dropdown-text">
+            <strong>Bookmarks Manager</strong>
+            <span>View & organize saved URLs</span>
+          </div>
+        </div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://history'); closeDropdowns();">
+          <span class="dropdown-icon">🕒</span>
+          <div class="dropdown-text">
+            <strong>Browsing History</strong>
+            <span>Session visits & search records</span>
+          </div>
+        </div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://settings'); closeDropdowns();">
+          <span class="dropdown-icon">⚙️</span>
+          <div class="dropdown-text">
+            <strong>Settings & Channels</strong>
+            <span>Tor, Sleipnir & GitLab CI update branch</span>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://about'); closeDropdowns();">
+          <span class="dropdown-icon">ℹ️</span>
+          <div class="dropdown-text">
+            <strong>About Aether Platform</strong>
+            <span>Jeffrey Kim • GitLab Releases</span>
+          </div>
+        </div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://version'); closeDropdowns();">
+          <span class="dropdown-icon">📦</span>
+          <div class="dropdown-text">
+            <strong>Version Details</strong>
+            <span>v0.0.1 Subsystem Specifications</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Bookmarks & Quick Links Bar -->
+  <!-- Spacious Web Bookmarks Bar -->
   <div class="quick-bar">
-    <span style="font-weight:600;color:#64748b;font-size:11px;">QUICK:</span>
-    <span class="quick-link highlight" data-url="https://mail.proton.me">✉️ Proton Mail</span>
-    <span class="quick-link highlight" data-url="https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion">🧅 DuckDuckGo (.onion)</span>
-    <span class="quick-link" data-url="https://check.torproject.org">🛡️ Tor Check</span>
-    <span class="quick-link" data-url="https://duckduckgo.com">🔍 DuckDuckGo</span>
-    <span style="color:rgba(255,255,255,0.15);margin:0 4px;">|</span>
-    <span class="quick-link highlight" data-url="aetherum://nibelungen">🗝️ Nibelungen</span>
-    <span class="quick-link" data-url="aetherum://ratatoskr">🐿️ Ratatoskr</span>
-    <span class="quick-link" data-url="aetherum://fafnir">🐉 Fafnir Vault</span>
-    <span style="color:rgba(255,255,255,0.15);margin:0 4px;">|</span>
-    <span class="quick-link" data-url="aetherum://welcome">🏠 Welcome</span>
-    <span class="quick-link" data-url="aetherum://bookmarks">⭐ Bookmarks</span>
-    <span class="quick-link" data-url="aetherum://history">🕒 History</span>
-    <span class="quick-link" data-url="aetherum://settings">⚙️ Settings</span>
-    <span class="quick-link" data-url="aetherum://about">ℹ️ About</span>
-    <span class="quick-link" data-url="aetherum://version">📦 Version</span>
+    <!-- Left: Pure Web Favorites -->
+    <div class="bar-section">
+      <span class="bar-label">⭐ FAVORITES:</span>
+      <span class="quick-link highlight" data-url="https://mail.proton.me">✉️ Proton Mail</span>
+      <span class="quick-link highlight" data-url="https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion">🧅 DuckDuckGo (.onion)</span>
+      <span class="quick-link" data-url="https://check.torproject.org">🛡️ Tor Check</span>
+      <span class="quick-link" data-url="https://duckduckgo.com">🔍 DuckDuckGo</span>
+    </div>
+
+    <!-- Right: Browser Tools -->
+    <div class="bar-section">
+      <button class="btn-subtle" onclick="window.navigateTo('aetherum://bookmarks')" title="Open Bookmarks Manager">⭐ Bookmarks</button>
+      <button class="btn-subtle" onclick="window.navigateTo('aetherum://history')" title="Open History">🕒 History</button>
+      <button class="btn-subtle" onclick="window.navigateTo('aetherum://settings')" title="Open Settings">⚙️ Settings</button>
+    </div>
   </div>
 
   <!-- Viewport -->
@@ -413,6 +608,12 @@
     const btnBadgeLogo = document.getElementById("btnBadgeLogo");
     const torToggle = document.getElementById("torToggle");
     const torLabel = document.getElementById("torLabel");
+    const sleipnirToggle = document.getElementById("sleipnirToggle");
+    const sleipnirLabel = document.getElementById("sleipnirLabel");
+    const btnSuiteMenu = document.getElementById("btnSuiteMenu");
+    const suiteDropdown = document.getElementById("suiteDropdown");
+    const btnToolsMenu = document.getElementById("btnToolsMenu");
+    const toolsDropdown = document.getElementById("toolsDropdown");
     const btnSummarize = document.getElementById("btnSummarize");
     const btnSaveDoc = document.getElementById("btnSaveDoc");
     const aiDrawer = document.getElementById("aiDrawer");
@@ -421,11 +622,40 @@
     const progressBar = document.getElementById("progressBar");
 
     let torEnabled = true;
-
-    const sleipnirToggle = document.getElementById("sleipnirToggle");
-    const sleipnirLabel = document.getElementById("sleipnirLabel");
     let sleipnirEnabled = true;
 
+    // Dropdown Toggles
+    btnSuiteMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toolsDropdown.classList.remove("show");
+      suiteDropdown.classList.toggle("show");
+    });
+
+    btnToolsMenu.addEventListener("click", (e) => {
+      e.stopPropagation();
+      suiteDropdown.classList.remove("show");
+      toolsDropdown.classList.toggle("show");
+    });
+
+    window.closeDropdowns = function() {
+      suiteDropdown.classList.remove("show");
+      toolsDropdown.classList.remove("show");
+    };
+
+    window.addEventListener("click", () => closeDropdowns());
+
+    window.openMimisbrunnrPrompt = function() {
+      const q = prompt("🧠 Mímisbrunnr Airgapped AI Assistant:\nEnter prompt or question for local intelligence analysis:");
+      if (!q) return;
+      if (window.hyperOffice && window.hyperOffice.mimisbrunnr) {
+        window.hyperOffice.mimisbrunnr.chat({ prompt: q, task: "general" }).then(res => {
+          aiDrawer.classList.add("open");
+          drawerContent.textContent = res.response;
+        });
+      }
+    };
+
+    // Sleipnir Status Initialization
     async function initSleipnirStatus() {
       if (window.hyperOffice && window.hyperOffice.sleipnir) {
         try {
@@ -514,7 +744,6 @@
       if (!url) return;
       url = url.trim();
 
-      // Normalize protocol
       if (url.startsWith("aetheum://")) {
         url = url.replace("aetheum://", "aetherum://");
       }

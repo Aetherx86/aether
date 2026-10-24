@@ -2167,6 +2167,9 @@ const hyperOfficeApi = {
     commit: (cwd, message, files) => electron.ipcRenderer.invoke("hyper:git:commit", { cwd, message, files }),
     officeDiff: (cwd, filePath, commit) => electron.ipcRenderer.invoke("hyper:git:office-diff", { cwd, filePath, commit })
   },
+  terminal: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:term:open-tab")
+  },
   projects: {
     list: () => electron.ipcRenderer.invoke("hyper:projects:list")
   },
@@ -2176,12 +2179,14 @@ const hyperOfficeApi = {
     set: (enable) => electron.ipcRenderer.invoke("hyper:sleipnir:set", enable)
   },
   nibelungen: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:nibelungen:open-tab"),
     getGraph: (params) => electron.ipcRenderer.invoke("hyper:nibelungen:get-graph", params),
     listNotes: () => electron.ipcRenderer.invoke("hyper:nibelungen:list-notes"),
     saveNote: (note) => electron.ipcRenderer.invoke("hyper:nibelungen:save-note", note),
     deleteNote: (id) => electron.ipcRenderer.invoke("hyper:nibelungen:delete-note", id)
   },
   fafnir: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:fafnir:open-tab"),
     list: () => electron.ipcRenderer.invoke("hyper:fafnir:list"),
     encrypt: (params) => electron.ipcRenderer.invoke("hyper:fafnir:encrypt", params),
     decrypt: (params) => electron.ipcRenderer.invoke("hyper:fafnir:decrypt", params)
@@ -2191,6 +2196,7 @@ const hyperOfficeApi = {
     chat: (payload) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:chat", payload)
   },
   ratatoskr: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:ratatoskr:open-tab"),
     request: (payload) => electron.ipcRenderer.invoke("hyper:ratatoskr:request", payload),
     querySqlite: (params) => electron.ipcRenderer.invoke("hyper:ratatoskr:query-sqlite", params),
     listTables: (dbPath) => electron.ipcRenderer.invoke("hyper:ratatoskr:list-tables", dbPath)

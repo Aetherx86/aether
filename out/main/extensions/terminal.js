@@ -19,9 +19,11 @@ class TerminalSessionManager {
     const isWin = process.platform === "win32";
     const shell = options.shell || (isWin ? "powershell.exe" : (process.env.SHELL || "/bin/zsh"));
 
-    const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli")
-      ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli"
-      : path.resolve(__dirname, "../../cli");
+    const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli")
+      ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli"
+      : (fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli")
+        ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli"
+        : path.resolve(__dirname, "../../cli"));
     const currentPath = process.env.PATH || "";
     const enhancedPath = `${cliDir}:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${currentPath}`;
 
@@ -73,7 +75,7 @@ class TerminalSessionManager {
 
     // Send initial greeting to verify connection
     setTimeout(() => {
-      sendData(`\x1b[1;34mAetheum Shell Session Initialized\x1b[0m\r\nWorking Directory: ${defaultCwd}\r\nType 'aetheum --help' or any command.\r\n\r\n`);
+      sendData(`\x1b[1;36mYggdrasil Session Initialized\x1b[0m\r\nWorking Directory: ${defaultCwd}\r\nType 'aether --help' or any command.\r\n\r\n`);
     }, 100);
 
     return { id, shell, cwd: defaultCwd };
@@ -106,9 +108,11 @@ class TerminalSessionManager {
 
   executeOneShot(cmd, cwd = "/Users/sushikim/Desktop/app_source") {
     return new Promise((resolve) => {
-      const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli")
-        ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli"
-        : path.resolve(__dirname, "../../cli");
+      const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli")
+        ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli"
+        : (fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli")
+          ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli"
+          : path.resolve(__dirname, "../../cli"));
       const currentPath = process.env.PATH || "";
       const enhancedPath = `${cliDir}:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${currentPath}`;
 
