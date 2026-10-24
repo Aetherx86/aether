@@ -9,8 +9,12 @@ const candidateClis = [
   "/Applications/dumped.app/Contents/Resources/cli/aether"
 ];
 const CLI_PATH = candidateClis.find(p => fs.existsSync(p)) || candidateClis[0];
-const BUILTIN_SKILLS_PATH = "/Applications/dumped.app/Contents/Resources/builtin-skills";
-const VISION_OCR_PATH = "/Applications/dumped.app/Contents/Resources/ocr/vision-ocr";
+const BUILTIN_SKILLS_PATH = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/builtin-skills")
+  ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/builtin-skills"
+  : "/Applications/dumped.app/Contents/Resources/builtin-skills";
+const VISION_OCR_PATH = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/ocr/vision-ocr")
+  ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/ocr/vision-ocr"
+  : "/Applications/dumped.app/Contents/Resources/ocr/vision-ocr";
 const WORKSPACE_ROOT = "/Users/sushikim/Desktop/app_source";
 
 function runCli(command, args = [], options = {}) {

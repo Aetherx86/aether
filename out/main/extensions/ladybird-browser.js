@@ -4,8 +4,17 @@ const fs = require("node:fs");
 const path = require("node:path");
 const http = require("node:http");
 const https = require("node:https");
+const net = require("node:net");
+const { spawn } = require("node:child_process");
 const { executeAiChat } = require("./env-agent");
 const { convertDocument } = require("./office-tools");
+
+let electronSession = null;
+try {
+  electronSession = require("electron").session;
+} catch {
+  electronSession = null;
+}
 
 const candidatePaths = [
   "/Users/sushikim/Desktop/app_source/ladybird-master",
@@ -15,6 +24,80 @@ const candidatePaths = [
 const LADYBIRD_DIR = candidatePaths.find(p => p && fs.existsSync(p)) || "/Users/sushikim/Desktop/app_source/ladybird-master";
 const ABOUT_PAGES_DIR = path.join(LADYBIRD_DIR, "Base/res/ladybird/about-pages");
 const RES_DIR = path.join(LADYBIRD_DIR, "Base/res/ladybird");
+
+let torModeEnabled = true;
+
+function checkTorPort() {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(1200);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once("error", () => {
+      resolve(false);
+    });
+    socket.connect(9050, "127.0.0.1");
+  });
+}
+
+async function ensureTorRunning() {
+  const isRunning = await checkTorPort();
+  if (isRunning) return true;
+  try {
+    const torBin = fs.existsSync("/opt/homebrew/bin/tor") ? "/opt/homebrew/bin/tor" : "tor";
+    const child = spawn(torBin, [], { detached: true, stdio: "ignore" });
+    child.unref();
+    for (let i = 0; i < 8; i++) {
+      await new Promise(r => setTimeout(r, 400));
+      if (await checkTorPort()) return true;
+    }
+  } catch (e) {
+    console.error("[Aether Tor] Error starting tor daemon:", e.message);
+  }
+  return await checkTorPort();
+}
+
+async function configureLadybirdSession() {
+  if (!electronSession) return;
+  try {
+    const ses = electronSession.fromPartition("persist:ladybird");
+
+    // Remove restrictive security headers that prevent framing/webview embed
+    ses.webRequest.onHeadersReceived((details, callback) => {
+      const responseHeaders = { ...details.responseHeaders };
+      delete responseHeaders["x-frame-options"];
+      delete responseHeaders["X-Frame-Options"];
+      delete responseHeaders["content-security-policy"];
+      delete responseHeaders["Content-Security-Policy"];
+      delete responseHeaders["x-content-security-policy"];
+      delete responseHeaders["X-Content-Security-Policy"];
+      callback({ cancel: false, responseHeaders });
+    });
+
+    // Custom Ladybird / Tor user agent
+    ses.setUserAgent(
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Ladybird/1.0 SerenityOS/1.0 AetherBrowser/1.0"
+    );
+
+    // Apply Tor proxy if enabled
+    await ensureTorRunning();
+    if (torModeEnabled) {
+      await ses.setProxy({ proxyRules: "socks5://127.0.0.1:9050,socks5://127.0.0.1:9150,direct://" });
+      console.log("[Aether Ladybird] Tor proxy attached: socks5://127.0.0.1:9050");
+    } else {
+      await ses.setProxy({ proxyRules: "" });
+      console.log("[Aether Ladybird] Direct web connection attached.");
+    }
+  } catch (err) {
+    console.error("[Aether Ladybird] Session configuration error:", err.message);
+  }
+}
 
 function getLadybirdPage(pageName = "welcome") {
   const safeName = path.basename(pageName).replace(/\.html$/, "");
@@ -76,7 +159,6 @@ function fetchUrlText(urlStr) {
         let data = "";
         res.on("data", chunk => data += chunk);
         res.on("end", () => {
-          // Quick strip tags
           const stripped = data.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
                                .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
                                .replace(/<[^>]+>/g, " ")
@@ -134,7 +216,6 @@ async function saveWebpageAsDoc(urlStr, outputPath) {
     await convertDocument(tempHtml, outputPath);
     return { ok: true, path: outputPath };
   } else {
-    // Markdown
     const mdContent = `# Webpage Capture: ${urlStr}\n\n*Captured via Aether Ladybird Browser on ${new Date().toLocaleString()}*\n\n---\n\n${pageText}`;
     fs.writeFileSync(outputPath, mdContent, "utf8");
     return { ok: true, path: outputPath };
@@ -142,6 +223,8 @@ async function saveWebpageAsDoc(urlStr, outputPath) {
 }
 
 function registerLadybirdIpc(ipcMain) {
+  configureLadybirdSession();
+
   ipcMain.handle("hyper:browser:get-ladybird-page", (_event, pageName) => {
     return getLadybirdPage(pageName);
   });
@@ -162,11 +245,33 @@ function registerLadybirdIpc(ipcMain) {
       return { ok: false, error: err.message };
     }
   });
+
+  ipcMain.handle("hyper:browser:tor-status", async () => {
+    const active = await checkTorPort();
+    return { active, torEnabled: torModeEnabled, port: 9050 };
+  });
+
+  ipcMain.handle("hyper:browser:set-tor", async (_event, enabled) => {
+    torModeEnabled = !!enabled;
+    if (electronSession) {
+      const ses = electronSession.fromPartition("persist:ladybird");
+      if (torModeEnabled) {
+        await ensureTorRunning();
+        await ses.setProxy({ proxyRules: "socks5://127.0.0.1:9050,socks5://127.0.0.1:9150,direct://" });
+      } else {
+        await ses.setProxy({ proxyRules: "" });
+      }
+    }
+    const active = await checkTorPort();
+    return { active, torEnabled: torModeEnabled, port: 9050 };
+  });
 }
 
 module.exports = {
   getLadybirdPage,
   summarizeWebpage,
   saveWebpageAsDoc,
-  registerLadybirdIpc
+  registerLadybirdIpc,
+  ensureTorRunning,
+  checkTorPort
 };

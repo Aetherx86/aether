@@ -343971,7 +343971,8 @@ function createShellWindow() {
       preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
+      sandbox: false,
+      webviewTag: true
     }
   });
   shellWindow = win2;
@@ -345139,7 +345140,9 @@ const TAB_MENU_ICON = {
   html: "html",
   mindmap: "mindmap",
   hwp: "hwp",
-  help: "home"
+  help: "home",
+  browser: "html",
+  terminal: "home"
 };
 function broadcastChromePressed(exclude) {
   for (const wc of require$$1$3.webContents.getAllWebContents()) {
@@ -345703,6 +345706,17 @@ function buildHomeMenu() {
         { label: tm("menuNewMindmap"), click: () => newMindmapTab() },
         { label: tm("menuNewHwp"), click: () => newHwpTab() },
         { label: tm("menuNewPdf"), click: () => void newPdfTab() },
+        { type: "separator" },
+        {
+          label: "New Ladybird Browser Tab (Web / Tor / Proton)",
+          accelerator: "CmdOrCtrl+B",
+          click: () => newBrowserTab("https://mail.proton.me")
+        },
+        {
+          label: "Open Built-in Terminal (zsh)",
+          accelerator: "CmdOrCtrl+T",
+          click: () => tabManager?.openTerminalTab?.()
+        },
         { type: "separator" },
         {
           label: tm("menuOpen"),
@@ -346567,7 +346581,16 @@ function installDockMenu() {
       },
       { label: tm("menuNewSlide"), click: () => newSlideTab() },
       { label: tm("menuNewMarkdown"), click: () => newMarkdownTab() },
-      { label: tm("menuNewPdf"), click: () => void newPdfTab() }
+      { label: tm("menuNewPdf"), click: () => void newPdfTab() },
+      { type: "separator" },
+      {
+        label: "New Ladybird Browser Tab (Web / Tor / Proton)",
+        click: () => newBrowserTab("https://mail.proton.me")
+      },
+      {
+        label: "Open Built-in Terminal (zsh)",
+        click: () => tabManager?.openTerminalTab?.()
+      }
     ])
   );
 }

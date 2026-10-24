@@ -1,6 +1,6 @@
 "use strict";
 
-const { spawn } = require("node:child_process");
+const { spawn, exec } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -15,16 +15,15 @@ class TerminalSessionManager {
       this.killSession(id);
     }
 
-    const defaultCwd = options.cwd || os.homedir();
+    const defaultCwd = options.cwd || "/Users/sushikim/Desktop/app_source";
     const isWin = process.platform === "win32";
     const shell = options.shell || (isWin ? "powershell.exe" : (process.env.SHELL || "/bin/zsh"));
 
-    // Ensure PATH has Aether CLI directory and Node runtime
     const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli")
       ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli"
-      : "/Applications/dumped.app/Contents/Resources/cli";
+      : path.resolve(__dirname, "../../cli");
     const currentPath = process.env.PATH || "";
-    const enhancedPath = `${cliDir}:${path.join(cliDir, "bin")}:/usr/local/bin:/opt/homebrew/bin:${currentPath}`;
+    const enhancedPath = `${cliDir}:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${currentPath}`;
 
     const env = {
       ...process.env,
@@ -32,7 +31,10 @@ class TerminalSessionManager {
       PATH: enhancedPath,
       TERM: "xterm-256color",
       COLORTERM: "truecolor",
-      LANG: process.env.LANG || "ko_KR.UTF-8"
+      LANG: process.env.LANG || "ko_KR.UTF-8",
+      PAGER: "cat",
+      GIT_PAGER: "cat",
+      MANPAGER: "cat"
     };
 
     const child = spawn(shell, isWin ? [] : ["-l"], {
@@ -69,6 +71,11 @@ class TerminalSessionManager {
       sender
     });
 
+    // Send initial greeting to verify connection
+    setTimeout(() => {
+      sendData(`\x1b[1;34mAether Shell Session Initialized\x1b[0m\r\nWorking Directory: ${defaultCwd}\r\nType 'aether --help' or any command.\r\n\r\n`);
+    }, 100);
+
     return { id, shell, cwd: defaultCwd };
   }
 
@@ -96,6 +103,35 @@ class TerminalSessionManager {
       this.killSession(id);
     }
   }
+
+  executeOneShot(cmd, cwd = "/Users/sushikim/Desktop/app_source") {
+    return new Promise((resolve) => {
+      const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli")
+        ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli"
+        : path.resolve(__dirname, "../../cli");
+      const currentPath = process.env.PATH || "";
+      const enhancedPath = `${cliDir}:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${currentPath}`;
+
+      exec(cmd, {
+        cwd,
+        env: {
+          ...process.env,
+          PATH: enhancedPath,
+          TERM: "xterm-256color",
+          PAGER: "cat",
+          GIT_PAGER: "cat"
+        },
+        maxBuffer: 10 * 1024 * 1024
+      }, (err, stdout, stderr) => {
+        resolve({
+          ok: !err,
+          code: err ? (err.code || 1) : 0,
+          stdout: stdout || "",
+          stderr: stderr || (err ? err.message : "")
+        });
+      });
+    });
+  }
 }
 
 const terminalManager = new TerminalSessionManager();
@@ -111,6 +147,10 @@ function registerTerminalIpc(ipcMain) {
 
   ipcMain.handle("hyper:term:kill", (_event, { id = "default" }) => {
     return terminalManager.killSession(id);
+  });
+
+  ipcMain.handle("hyper:term:exec", async (_event, { cmd, cwd }) => {
+    return await terminalManager.executeOneShot(cmd, cwd);
   });
 }
 

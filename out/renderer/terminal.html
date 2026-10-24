@@ -5,21 +5,21 @@
   <title>Aether Terminal</title>
   <style>
     :root {
-      --bg: #18181b;
-      --header-bg: #27272a;
-      --border: #3f3f46;
-      --text: #f4f4f5;
-      --text-muted: #a1a1aa;
+      --bg: #0f172a;
+      --header-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
       --accent: #6366f1;
       --green: #22c55e;
       --red: #ef4444;
-      --yellow: #eab308;
+      --yellow: #f59e0b;
       --cyan: #06b6d4;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -27,7 +27,7 @@
       height: 100vh;
       overflow: hidden;
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
     /* Terminal Header */
@@ -48,16 +48,36 @@
       gap: 8px;
       font-weight: 600;
       font-size: 13px;
-      color: #e4e4e7;
+      color: #f1f5f9;
     }
 
     .term-badge {
       font-size: 11px;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
       background: #312e81;
       color: #c7d2fe;
       border: 1px solid var(--accent);
+      font-weight: 600;
+    }
+
+    .status-pill {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid #16a34a;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
     }
 
     .quick-bar {
@@ -67,18 +87,19 @@
     }
 
     .pill-btn {
-      background: #3f3f46;
-      border: 1px solid #52525b;
+      background: #334155;
+      border: 1px solid #475569;
       color: var(--text);
-      padding: 3px 8px;
+      padding: 3px 9px;
       border-radius: 4px;
       font-size: 11px;
       font-family: inherit;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, border-color 0.15s;
     }
     .pill-btn:hover {
-      background: #52525b;
+      background: #475569;
+      border-color: #64748b;
     }
 
     /* Output Scroll View */
@@ -90,8 +111,32 @@
       word-break: break-all;
     }
 
-    .term-line {
+    .banner-box {
+      border: 1px solid #334155;
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      color: #94a3b8;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .banner-title {
+      font-weight: 600;
+      color: #818cf8;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .cmd-echo {
+      margin-top: 6px;
       margin-bottom: 2px;
+      color: #38bdf8;
+    }
+    .cmd-prompt-label {
+      color: #4ade80;
+      font-weight: 600;
+      margin-right: 6px;
     }
 
     /* Active Prompt */
@@ -99,13 +144,17 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-top: 4px;
+      padding: 8px 16px;
+      background: #111827;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
     .prompt-label {
-      color: var(--green);
+      color: #4ade80;
       font-weight: 600;
       user-select: none;
+      white-space: nowrap;
     }
 
     .prompt-input {
@@ -113,10 +162,10 @@
       background: transparent;
       border: none;
       outline: none;
-      color: var(--text);
+      color: #f8fafc;
       font-family: inherit;
       font-size: 13px;
-      caret-color: var(--accent);
+      caret-color: #818cf8;
     }
   </style>
 </head>
@@ -124,25 +173,32 @@
   <div class="term-header">
     <div class="term-title">
       <span class="term-badge">zsh</span>
-      <span>Aether Workspace Terminal</span>
+      <span>Aether Workspace Shell & Terminal</span>
+      <div class="status-pill"><span class="status-dot"></span><span>Active</span></div>
     </div>
     <div class="quick-bar">
       <button class="pill-btn" onclick="sendCmd('aether --help')">aether --help</button>
       <button class="pill-btn" onclick="sendCmd('git status')">git status</button>
       <button class="pill-btn" onclick="sendCmd('ls -la')">ls -la</button>
-      <button class="pill-btn" onclick="sendCmd('clear')">clear</button>
+      <button class="pill-btn" onclick="sendCmd('curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip')">tor check</button>
+      <button class="pill-btn" onclick="clearTerm()">clear</button>
     </div>
   </div>
 
   <div class="term-body" id="termBody">
-    <div class="term-line" style="color:#a1a1aa;">Welcome to Aether Built-in Terminal.</div>
-    <div class="term-line" style="color:#818cf8;">Direct access to macOS zsh shell, Aether CLI tools, and project repo.</div>
-    <div class="term-line" style="color:#71717a;">Type commands below or use the quick buttons above.</div>
-    <div id="output"></div>
-    <div class="term-prompt-row">
-      <span class="prompt-label" id="promptText">aether ~ %</span>
-      <input type="text" class="prompt-input" id="cmdInput" autofocus spellcheck="false" autocomplete="off" />
+    <div class="banner-box">
+      <div class="banner-title">⚡ Aether Interactive Terminal</div>
+      <div>• Shell: macOS zsh interactive environment with full ANSI color support</div>
+      <div>• CLI Tools: <code>aether</code> (/opt/homebrew/bin/aether v0.12.3)</div>
+      <div>• Network Security: Tor SOCKS5 Tunnel on 127.0.0.1:9050</div>
+      <div>• Working Directory: /Users/sushikim/Desktop/app_source</div>
     </div>
+    <div id="output"></div>
+  </div>
+
+  <div class="term-prompt-row">
+    <span class="prompt-label" id="promptText">aether:app_source sushikim%</span>
+    <input type="text" class="prompt-input" id="cmdInput" autofocus spellcheck="false" autocomplete="off" />
   </div>
 
   <script>
@@ -153,10 +209,18 @@
 
     const history = [];
     let historyIdx = -1;
-    let sessionId = "session-" + Date.now();
+    const sessionId = "term-" + Math.random().toString(36).substring(2, 9);
+    let sessionActive = false;
 
     function scrollToBottom() {
       termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     }
 
     function appendOutput(text, isError = false) {
@@ -164,6 +228,14 @@
       span.innerHTML = ansiToHtml(text);
       if (isError) span.style.color = "var(--red)";
       outputEl.appendChild(span);
+      scrollToBottom();
+    }
+
+    function appendCommandEcho(cmd) {
+      const div = document.createElement("div");
+      div.className = "cmd-echo";
+      div.innerHTML = `<span class="cmd-prompt-label">aether:app_source %</span><span>${escapeHtml(cmd)}</span>`;
+      outputEl.appendChild(div);
       scrollToBottom();
     }
 
@@ -180,43 +252,64 @@
         .replace(/\x1b\[34m/g, "<span style='color:#60a5fa;'>")
         .replace(/\x1b\[35m/g, "<span style='color:#c084fc;'>")
         .replace(/\x1b\[36m/g, "<span style='color:var(--cyan);'>")
-        .replace(/\x1b\[37m/g, "<span style='color:#f4f4f5;'>")
-        .replace(/\x1b\[90m/g, "<span style='color:#71717a;'>")
-        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, ""); // strip unknown escape codes
+        .replace(/\x1b\[37m/g, "<span style='color:#f8fafc;'>")
+        .replace(/\x1b\[90m/g, "<span style='color:#64748b;'>")
+        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
+    }
+
+    function clearTerm() {
+      outputEl.innerHTML = "";
     }
 
     // Connect with window.hyperOffice.terminal
     if (window.hyperOffice && window.hyperOffice.terminal) {
       window.hyperOffice.terminal.create({
+        id: sessionId,
         cwd: "/Users/sushikim/Desktop/app_source"
       }).then(res => {
-        if (res && res.id) sessionId = res.id;
+        sessionActive = true;
+      }).catch(err => {
+        appendOutput(`[Session create notice: ${err.message}]\r\n`);
       });
 
       window.hyperOffice.terminal.onOutput((payload) => {
-        if (payload && payload.data) {
+        if (payload && payload.id === sessionId && payload.data) {
+          appendOutput(payload.data);
+        } else if (payload && payload.data && !payload.id) {
           appendOutput(payload.data);
         }
       });
     }
 
-    function sendCmd(cmd) {
+    async function sendCmd(cmd) {
+      cmd = cmd.trim();
+      if (!cmd) return;
+
       if (cmd === "clear") {
-        outputEl.innerHTML = "";
+        clearTerm();
         return;
       }
+
+      appendCommandEcho(cmd);
+
       if (window.hyperOffice && window.hyperOffice.terminal) {
-        window.hyperOffice.terminal.write(sessionId, cmd + "\n");
+        if (sessionActive) {
+          window.hyperOffice.terminal.write(sessionId, cmd + "\n");
+        } else if (window.hyperOffice.terminal.exec) {
+          const res = await window.hyperOffice.terminal.exec(cmd, "/Users/sushikim/Desktop/app_source");
+          if (res.stdout) appendOutput(res.stdout);
+          if (res.stderr) appendOutput(res.stderr, true);
+        }
       } else {
-        appendOutput("\n$ " + cmd + "\n[Terminal session offline]\n", true);
+        appendOutput("[Terminal backend offline]\n", true);
       }
     }
 
     cmdInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        const cmd = cmdInput.value.trim();
+        const cmd = cmdInput.value;
         cmdInput.value = "";
-        if (cmd) {
+        if (cmd.trim()) {
           history.push(cmd);
           historyIdx = history.length;
           sendCmd(cmd);
@@ -240,10 +333,10 @@
         if (window.hyperOffice && window.hyperOffice.terminal) {
           window.hyperOffice.terminal.write(sessionId, "\x03");
         }
+        appendOutput("^C\n");
       }
     });
 
-    // Keep focus
     document.addEventListener("click", () => cmdInput.focus());
   </script>
 </body>

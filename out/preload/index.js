@@ -2125,6 +2125,7 @@ const hyperOfficeApi = {
     create: (options) => electron.ipcRenderer.invoke("hyper:term:create", options),
     write: (id, input) => electron.ipcRenderer.invoke("hyper:term:write", { id, input }),
     kill: (id) => electron.ipcRenderer.invoke("hyper:term:kill", { id }),
+    exec: (cmd, cwd) => electron.ipcRenderer.invoke("hyper:term:exec", { cmd, cwd }),
     onOutput: (listener) => {
       const handler = (_event, data) => listener(data);
       electron.ipcRenderer.on("hyper:term:output", handler);
@@ -2156,7 +2157,9 @@ const hyperOfficeApi = {
     openTab: (url) => electron.ipcRenderer.invoke("hyper:browser:open-tab", url),
     getLadybirdPage: (page) => electron.ipcRenderer.invoke("hyper:browser:get-ladybird-page", page),
     summarize: (url) => electron.ipcRenderer.invoke("hyper:browser:summarize", url),
-    saveDoc: (url, outputPath) => electron.ipcRenderer.invoke("hyper:browser:save-doc", { url, outputPath })
+    saveDoc: (url, outputPath) => electron.ipcRenderer.invoke("hyper:browser:save-doc", { url, outputPath }),
+    setTor: (enabled) => electron.ipcRenderer.invoke("hyper:browser:set-tor", enabled),
+    getTorStatus: () => electron.ipcRenderer.invoke("hyper:browser:tor-status")
   },
   git: {
     getStatus: (cwd) => electron.ipcRenderer.invoke("hyper:git:status", cwd),
