@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nibelungen — Local-First Knowledge Graph</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-hover: #1f2937;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-light: rgba(255, 255, 255, 0.15);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --node-note: #a78bfa;
+      --node-bm: #38bdf8;
+      --node-topic: #f59e0b;
+      --node-email: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .nib-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px;
+      background: #111827;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .nib-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      color: #ede9fe;
+    }
+    .nib-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid var(--accent);
+      color: #c4b5fd;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn {
+      background: var(--surface-hover);
+      border: 1px solid var(--border-light);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: #374151; color: #fff; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { background: var(--accent-hover); }
+
+    /* Main Container */
+    .nib-layout {
+      flex: 1 1 0%;
+      min-height: 0;
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Left Sidebar: Notes & Topics */
+    .nib-sidebar {
+      width: 280px;
+      background: #0d1322;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-search {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .search-input {
+      width: 100%;
+      background: #111827;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 12px;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .note-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .note-item {
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: background 0.15s;
+      border: 1px solid transparent;
+    }
+    .note-item:hover { background: rgba(255,255,255,0.05); }
+    .note-item.active {
+      background: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+    .note-item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .note-item-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .tag-pill {
+      font-size: 10px;
+      padding: 1px 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      color: var(--text-muted);
+    }
+
+    /* Middle: Interactive Canvas Graph */
+    .nib-graph-pane {
+      flex: 1;
+      position: relative;
+      background: #090d16;
+      overflow: hidden;
+    }
+    canvas#graphCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    canvas#graphCanvas:active {
+      cursor: grabbing;
+    }
+    .graph-legend {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11px;
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Right: Markdown Editor Pane */
+    .nib-editor-pane {
+      width: 440px;
+      background: #111827;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .editor-top {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .input-title {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      outline: none;
+    }
+    .input-tags {
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 5px 8px;
+      font-size: 12px;
+      outline: none;
+    }
+    .editor-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 16px;
+      overflow-y: auto;
+    }
+    .editor-textarea {
+      flex: 1;
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f1f5f9;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+    }
+    .editor-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="nib-header">
+    <div class="nib-brand">
+      <span>🗝️ Nibelungen</span>
+      <span class="nib-badge">Obsidian-Style Personal Knowledge Graph</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="btnSync">🔄 Sync Bookmarks & Notes</button>
+      <button class="btn primary" id="btnNewNote">➕ New Note</button>
+    </div>
+  </div>
+
+  <div class="nib-layout">
+    <!-- Sidebar -->
+    <div class="nib-sidebar">
+      <div class="sidebar-search">
+        <input type="text" id="searchNotes" class="search-input" placeholder="Filter notes or [[wikilinks]]...">
+      </div>
+      <div class="note-list" id="notesContainer"></div>
+    </div>
+
+    <!-- Canvas Graph -->
+    <div class="nib-graph-pane">
+      <canvas id="graphCanvas"></canvas>
+      <div class="graph-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#a78bfa;"></span><span>Notes</span></div>
+        <div class="legend-item"><span class="legend-dot" style="background:#38bdf8;"></span><span>Bookmarks</span></div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span><span>Topics</span></div>
+      </div>
+    </div>
+
+    <!-- Note Editor -->
+    <div class="nib-editor-pane">
+      <div class="editor-top">
+        <input type="text" id="noteTitle" class="input-title" placeholder="Note Title...">
+        <input type="text" id="noteTags" class="input-tags" placeholder="Tags (comma-separated)...">
+      </div>
+      <div class="editor-body">
+        <textarea id="noteContent" class="editor-textarea" placeholder="Write markdown note... Link topics using [[Topic Name]]..."></textarea>
+      </div>
+      <div class="editor-footer">
+        <span id="saveStatus">Auto-saved to ~/.aether/nibelungen/</span>
+        <button class="btn" id="btnDeleteNote" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let graphData = { nodes: [], edges: [] };
+    let currentNoteId = null;
+    let notesCache = [];
+
+    const canvas = document.getElementById("graphCanvas");
+    const ctx = canvas.getContext("2d");
+    const notesContainer = document.getElementById("notesContainer");
+    const noteTitle = document.getElementById("noteTitle");
+    const noteTags = document.getElementById("noteTags");
+    const noteContent = document.getElementById("noteContent");
+    const saveStatus = document.getElementById("saveStatus");
+    const searchNotes = document.getElementById("searchNotes");
+    const btnNewNote = document.getElementById("btnNewNote");
+    const btnSync = document.getElementById("btnSync");
+    const btnDeleteNote = document.getElementById("btnDeleteNote");
+
+    // Resize canvas
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    // Physics Engine for Graph
+    let simulation = {
+      nodes: [],
+      links: [],
+      draggedNode: null,
+      hoveredNode: null
+    };
+
+    function initPhysics(data) {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      const nodeMap = new Map();
+      simulation.nodes = data.nodes.map((n, i) => {
+        const angle = (i / data.nodes.length) * Math.PI * 2;
+        const radius = Math.min(w, h) * 0.28 + (Math.random() * 40 - 20);
+        const node = {
+          ...n,
+          x: w / 2 + Math.cos(angle) * radius,
+          y: h / 2 + Math.sin(angle) * radius,
+          vx: 0,
+          vy: 0,
+          radius: n.type === "note" ? 9 : (n.type === "bookmark" ? 7 : 6)
+        };
+        nodeMap.set(n.id, node);
+        return node;
+      });
+
+      simulation.links = data.edges.map(e => ({
+        source: nodeMap.get(e.source),
+        target: nodeMap.get(e.target)
+      })).filter(l => l.source && l.target);
+    }
+
+    function stepPhysics() {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Node Repulsion
+      for (let i = 0; i < simulation.nodes.length; i++) {
+        for (let j = i + 1; j < simulation.nodes.length; j++) {
+          const n1 = simulation.nodes[i];
+          const n2 = simulation.nodes[j];
+          const dx = n2.x - n1.x;
+          const dy = n2.y - n1.y;
+          const distSq = dx * dx + dy * dy || 1;
+          const dist = Math.sqrt(distSq);
+          if (dist < 220) {
+            const force = (220 - dist) / 220 * 0.45;
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            n1.vx -= fx;
+            n1.vy -= fy;
+            n2.vx += fx;
+            n2.vy += fy;
+          }
+        }
+      }
+
+      // Link Spring Attraction
+      for (const link of simulation.links) {
+        const dx = link.target.x - link.source.x;
+        const dy = link.target.y - link.source.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const desiredDist = 110;
+        const force = (dist - desiredDist) * 0.035;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        link.source.vx += fx;
+        link.source.vy += fy;
+        link.target.vx -= fx;
+        link.target.vy -= fy;
+      }
+
+      // Center Gravity & Velocity Dampening
+      for (const node of simulation.nodes) {
+        if (node === simulation.draggedNode) continue;
+        const toCenterX = (w / 2 - node.x) * 0.008;
+        const toCenterY = (h / 2 - node.y) * 0.008;
+        node.vx += toCenterX;
+        node.vy += toCenterY;
+
+        node.vx *= 0.88;
+        node.vy *= 0.88;
+        node.x += node.vx;
+        node.y += node.vy;
+
+        // Bounding
+        node.x = Math.max(30, Math.min(w - 30, node.x));
+        node.y = Math.max(30, Math.min(h - 30, node.y));
+      }
+    }
+
+    function renderGraph() {
+      stepPhysics();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Edges
+      ctx.lineWidth = 1;
+      for (const link of simulation.links) {
+        const isHovered = simulation.hoveredNode &&
+          (link.source === simulation.hoveredNode || link.target === simulation.hoveredNode);
+        ctx.strokeStyle = isHovered ? "rgba(167, 139, 250, 0.7)" : "rgba(255, 255, 255, 0.12)";
+        ctx.beginPath();
+        ctx.moveTo(link.source.x, link.source.y);
+        ctx.lineTo(link.target.x, link.target.y);
+        ctx.stroke();
+      }
+
+      // Draw Nodes
+      for (const node of simulation.nodes) {
+        const isHovered = node === simulation.hoveredNode;
+        const isSelected = node.id === currentNoteId;
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius + (isHovered || isSelected ? 3 : 0), 0, Math.PI * 2);
+
+        if (node.type === "note") ctx.fillStyle = isSelected ? "#c4b5fd" : "#a78bfa";
+        else if (node.type === "bookmark") ctx.fillStyle = "#38bdf8";
+        else ctx.fillStyle = "#f59e0b";
+
+        ctx.fill();
+
+        // Node Border / Glow
+        if (isSelected || isHovered) {
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Label
+        ctx.font = isHovered || isSelected ? "600 12px -apple-system, sans-serif" : "11px -apple-system, sans-serif";
+        ctx.fillStyle = isHovered || isSelected ? "#ffffff" : "rgba(241, 245, 249, 0.75)";
+        ctx.textAlign = "center";
+        ctx.fillText(node.title, node.x, node.y + node.radius + 14);
+      }
+
+      requestAnimationFrame(renderGraph);
+    }
+
+    // Interactivity: Drag & Click
+    let mousePos = { x: 0, y: 0 };
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mousePos.x = e.clientX - rect.left;
+      mousePos.y = e.clientY - rect.top;
+
+      if (simulation.draggedNode) {
+        simulation.draggedNode.x = mousePos.x;
+        simulation.draggedNode.y = mousePos.y;
+        return;
+      }
+
+      // Hover check
+      simulation.hoveredNode = null;
+      for (const n of simulation.nodes) {
+        const dx = n.x - mousePos.x;
+        const dy = n.y - mousePos.y;
+        if (dx * dx + dy * dy < (n.radius + 6) * (n.radius + 6)) {
+          simulation.hoveredNode = n;
+          break;
+        }
+      }
+    });
+
+    canvas.addEventListener("mousedown", (e) => {
+      if (simulation.hoveredNode) {
+        simulation.draggedNode = simulation.hoveredNode;
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      if (simulation.draggedNode) {
+        if (simulation.draggedNode.type === "note") {
+          selectNote(simulation.draggedNode.id);
+        } else if (simulation.draggedNode.url) {
+          window.open(simulation.draggedNode.url, "_blank");
+        }
+      }
+      simulation.draggedNode = null;
+    });
+
+    // Load Data
+    async function refreshGraph() {
+      try {
+        let bookmarks = [];
+        try {
+          const raw = localStorage.getItem("aetherum_bookmarks");
+          if (raw) bookmarks = JSON.parse(raw);
+        } catch {}
+
+        if (window.hyperOffice && window.hyperOffice.nibelungen) {
+          graphData = await window.hyperOffice.nibelungen.getGraph({ bookmarks });
+          notesCache = await window.hyperOffice.nibelungen.listNotes();
+        }
+        initPhysics(graphData);
+        renderSidebarNotes();
+      } catch (e) {
+        console.error("Refresh error:", e);
+      }
+    }
+
+    function renderSidebarNotes() {
+      const q = (searchNotes.value || "").toLowerCase();
+      notesContainer.innerHTML = "";
+      const filtered = notesCache.filter(n => n.title.toLowerCase().includes(q) || (n.tags || []).some(t => t.toLowerCase().includes(q)));
+
+      filtered.forEach(n => {
+        const el = document.createElement("div");
+        el.className = "note-item" + (n.id === currentNoteId ? " active" : "");
+        el.onclick = () => selectNote(n.id);
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "note-item-title";
+        titleEl.textContent = n.title;
+
+        const tagsEl = document.createElement("div");
+        tagsEl.className = "note-item-tags";
+        (n.tags || []).forEach(t => {
+          const pill = document.createElement("span");
+          pill.className = "tag-pill";
+          pill.textContent = "#" + t;
+          tagsEl.appendChild(pill);
+        });
+
+        el.appendChild(titleEl);
+        el.appendChild(tagsEl);
+        notesContainer.appendChild(el);
+      });
+    }
+
+    function selectNote(id) {
+      currentNoteId = id;
+      const note = notesCache.find(n => n.id === id);
+      if (!note) return;
+
+      noteTitle.value = note.title || "";
+      noteTags.value = (note.tags || []).join(", ");
+      noteContent.value = note.content || "";
+      saveStatus.textContent = "Loaded note: " + note.title;
+      renderSidebarNotes();
+    }
+
+    // Auto-Save
+    let saveTimeout = null;
+    function scheduleSave() {
+      if (!currentNoteId) return;
+      saveStatus.textContent = "Saving...";
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        const title = noteTitle.value.trim() || "Untitled Note";
+        const tags = noteTags.value.split(",").map(t => t.trim()).filter(Boolean);
+        const content = noteContent.value;
+
+        if (window.hyperOffice && window.hyperOffice.nibelungen) {
+          await window.hyperOffice.nibelungen.saveNote({
+            id: currentNoteId,
+            title,
+            tags,
+            content
+          });
+          saveStatus.textContent = "Saved to vault (" + new Date().toLocaleTimeString() + ")";
+          refreshGraph();
+        }
+      }, 700);
+    }
+
+    noteTitle.addEventListener("input", scheduleSave);
+    noteTags.addEventListener("input", scheduleSave);
+    noteContent.addEventListener("input", scheduleSave);
+    searchNotes.addEventListener("input", renderSidebarNotes);
+
+    btnNewNote.addEventListener("click", () => {
+      const id = "note-" + Date.now();
+      const newNote = {
+        id,
+        title: "New Note",
+        tags: ["idea"],
+        content: "# New Note\n\nStart typing thoughts, or link topics using [[Topic Name]]."
+      };
+      notesCache.unshift(newNote);
+      selectNote(id);
+      scheduleSave();
+    });
+
+    btnDeleteNote.addEventListener("click", async () => {
+      if (!currentNoteId) return;
+      if (confirm("Delete this note from Nibelungen vault?")) {
+        if (window.hyperOffice && window.hyperOffice.nibelungen) {
+          await window.hyperOffice.nibelungen.deleteNote(currentNoteId);
+          currentNoteId = null;
+          noteTitle.value = "";
+          noteTags.value = "";
+          noteContent.value = "";
+          refreshGraph();
+        }
+      }
+    });
+
+    btnSync.addEventListener("click", refreshGraph);
+
+    // Initial load
+    refreshGraph().then(() => {
+      if (notesCache.length > 0) selectNote(notesCache[0].id);
+    });
+    renderGraph();
+  </script>
+</body>
+</html>

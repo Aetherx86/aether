@@ -181,9 +181,10 @@
       <div class="status-pill"><span class="status-dot"></span><span>Active</span></div>
     </div>
     <div class="quick-bar">
+      <button class="pill-btn" onclick="openRatatoskr()">🐿️ Ratatoskr API/DB</button>
+      <button class="pill-btn" onclick="openMimisbrunnr()">🧠 Mímisbrunnr AI</button>
       <button class="pill-btn" onclick="sendCmd('aether --help')">aether --help</button>
       <button class="pill-btn" onclick="sendCmd('git status')">git status</button>
-      <button class="pill-btn" onclick="sendCmd('ls -la')">ls -la</button>
       <button class="pill-btn" onclick="sendCmd('curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip')">tor check</button>
       <button class="pill-btn" onclick="clearTerm()">clear</button>
     </div>
@@ -263,6 +264,28 @@
 
     function clearTerm() {
       outputEl.innerHTML = "";
+    }
+
+    function openRatatoskr() {
+      if (window.hyperOffice && window.hyperOffice.browser && window.hyperOffice.browser.openTab) {
+        window.hyperOffice.browser.openTab("aetherum://ratatoskr");
+      } else {
+        sendCmd("echo 'Ratatoskr API & Database inspector is available at aetherum://ratatoskr'");
+      }
+    }
+
+    function openMimisbrunnr() {
+      const lastOutput = outputEl.innerText.slice(-600);
+      sendCmd("echo '🧠 Mímisbrunnr analyzing terminal context...'");
+      if (window.hyperOffice && window.hyperOffice.mimisbrunnr) {
+        window.hyperOffice.mimisbrunnr.chat({
+          prompt: "Diagnose and optimize terminal shell command:\n" + (lastOutput || cmdInput.value || "zsh command check"),
+          task: "script"
+        }).then(res => {
+          outputEl.innerHTML += `<div style="padding:10px;margin:8px 0;background:#1e1b4b;border-left:3px solid #8b5cf6;border-radius:4px;color:#e0e7ff;font-family:sans-serif;font-size:12px;white-space:pre-wrap;">${res.response}</div>`;
+          termBody.scrollTop = termBody.scrollHeight;
+        });
+      }
     }
 
     // Connect with window.hyperOffice.terminal

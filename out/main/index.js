@@ -320770,6 +320770,45 @@ function createTerminalView() {
   void view.webContents.loadURL(require$$1$2.pathToFileURL(termPath).toString());
   return view;
 }
+function createNibelungenView() {
+  const view = new require$$1$3.WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  const nibPath = path.resolve(__dirname, "../renderer/nibelungen.html");
+  void view.webContents.loadURL(require$$1$2.pathToFileURL(nibPath).toString());
+  return view;
+}
+function createRatatoskrView() {
+  const view = new require$$1$3.WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  const ratPath = path.resolve(__dirname, "../renderer/ratatoskr.html");
+  void view.webContents.loadURL(require$$1$2.pathToFileURL(ratPath).toString());
+  return view;
+}
+function createFafnirView() {
+  const view = new require$$1$3.WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  const fafPath = path.resolve(__dirname, "../renderer/fafnir.html");
+  void view.webContents.loadURL(require$$1$2.pathToFileURL(fafPath).toString());
+  return view;
+}
 const MINDMAP_CHANNELS = {
   // ---- open and save (implemented) ----
   /** invoke → `string | null`: the path queued for this view, null for a new map */
@@ -324972,6 +325011,57 @@ class TabManager {
       kind: "browser",
       view,
       title: "Yggdrasil",
+      filePath: void 0
+    });
+    this.activateTab(id2);
+    return id2;
+  }
+  openNibelungenTab() {
+    const view = createNibelungenView();
+    const id2 = `t${this.nextId++}`;
+    this.shellWindow.contentView.addChildView(view);
+    view.setVisible(false);
+    this.trackHtmlFullScreen(view);
+    this.trackPaneFocus(view);
+    this.tabs.push({
+      id: id2,
+      kind: "browser",
+      view,
+      title: "Nibelungen",
+      filePath: void 0
+    });
+    this.activateTab(id2);
+    return id2;
+  }
+  openRatatoskrTab() {
+    const view = createRatatoskrView();
+    const id2 = `t${this.nextId++}`;
+    this.shellWindow.contentView.addChildView(view);
+    view.setVisible(false);
+    this.trackHtmlFullScreen(view);
+    this.trackPaneFocus(view);
+    this.tabs.push({
+      id: id2,
+      kind: "browser",
+      view,
+      title: "Ratatoskr",
+      filePath: void 0
+    });
+    this.activateTab(id2);
+    return id2;
+  }
+  openFafnirTab() {
+    const view = createFafnirView();
+    const id2 = `t${this.nextId++}`;
+    this.shellWindow.contentView.addChildView(view);
+    view.setVisible(false);
+    this.trackHtmlFullScreen(view);
+    this.trackPaneFocus(view);
+    this.tabs.push({
+      id: id2,
+      kind: "browser",
+      view,
+      title: "Fafnir Vault",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -345674,6 +345764,21 @@ function registerTabsIpc() {
         click: () => tabManager?.openTerminalTab?.()
       },
       {
+        label: "Open Nibelungen Graph",
+        icon: menuIcons().mindmap,
+        click: () => tabManager?.openNibelungenTab?.()
+      },
+      {
+        label: "Open Ratatoskr API & DB",
+        icon: menuIcons().docx,
+        click: () => tabManager?.openRatatoskrTab?.()
+      },
+      {
+        label: "Open Fafnir Vault",
+        icon: menuIcons().xlsx,
+        click: () => tabManager?.openFafnirTab?.()
+      },
+      {
         label: "New Aetherum Browser Tab (Tor / Web / Proton)",
         icon: menuIcons().html,
         click: () => newBrowserTab()
@@ -345729,6 +345834,21 @@ function buildHomeMenu() {
           label: "Open Yggdrasil",
           accelerator: "CmdOrCtrl+T",
           click: () => tabManager?.openTerminalTab?.()
+        },
+        {
+          label: "Open Nibelungen Graph",
+          accelerator: "CmdOrCtrl+Shift+N",
+          click: () => tabManager?.openNibelungenTab?.()
+        },
+        {
+          label: "Open Ratatoskr API & DB",
+          accelerator: "CmdOrCtrl+Shift+R",
+          click: () => tabManager?.openRatatoskrTab?.()
+        },
+        {
+          label: "Open Fafnir Vault",
+          accelerator: "CmdOrCtrl+Shift+F",
+          click: () => tabManager?.openFafnirTab?.()
         },
         { type: "separator" },
         {
@@ -346813,10 +346933,27 @@ require$$1$3.app.whenReady().then(async () => {
   try {
     require("./extensions/index.js").installHyperOfficeExtensions();
     require$$1$3.ipcMain.handle("hyper:browser:open-tab", (_event, url) => {
-      tabManager?.openBrowserTab(url || "aetherum://welcome");
+      if (url === "aetherum://nibelungen") {
+        tabManager?.openNibelungenTab?.();
+      } else if (url === "aetherum://ratatoskr") {
+        tabManager?.openRatatoskrTab?.();
+      } else if (url === "aetherum://fafnir") {
+        tabManager?.openFafnirTab?.();
+      } else {
+        tabManager?.openBrowserTab(url || "aetherum://welcome");
+      }
     });
     require$$1$3.ipcMain.handle("hyper:term:open-tab", () => {
       tabManager?.openTerminalTab?.();
+    });
+    require$$1$3.ipcMain.handle("hyper:nibelungen:open-tab", () => {
+      tabManager?.openNibelungenTab?.();
+    });
+    require$$1$3.ipcMain.handle("hyper:ratatoskr:open-tab", () => {
+      tabManager?.openRatatoskrTab?.();
+    });
+    require$$1$3.ipcMain.handle("hyper:fafnir:open-tab", () => {
+      tabManager?.openFafnirTab?.();
     });
   } catch (extErr) {
     console.error("[HyperOffice Extension Error]", extErr);

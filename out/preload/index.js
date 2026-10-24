@@ -2169,6 +2169,31 @@ const hyperOfficeApi = {
   },
   projects: {
     list: () => electron.ipcRenderer.invoke("hyper:projects:list")
+  },
+  sleipnir: {
+    getStatus: () => electron.ipcRenderer.invoke("hyper:sleipnir:status"),
+    toggle: () => electron.ipcRenderer.invoke("hyper:sleipnir:toggle"),
+    set: (enable) => electron.ipcRenderer.invoke("hyper:sleipnir:set", enable)
+  },
+  nibelungen: {
+    getGraph: (params) => electron.ipcRenderer.invoke("hyper:nibelungen:get-graph", params),
+    listNotes: () => electron.ipcRenderer.invoke("hyper:nibelungen:list-notes"),
+    saveNote: (note) => electron.ipcRenderer.invoke("hyper:nibelungen:save-note", note),
+    deleteNote: (id) => electron.ipcRenderer.invoke("hyper:nibelungen:delete-note", id)
+  },
+  fafnir: {
+    list: () => electron.ipcRenderer.invoke("hyper:fafnir:list"),
+    encrypt: (params) => electron.ipcRenderer.invoke("hyper:fafnir:encrypt", params),
+    decrypt: (params) => electron.ipcRenderer.invoke("hyper:fafnir:decrypt", params)
+  },
+  mimisbrunnr: {
+    status: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:status"),
+    chat: (payload) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:chat", payload)
+  },
+  ratatoskr: {
+    request: (payload) => electron.ipcRenderer.invoke("hyper:ratatoskr:request", payload),
+    querySqlite: (params) => electron.ipcRenderer.invoke("hyper:ratatoskr:query-sqlite", params),
+    listTables: (dbPath) => electron.ipcRenderer.invoke("hyper:ratatoskr:list-tables", dbPath)
   }
 };
 electron.contextBridge.exposeInMainWorld("hyperOffice", hyperOfficeApi);

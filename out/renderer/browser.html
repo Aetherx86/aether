@@ -127,6 +127,33 @@
       box-shadow: none;
     }
 
+    .sleipnir-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #c084fc;
+      background: rgba(192, 132, 252, 0.18);
+      color: #e9d5ff;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .sleipnir-toggle.off {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+    .sleipnir-icon {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      border-radius: 3px;
+    }
+
     .url-box {
       flex: 1;
       display: flex;
@@ -310,6 +337,12 @@
 
     <button class="btn primary" id="btnGo">Go</button>
 
+    <!-- Sleipnir VPN / SNI Packet Splitting Toggle -->
+    <div class="sleipnir-toggle" id="sleipnirToggle" title="Sleipnir HTTPS SNI Packet Splitting (WinDivert/Unicorn HTTPS Anti-DPI engine on Port 8087)">
+      <img src="./assets/sleipnir-logo.png" class="sleipnir-icon" alt="">
+      <span id="sleipnirLabel">Sleipnir: ON</span>
+    </div>
+
     <!-- Tor Mode Toggle -->
     <div class="tor-toggle" id="torToggle" title="Toggle Tor SOCKS5 Proxy Routing (Port 9050)">
       <span class="tor-indicator"></span>
@@ -327,6 +360,10 @@
     <span class="quick-link highlight" data-url="https://duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion">🧅 DuckDuckGo (.onion)</span>
     <span class="quick-link" data-url="https://check.torproject.org">🛡️ Tor Check</span>
     <span class="quick-link" data-url="https://duckduckgo.com">🔍 DuckDuckGo</span>
+    <span style="color:rgba(255,255,255,0.15);margin:0 4px;">|</span>
+    <span class="quick-link highlight" data-url="aetherum://nibelungen">🗝️ Nibelungen</span>
+    <span class="quick-link" data-url="aetherum://ratatoskr">🐿️ Ratatoskr</span>
+    <span class="quick-link" data-url="aetherum://fafnir">🐉 Fafnir Vault</span>
     <span style="color:rgba(255,255,255,0.15);margin:0 4px;">|</span>
     <span class="quick-link" data-url="aetherum://welcome">🏠 Welcome</span>
     <span class="quick-link" data-url="aetherum://bookmarks">⭐ Bookmarks</span>
@@ -384,6 +421,42 @@
     const progressBar = document.getElementById("progressBar");
 
     let torEnabled = true;
+
+    const sleipnirToggle = document.getElementById("sleipnirToggle");
+    const sleipnirLabel = document.getElementById("sleipnirLabel");
+    let sleipnirEnabled = true;
+
+    async function initSleipnirStatus() {
+      if (window.hyperOffice && window.hyperOffice.sleipnir) {
+        try {
+          const status = await window.hyperOffice.sleipnir.getStatus();
+          updateSleipnirUi(status.active);
+        } catch (e) {}
+      }
+    }
+
+    function updateSleipnirUi(active) {
+      sleipnirEnabled = active;
+      if (active) {
+        sleipnirToggle.classList.remove("off");
+        sleipnirLabel.textContent = "Sleipnir: ON";
+      } else {
+        sleipnirToggle.classList.add("off");
+        sleipnirLabel.textContent = "Sleipnir: OFF";
+      }
+    }
+
+    sleipnirToggle.addEventListener("click", async () => {
+      if (window.hyperOffice && window.hyperOffice.sleipnir) {
+        const res = await window.hyperOffice.sleipnir.toggle();
+        updateSleipnirUi(res.active);
+        if (localFrame.style.display !== "block") {
+          webview.reload();
+        }
+      }
+    });
+
+    initSleipnirStatus();
 
     // Tor Status Initialization
     async function initTorStatus() {

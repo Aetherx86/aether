@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ratatoskr — Visual API Client & DB Inspector</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-hover: #1e293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-light: rgba(255, 255, 255, 0.15);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --green: #10b981;
+      --red: #ef4444;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px;
+      background: #111827;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      color: #e0f2fe;
+    }
+    .brand-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--accent);
+      color: #7dd3fc;
+    }
+    .view-switcher {
+      display: flex;
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .tab-btn {
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: #1e293b;
+      color: #fff;
+    }
+
+    /* Content Area */
+    .view-content {
+      flex: 1 1 0%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* API Client Layout */
+    .api-view {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+    }
+    .request-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 18px;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border);
+    }
+    .method-select {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      outline: none;
+      cursor: pointer;
+    }
+    .url-input {
+      flex: 1;
+      background: #111827;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-family: ui-monospace, Menlo, monospace;
+      border-radius: var(--radius);
+      outline: none;
+    }
+    .url-input:focus { border-color: var(--accent); }
+    .btn-send {
+      background: #0284c7;
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 20px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-send:hover { background: #0369a1; }
+
+    .api-split {
+      flex: 1 1 0%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 0;
+    }
+    .pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-height: 0;
+      overflow: hidden;
+    }
+    .pane-header {
+      padding: 8px 14px;
+      background: #111827;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pane-body {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background: #090d16;
+    }
+    .code-textarea {
+      flex: 1;
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f1f5f9;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+    }
+
+    /* DB View Layout */
+    .db-view {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+    }
+    .db-bar {
+      display: flex;
+      gap: 10px;
+      padding: 12px 18px;
+      background: #0d1322;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+    }
+    .db-split {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+    .db-sidebar {
+      width: 240px;
+      background: #111827;
+      border-right: 1px solid var(--border);
+      padding: 12px;
+      overflow-y: auto;
+    }
+    .db-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .query-box {
+      height: 130px;
+      padding: 12px 14px;
+      background: #090d16;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .table-container {
+      flex: 1;
+      overflow: auto;
+      padding: 14px;
+      background: #0d1322;
+    }
+    table.data-grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: ui-monospace, Menlo, monospace;
+    }
+    table.data-grid th {
+      background: #1e293b;
+      color: #94a3b8;
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: left;
+      position: sticky;
+      top: 0;
+    }
+    table.data-grid td {
+      padding: 8px 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      color: #f8fafc;
+    }
+    table.data-grid tr:hover { background: rgba(255,255,255,0.04); }
+
+    .status-badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .status-badge.ok { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid #10b981; }
+    .status-badge.err { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="brand">
+      <span>🐿️ Ratatoskr</span>
+      <span class="brand-badge">Visual API Client & DB Inspector</span>
+    </div>
+    <div class="view-switcher">
+      <button class="tab-btn active" id="btnTabApi" onclick="switchView('api')">🌐 REST API Client</button>
+      <button class="tab-btn" id="btnTabDb" onclick="switchView('db')">🗄️ Database Viewer</button>
+    </div>
+  </div>
+
+  <div class="view-content">
+    <!-- REST API View -->
+    <div class="api-view" id="viewApi">
+      <div class="request-bar">
+        <select class="method-select" id="apiMethod">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+          <option value="PATCH">PATCH</option>
+          <option value="HEAD">HEAD</option>
+        </select>
+        <input type="text" class="url-input" id="apiUrl" value="https://check.torproject.org/api/ip" placeholder="Enter request URL...">
+        <button class="btn-send" id="btnSend">Send ⚡</button>
+      </div>
+
+      <div class="api-split">
+        <!-- Request Body / Headers -->
+        <div class="pane">
+          <div class="pane-header">
+            <span>REQUEST BODY & HEADERS (JSON)</span>
+            <span style="font-size:11px;">Presets: <a href="javascript:void(0)" onclick="loadTorCheck()" style="color:#38bdf8;">Tor Check</a> | <a href="javascript:void(0)" onclick="loadDoH()" style="color:#38bdf8;">DoH Cloudflare</a></span>
+          </div>
+          <div class="pane-body">
+            <textarea id="apiBody" class="code-textarea" placeholder='{\n  "Content-Type": "application/json"\n}'></textarea>
+          </div>
+        </div>
+
+        <!-- Response Panel -->
+        <div class="pane">
+          <div class="pane-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span>RESPONSE</span>
+              <span id="respStatus" class="status-badge ok" style="display:none;">200 OK</span>
+              <span id="respTime" style="font-size:11px;color:var(--text-muted);"></span>
+            </div>
+          </div>
+          <div class="pane-body">
+            <textarea id="respBody" class="code-textarea" readonly placeholder="Response will appear here..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Database View -->
+    <div class="db-view" id="viewDb">
+      <div class="db-bar">
+        <span style="font-size:13px;font-weight:600;">SQLite Path:</span>
+        <input type="text" id="dbPath" class="url-input" style="flex:1;" value="/Users/sushikim/.aether/nibelungen.db" placeholder="Path to .sqlite or .db file...">
+        <button class="btn-send" id="btnConnectDb">Inspect Tables</button>
+      </div>
+      <div class="db-split">
+        <div class="db-sidebar">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">TABLES & VIEWS</div>
+          <div id="tableList" style="font-size:13px;display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+        <div class="db-main">
+          <div class="query-box">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:11px;font-weight:600;color:var(--text-muted);">SQL QUERY RUNNER</span>
+              <button class="btn-send" id="btnRunQuery" style="padding:4px 12px;font-size:12px;">Run Query ▶</button>
+            </div>
+            <textarea id="sqlQuery" class="code-textarea" style="background:#000;border-radius:4px;padding:6px;" placeholder="SELECT * FROM ... LIMIT 50;"></textarea>
+          </div>
+          <div class="table-container" id="queryResults">
+            <div style="color:var(--text-muted);font-size:13px;padding:20px;text-align:center;">
+              Execute a SQL query or pick a table to inspect live data records.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchView(tab) {
+      document.getElementById("btnTabApi").className = "tab-btn" + (tab === "api" ? " active" : "");
+      document.getElementById("btnTabDb").className = "tab-btn" + (tab === "db" ? " active" : "");
+      document.getElementById("viewApi").style.display = tab === "api" ? "flex" : "none";
+      document.getElementById("viewDb").style.display = tab === "db" ? "flex" : "none";
+    }
+
+    // Presets
+    function loadTorCheck() {
+      document.getElementById("apiMethod").value = "GET";
+      document.getElementById("apiUrl").value = "https://check.torproject.org/api/ip";
+      document.getElementById("apiBody").value = "";
+    }
+    function loadDoH() {
+      document.getElementById("apiMethod").value = "GET";
+      document.getElementById("apiUrl").value = "https://1.1.1.1/dns-query?name=proton.me&type=A";
+      document.getElementById("apiBody").value = JSON.stringify({ headers: { "Accept": "application/dns-json" } }, null, 2);
+    }
+
+    // Send API Request
+    document.getElementById("btnSend").addEventListener("click", async () => {
+      const method = document.getElementById("apiMethod").value;
+      const url = document.getElementById("apiUrl").value.trim();
+      const rawBody = document.getElementById("apiBody").value.trim();
+      const respBody = document.getElementById("respBody");
+      const respStatus = document.getElementById("respStatus");
+      const respTime = document.getElementById("respTime");
+
+      respBody.value = "Sending request...";
+      respStatus.style.display = "none";
+      respTime.textContent = "";
+
+      let parsedBody = null;
+      let headers = {};
+      if (rawBody) {
+        try {
+          const parsed = JSON.parse(rawBody);
+          if (parsed.headers) {
+            headers = parsed.headers;
+            delete parsed.headers;
+          }
+          parsedBody = Object.keys(parsed).length > 0 ? parsed : null;
+        } catch {
+          parsedBody = rawBody;
+        }
+      }
+
+      if (window.hyperOffice && window.hyperOffice.ratatoskr) {
+        const res = await window.hyperOffice.ratatoskr.request({
+          method,
+          url,
+          headers,
+          body: parsedBody
+        });
+
+        respStatus.style.display = "inline";
+        respStatus.className = "status-badge " + (res.ok ? "ok" : "err");
+        respStatus.textContent = `${res.status} ${res.statusText || ""}`;
+        respTime.textContent = `(${res.duration}ms)`;
+
+        if (res.data) {
+          respBody.value = typeof res.data === "object" ? JSON.stringify(res.data, null, 2) : res.data;
+        } else if (res.error) {
+          respBody.value = "Error: " + res.error;
+        }
+      } else {
+        respBody.value = "Ratatoskr backend not attached.";
+      }
+    });
+
+    // Database Queries
+    document.getElementById("btnConnectDb").addEventListener("click", async () => {
+      const dbPath = document.getElementById("dbPath").value.trim();
+      const listEl = document.getElementById("tableList");
+      listEl.innerHTML = "Inspecting...";
+
+      if (window.hyperOffice && window.hyperOffice.ratatoskr) {
+        const res = await window.hyperOffice.ratatoskr.listTables(dbPath);
+        listEl.innerHTML = "";
+        if (res.ok && res.rows && res.rows.length > 0) {
+          res.rows.forEach(t => {
+            const btn = document.createElement("button");
+            btn.className = "tab-btn";
+            btn.style.textAlign = "left";
+            btn.style.color = "#38bdf8";
+            btn.textContent = "📄 " + t.name;
+            btn.onclick = () => {
+              document.getElementById("sqlQuery").value = `SELECT * FROM "${t.name}" LIMIT 50;`;
+              document.getElementById("btnRunQuery").click();
+            };
+            listEl.appendChild(btn);
+          });
+        } else {
+          listEl.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">No tables found or invalid DB.</span>';
+        }
+      }
+    });
+
+    document.getElementById("btnRunQuery").addEventListener("click", async () => {
+      const dbPath = document.getElementById("dbPath").value.trim();
+      const sql = document.getElementById("sqlQuery").value.trim();
+      const outEl = document.getElementById("queryResults");
+      outEl.innerHTML = "Executing query...";
+
+      if (window.hyperOffice && window.hyperOffice.ratatoskr) {
+        const res = await window.hyperOffice.ratatoskr.querySqlite({ dbPath, sql });
+        if (res.ok && res.rows && res.rows.length > 0) {
+          const keys = Object.keys(res.rows[0]);
+          let html = '<table class="data-grid"><thead><tr>';
+          keys.forEach(k => html += `<th>${k}</th>`);
+          html += '</tr></thead><tbody>';
+          res.rows.forEach(r => {
+            html += '<tr>';
+            keys.forEach(k => html += `<td>${r[k] !== undefined ? r[k] : ""}</td>`);
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+          outEl.innerHTML = html;
+        } else if (res.ok) {
+          outEl.innerHTML = '<div style="color:#10b981;padding:20px;">Query executed successfully (0 rows returned).</div>';
+        } else {
+          outEl.innerHTML = `<div style="color:#ef4444;padding:20px;">SQL Error: ${res.error}</div>`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

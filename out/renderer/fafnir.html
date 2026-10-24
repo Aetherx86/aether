@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fafnir Vault — Zero-Knowledge Encrypted Drive</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface-hover: #1e293b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-light: rgba(255, 255, 255, 0.15);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #eab308;
+      --accent-hover: #ca8a04;
+      --green: #10b981;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-y: auto;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: #111827;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      color: #fef08a;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(234, 179, 8, 0.15);
+      border: 1px solid var(--accent);
+      color: #fef08a;
+    }
+
+    .container {
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-text {
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 9px 14px;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+    }
+    .input-text:focus { border-color: var(--accent); }
+
+    .btn {
+      background: #ca8a04;
+      border: 1px solid #eab308;
+      color: #000;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: #eab308; }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .file-row:hover { background: rgba(255,255,255,0.03); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <span>🐉 Fafnir Vault</span>
+      <span class="badge">Zero-Knowledge AES-256-GCM Encrypted Storage</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);">
+      Proton Drive & Microsoft 365 Cloud Encrypted Bridge
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Encrypt File Card -->
+    <div class="card">
+      <div class="card-title">🔒 Encrypt Document into Vault</div>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px;">
+        Encrypt local files using zero-knowledge client-side AES-256-GCM authenticated encryption. Neither Proton nor Microsoft 365 can access unencrypted content.
+      </p>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <input type="text" id="encSrcPath" class="input-text" placeholder="Source file path (e.g. /Users/sushikim/Desktop/Financial_Report.docx)..." style="flex:2;">
+        <input type="password" id="encPass" class="input-text" placeholder="Master Vault Passphrase..." style="flex:1;">
+        <button class="btn" id="btnEncrypt">Encrypt & Store</button>
+      </div>
+      <div id="encStatus" style="font-size:12px;color:#10b981;display:none;"></div>
+    </div>
+
+    <!-- Vault Files List -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="card-title" style="margin:0;">📦 Vault Containers (~/.aether/fafnir_vault/)</div>
+        <button class="btn" id="btnRefresh" style="background:#1e293b;border-color:var(--border-light);color:#fff;">Refresh</button>
+      </div>
+      <div id="vaultList"></div>
+    </div>
+  </div>
+
+  <script>
+    async function loadVault() {
+      const listEl = document.getElementById("vaultList");
+      listEl.innerHTML = '<div style="color:var(--text-muted);padding:14px;">Loading vault...</div>';
+
+      if (window.hyperOffice && window.hyperOffice.fafnir) {
+        const files = await window.hyperOffice.fafnir.list();
+        listEl.innerHTML = "";
+        if (files.length === 0) {
+          listEl.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center;">No encrypted containers in vault.</div>';
+          return;
+        }
+
+        files.forEach(f => {
+          const row = document.createElement("div");
+          row.className = "file-row";
+
+          const left = document.createElement("div");
+          left.innerHTML = `<strong style="color:#fff;">🔒 ${f.filename}</strong> <span style="font-size:11px;color:#94a3b8;margin-left:8px;">(${(f.size / 1024).toFixed(1)} KB • ${f.cipher})</span>`;
+
+          const right = document.createElement("div");
+          const decBtn = document.createElement("button");
+          decBtn.className = "btn";
+          decBtn.style.padding = "4px 10px";
+          decBtn.style.fontSize = "12px";
+          decBtn.textContent = "Decrypt to Desktop";
+          decBtn.onclick = async () => {
+            const pass = prompt(`Enter passphrase to decrypt ${f.filename}:`);
+            if (!pass) return;
+            const res = await window.hyperOffice.fafnir.decrypt({ vaultFileName: f.id, passphrase: pass });
+            if (res.ok) alert(`Decrypted successfully to:\n${res.decryptedPath}`);
+            else alert("Decryption failed: " + res.error);
+          };
+
+          right.appendChild(decBtn);
+          row.appendChild(left);
+          row.appendChild(right);
+          listEl.appendChild(row);
+        });
+      }
+    }
+
+    document.getElementById("btnEncrypt").addEventListener("click", async () => {
+      const srcPath = document.getElementById("encSrcPath").value.trim();
+      const passphrase = document.getElementById("encPass").value;
+      const statusEl = document.getElementById("encStatus");
+
+      if (!srcPath || !passphrase) return alert("Please specify both file path and master passphrase.");
+      statusEl.style.display = "block";
+      statusEl.textContent = "Encrypting with AES-256-GCM...";
+
+      if (window.hyperOffice && window.hyperOffice.fafnir) {
+        const res = await window.hyperOffice.fafnir.encrypt({ srcPath, passphrase });
+        if (res.ok) {
+          statusEl.textContent = `File encrypted successfully into vault: ${res.vaultPath}`;
+          document.getElementById("encSrcPath").value = "";
+          document.getElementById("encPass").value = "";
+          loadVault();
+        } else {
+          statusEl.style.color = "#ef4444";
+          statusEl.textContent = "Encryption failed: " + res.error;
+        }
+      }
+    });
+
+    document.getElementById("btnRefresh").addEventListener("click", loadVault);
+    loadVault();
+  </script>
+</body>
+</html>

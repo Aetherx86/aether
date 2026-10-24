@@ -313,6 +313,27 @@ function getWelcomePage() {
             <span>Standard Web Search</span>
           </div>
         </a>
+        <a class="nav-item" onclick="parentNavigate('aetherum://nibelungen')">
+          <span class="nav-icon">🗝️</span>
+          <div class="nav-text">
+            <strong>Nibelungen Graph</strong>
+            <span>Local-First Personal Wiki</span>
+          </div>
+        </a>
+        <a class="nav-item" onclick="parentNavigate('aetherum://ratatoskr')">
+          <span class="nav-icon">🐿️</span>
+          <div class="nav-text">
+            <strong>Ratatoskr API/DB</strong>
+            <span>Visual API Client & DB GUI</span>
+          </div>
+        </a>
+        <a class="nav-item" onclick="parentNavigate('aetherum://fafnir')">
+          <span class="nav-icon">🐉</span>
+          <div class="nav-text">
+            <strong>Fafnir Vault</strong>
+            <span>Zero-Knowledge Encrypted Drive</span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -401,6 +422,11 @@ function getAboutPage() {
         <tr><td class="label">Product Name</td><td class="value">Aether</td></tr>
         <tr><td class="label">Browser Component</td><td class="value">Aetherum Browser</td></tr>
         <tr><td class="label">Terminal Component</td><td class="value">Yggdrasil</td></tr>
+        <tr><td class="label">Knowledge Graph</td><td class="value">Nibelungen (Local-First Wiki)</td></tr>
+        <tr><td class="label">Encrypted Drive</td><td class="value">Fafnir Vault (AES-256-GCM)</td></tr>
+        <tr><td class="label">Anti-DPI Shield</td><td class="value">Sleipnir (SNI Packet Splitter)</td></tr>
+        <tr><td class="label">API & DB Inspector</td><td class="value">Ratatoskr</td></tr>
+        <tr><td class="label">Local AI Engine</td><td class="value">Mímisbrunnr (Airgapped Neural Assistant)</td></tr>
         <tr><td class="label">Platform Version</td><td class="value">0.0.1</td></tr>
         <tr><td class="label">Author</td><td class="value">Jeffrey Kim (jk9576@hanyang.ac.kr)</td></tr>
         <tr><td class="label">GitLab Repository</td><td class="value"><a href="https://gitlab.com/jk9576/aether" target="_blank" style="color:#818cf8;">https://gitlab.com/jk9576/aether</a></td></tr>
@@ -824,6 +850,24 @@ function getAetherumPage(pageName = "welcome") {
       return getSettingsPage();
     case "version":
       return getVersionPage();
+    case "nibelungen":
+      try {
+        return fs.readFileSync(path.resolve(__dirname, "../../renderer/nibelungen.html"), "utf8");
+      } catch (e) {
+        return `<p style="padding:2rem;color:red;">Error loading Nibelungen: ${e.message}</p>`;
+      }
+    case "ratatoskr":
+      try {
+        return fs.readFileSync(path.resolve(__dirname, "../../renderer/ratatoskr.html"), "utf8");
+      } catch (e) {
+        return `<p style="padding:2rem;color:red;">Error loading Ratatoskr: ${e.message}</p>`;
+      }
+    case "fafnir":
+      try {
+        return fs.readFileSync(path.resolve(__dirname, "../../renderer/fafnir.html"), "utf8");
+      } catch (e) {
+        return `<p style="padding:2rem;color:red;">Error loading Fafnir Vault: ${e.message}</p>`;
+      }
     default:
       return getAboutPage();
   }
