@@ -2167,9 +2167,6 @@ const hyperOfficeApi = {
     commit: (cwd, message, files) => electron.ipcRenderer.invoke("hyper:git:commit", { cwd, message, files }),
     officeDiff: (cwd, filePath, commit) => electron.ipcRenderer.invoke("hyper:git:office-diff", { cwd, filePath, commit })
   },
-  terminal: {
-    openTab: () => electron.ipcRenderer.invoke("hyper:term:open-tab")
-  },
   projects: {
     list: () => electron.ipcRenderer.invoke("hyper:projects:list")
   },

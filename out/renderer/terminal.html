@@ -296,24 +296,31 @@
       }
     }
 
-    // Connect with window.hyperOffice.terminal
-    if (window.hyperOffice && window.hyperOffice.terminal) {
-      window.hyperOffice.terminal.create({
+    function getTerminalApi() {
+      return window.hyperOffice?.terminal || (typeof window !== "undefined" && window.parent?.hyperOffice?.terminal);
+    }
+
+    // Connect with terminal backend
+    const termApi = getTerminalApi();
+    if (termApi && termApi.create) {
+      termApi.create({
         id: sessionId,
         cwd: "/Users/sushikim/Desktop/app_source"
       }).then(res => {
         sessionActive = true;
       }).catch(err => {
-        appendOutput(`[Session create notice: ${err.message}]\r\n`);
+        appendOutput(`[Session notice: ${err.message}]\r\n`);
       });
 
-      window.hyperOffice.terminal.onOutput((payload) => {
-        if (payload && payload.id === sessionId && payload.data) {
-          appendOutput(payload.data);
-        } else if (payload && payload.data && !payload.id) {
-          appendOutput(payload.data);
-        }
-      });
+      if (termApi.onOutput) {
+        termApi.onOutput((payload) => {
+          if (payload && payload.id === sessionId && payload.data) {
+            appendOutput(payload.data);
+          } else if (payload && payload.data && !payload.id) {
+            appendOutput(payload.data);
+          }
+        });
+      }
     }
 
     async function sendCmd(cmd) {
@@ -327,13 +334,16 @@
 
       appendCommandEcho(cmd);
 
-      if (window.hyperOffice && window.hyperOffice.terminal) {
-        if (sessionActive) {
-          window.hyperOffice.terminal.write(sessionId, cmd + "\n");
-        } else if (window.hyperOffice.terminal.exec) {
-          const res = await window.hyperOffice.terminal.exec(cmd, "/Users/sushikim/Desktop/app_source");
-          if (res.stdout) appendOutput(res.stdout);
-          if (res.stderr) appendOutput(res.stderr, true);
+      const api = getTerminalApi();
+      if (api) {
+        if (sessionActive && api.write) {
+          api.write(sessionId, cmd + "\n");
+        } else if (api.exec) {
+          const res = await api.exec(cmd, "/Users/sushikim/Desktop/app_source");
+          if (res && res.stdout) appendOutput(res.stdout);
+          if (res && res.stderr) appendOutput(res.stderr, true);
+        } else if (api.write) {
+          api.write(sessionId, cmd + "\n");
         }
       } else {
         appendOutput("[Terminal backend offline]\n", true);
@@ -365,8 +375,9 @@
           cmdInput.value = "";
         }
       } else if (e.key === "c" && e.ctrlKey) {
-        if (window.hyperOffice && window.hyperOffice.terminal) {
-          window.hyperOffice.terminal.write(sessionId, "\x03");
+        const api = getTerminalApi();
+        if (api && api.write) {
+          api.write(sessionId, "\x03");
         }
         appendOutput("^C\n");
       }
@@ -379,7 +390,14 @@
     document.getElementById("btnTermTor")?.addEventListener("click", () => sendCmd("curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip"));
     document.getElementById("btnTermClear")?.addEventListener("click", () => clearTerm());
 
-    document.addEventListener("click", () => cmdInput.focus());
+    termBody.addEventListener("click", () => cmdInput.focus());
+    document.querySelector(".term-prompt-row")?.addEventListener("click", () => cmdInput.focus());
+    window.addEventListener("keydown", (e) => {
+      if (document.activeElement !== cmdInput && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+        cmdInput.focus();
+      }
+    });
+    setTimeout(() => cmdInput.focus(), 100);
   </script>
 </body>
 </html>
