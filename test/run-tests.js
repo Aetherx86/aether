@@ -183,21 +183,22 @@ async function main() {
     const { startSleipnir, stopSleipnir, getSleipnirStatus } = require("../out/main/extensions/sleipnir");
     const http = require("node:http");
     const tls = require("node:tls");
+    const testPort = 8097;
 
     // Rapid toggle stress test: 5 cycles
     for (let i = 0; i < 5; i++) {
-      await startSleipnir(8087);
+      await startSleipnir(testPort);
       assert.strictEqual(getSleipnirStatus().active, true, `Cycle ${i}: Sleipnir must be active after start`);
       await stopSleipnir();
       assert.strictEqual(getSleipnirStatus().active, false, `Cycle ${i}: Sleipnir must be inactive after stop`);
     }
 
     // Start proxy for packet splitting verification
-    await startSleipnir(8087);
+    await startSleipnir(testPort);
     await new Promise((resolve, reject) => {
       const req = http.request({
         host: "127.0.0.1",
-        port: 8087,
+        port: testPort,
         method: "CONNECT",
         path: "example.com:443"
       });

@@ -25,7 +25,9 @@ build_stable:
     - if: '$CI_COMMIT_BRANCH == "main"'
   script:
     - echo "Packaging Aether Stable channel..."
-    - npx --yes @electron/asar pack out app.asar
+    - rm -rf /tmp/aether_pack && mkdir -p /tmp/aether_pack
+    - cp -r package.json out /tmp/aether_pack/
+    - npx --yes @electron/asar pack /tmp/aether_pack app.asar
     - echo "Stable build completed."
   artifacts:
     name: "Aether-Stable-v0.0.1"
@@ -40,7 +42,9 @@ build_beta:
     - if: '$CI_COMMIT_BRANCH == "beta"'
   script:
     - echo "Packaging Aether Beta channel..."
-    - npx --yes @electron/asar pack out app.asar
+    - rm -rf /tmp/aether_pack && mkdir -p /tmp/aether_pack
+    - cp -r package.json out /tmp/aether_pack/
+    - npx --yes @electron/asar pack /tmp/aether_pack app.asar
     - echo "Beta build completed."
   artifacts:
     name: "Aether-Beta-v0.0.1"
