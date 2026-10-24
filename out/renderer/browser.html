@@ -645,13 +645,10 @@
     window.addEventListener("click", () => closeDropdowns());
 
     window.openMimisbrunnrPrompt = function() {
-      const q = prompt("🧠 Mímisbrunnr Airgapped AI Assistant:\nEnter prompt or question for local intelligence analysis:");
-      if (!q) return;
-      if (window.hyperOffice && window.hyperOffice.mimisbrunnr) {
-        window.hyperOffice.mimisbrunnr.chat({ prompt: q, task: "general" }).then(res => {
-          aiDrawer.classList.add("open");
-          drawerContent.textContent = res.response;
-        });
+      if (window.hyperOffice && window.hyperOffice.mimisbrunnr && window.hyperOffice.mimisbrunnr.openTab) {
+        window.hyperOffice.mimisbrunnr.openTab();
+      } else {
+        window.navigateTo("aetherum://mimisbrunnr");
       }
     };
 

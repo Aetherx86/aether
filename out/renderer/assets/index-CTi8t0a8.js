@@ -20851,6 +20851,26 @@ function Home({
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-count nav-external", children: "Vault" })
             ]
           }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            className: "nav-item",
+            title: "Mímisbrunnr Airgapped Local AI",
+            onClick: () => {
+              window.hyperOffice?.mimisbrunnr?.openTab?.();
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": "true", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M12 2a8 8 0 0 0-8 8c0 3.37 2.1 6.25 5.09 7.41.4.15.68.53.68.96V20a2 2 0 0 0 2 2h.46a2 2 0 0 0 2-2v-1.63c0-.43.28-.81.68-.96A8 8 0 0 0 20 10a8 8 0 0 0-8-8z" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M9 10h.01" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M15 10h.01" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M10 14a3 3 0 0 0 4 0" })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-label", children: "Mímisbrunnr" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-count nav-external", children: "AI" })
+            ]
+          }
         )
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sidebar-divider" }),

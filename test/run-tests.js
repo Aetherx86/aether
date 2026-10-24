@@ -59,9 +59,11 @@ async function main() {
       "out/renderer/nibelungen.html",
       "out/renderer/ratatoskr.html",
       "out/renderer/fafnir.html",
+      "out/renderer/mimisbrunnr.html",
       "out/preload/index.js",
       "out/main/extensions/aetherum-browser.js",
       "out/main/extensions/aetherum-pages.js",
+      "out/main/extensions/mimisbrunnr.js",
       "out/main/extensions/terminal.js",
       "out/main/extensions/office-tools.js",
       "out/main/index.js",
@@ -131,7 +133,10 @@ async function main() {
 
   // 6. Mimisbrunnr Airgapped AI Tests
   await runAsyncTest("Mímisbrunnr: Offline Semantic & Rule Intelligence", async () => {
-    const { executeMimisbrunnrChat } = require("../out/main/extensions/mimisbrunnr");
+    const { executeMimisbrunnrChat, getHardwareInfo } = require("../out/main/extensions/mimisbrunnr");
+    const hw = getHardwareInfo();
+    assert.ok(hw && typeof hw.chip === "string", "Must return Apple Silicon hardware specs");
+
     const emailRes = await executeMimisbrunnrChat({
       prompt: "From: boss@corp.com\nSubject: Project Deadline\nPlease finalize the quarterly audit report by Friday.",
       task: "email"
@@ -145,6 +150,13 @@ async function main() {
     });
     assert.ok(scriptRes.ok, "Script debugger must succeed");
     assert.ok(scriptRes.response.includes("Mímisbrunnr Terminal Script Diagnostic"), "Must flag unsafe command patterns");
+
+    const aiRes = await executeMimisbrunnrChat({
+      prompt: "is it impossible to use apple intelligence for local ai?",
+      task: "general"
+    });
+    assert.ok(aiRes.ok, "Must answer Apple Intelligence architecture query");
+    assert.ok(aiRes.response.includes("Apple Intelligence"), "Must provide Apple Intelligence explanation");
   });
 
   // 7. Ratatoskr Visual API Client & DB Engine Tests
@@ -155,10 +167,10 @@ async function main() {
     assert.strictEqual(typeof ratatoskr.listSqliteTables, "function", "listSqliteTables must be exported");
   });
 
-  // 8. Internal Aetherum Pages Generator (All 9 pages)
-  runTest("Aetherum Pages: Full 9-Page Generation Suite", () => {
+  // 8. Internal Aetherum Pages Generator (All 10 pages)
+  runTest("Aetherum Pages: Full 10-Page Generation Suite", () => {
     const { getAetherumPage } = require("../out/main/extensions/aetherum-pages");
-    const pages = ["welcome", "about", "bookmarks", "history", "settings", "version", "nibelungen", "ratatoskr", "fafnir"];
+    const pages = ["welcome", "about", "bookmarks", "history", "settings", "version", "nibelungen", "ratatoskr", "fafnir", "mimisbrunnr"];
 
     for (const p of pages) {
       const html = getAetherumPage(p);

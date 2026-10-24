@@ -868,6 +868,12 @@ function getAetherumPage(pageName = "welcome") {
       } catch (e) {
         return `<p style="padding:2rem;color:red;">Error loading Fafnir Vault: ${e.message}</p>`;
       }
+    case "mimisbrunnr":
+      try {
+        return fs.readFileSync(path.resolve(__dirname, "../../renderer/mimisbrunnr.html"), "utf8");
+      } catch (e) {
+        return `<p style="padding:2rem;color:red;">Error loading Mímisbrunnr: ${e.message}</p>`;
+      }
     default:
       return getAboutPage();
   }

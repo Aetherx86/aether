@@ -320809,6 +320809,19 @@ function createFafnirView() {
   void view.webContents.loadURL(require$$1$2.pathToFileURL(fafPath).toString());
   return view;
 }
+function createMimisbrunnrView() {
+  const view = new require$$1$3.WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  const mimPath = path.resolve(__dirname, "../renderer/mimisbrunnr.html");
+  void view.webContents.loadURL(require$$1$2.pathToFileURL(mimPath).toString());
+  return view;
+}
 const MINDMAP_CHANNELS = {
   // ---- open and save (implemented) ----
   /** invoke → `string | null`: the path queued for this view, null for a new map */
@@ -325062,6 +325075,23 @@ class TabManager {
       kind: "browser",
       view,
       title: "Fafnir Vault",
+      filePath: void 0
+    });
+    this.activateTab(id2);
+    return id2;
+  }
+  openMimisbrunnrTab() {
+    const view = createMimisbrunnrView();
+    const id2 = `t${this.nextId++}`;
+    this.shellWindow.contentView.addChildView(view);
+    view.setVisible(false);
+    this.trackHtmlFullScreen(view);
+    this.trackPaneFocus(view);
+    this.tabs.push({
+      id: id2,
+      kind: "browser",
+      view,
+      title: "Mímisbrunnr",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -346939,6 +346969,8 @@ require$$1$3.app.whenReady().then(async () => {
         tabManager?.openRatatoskrTab?.();
       } else if (url === "aetherum://fafnir") {
         tabManager?.openFafnirTab?.();
+      } else if (url === "aetherum://mimisbrunnr") {
+        tabManager?.openMimisbrunnrTab?.();
       } else {
         tabManager?.openBrowserTab(url || "aetherum://welcome");
       }
@@ -346954,6 +346986,9 @@ require$$1$3.app.whenReady().then(async () => {
     });
     require$$1$3.ipcMain.handle("hyper:fafnir:open-tab", () => {
       tabManager?.openFafnirTab?.();
+    });
+    require$$1$3.ipcMain.handle("hyper:mimisbrunnr:open-tab", () => {
+      tabManager?.openMimisbrunnrTab?.();
     });
   } catch (extErr) {
     console.error("[HyperOffice Extension Error]", extErr);

@@ -2192,7 +2192,9 @@ const hyperOfficeApi = {
     decrypt: (params) => electron.ipcRenderer.invoke("hyper:fafnir:decrypt", params)
   },
   mimisbrunnr: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:open-tab"),
     status: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:status"),
+    hardware: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:hardware"),
     chat: (payload) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:chat", payload)
   },
   ratatoskr: {
