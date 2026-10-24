@@ -271,9 +271,9 @@ const menuHwpIcon2x = require$$1$1.join(__dirname, "./chunks/menu-hwp@2x-1tyIsF7
 const menuHomeIcon1x = require$$1$1.join(__dirname, "./chunks/menu-home-IWzaKAPM.png");
 const menuHomeIcon2x = require$$1$1.join(__dirname, "./chunks/menu-home@2x-DklesmJt.png");
 const UPSTREAM_PRODUCT_NAME = "GenOffice";
-const PRODUCT_NAME = "Aetheum";
+const PRODUCT_NAME = "Aether";
 const LOCALIZED_PRODUCT_NAMES = {
-  ko: "Aetheum"
+  ko: "Aether"
 };
 function productName(lang) {
   const base = lang?.trim().toLowerCase().split(/[-_]/)[0] ?? "";
@@ -320742,7 +320742,7 @@ function createHtmlView(openPath) {
   void view.webContents.loadURL(rendererUrl(runtime$1.rendererUrl, "html"));
   return view;
 }
-function createBrowserView(initialUrl = "ladybird://welcome") {
+function createBrowserView(initialUrl = "aetherum://welcome") {
   const view = new require$$1$3.WebContentsView({
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
@@ -324943,7 +324943,7 @@ class TabManager {
     this.activateTab(id2);
     return id2;
   }
-  openBrowserTab(initialUrl = "ladybird://welcome") {
+  openBrowserTab(initialUrl = "aetherum://welcome") {
     const view = createBrowserView(initialUrl);
     const id2 = `t${this.nextId++}`;
     this.shellWindow.contentView.addChildView(view);
@@ -324954,7 +324954,7 @@ class TabManager {
       id: id2,
       kind: "browser",
       view,
-      title: "Aetheum Browser",
+      title: "Aetherum Browser",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -324971,7 +324971,7 @@ class TabManager {
       id: id2,
       kind: "browser",
       view,
-      title: "Terminal",
+      title: "Yggdrasil",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -344473,7 +344473,7 @@ function newHtmlTab() {
     surfaceNewTabError(err);
   }
 }
-function newBrowserTab(initialUrl = "ladybird://welcome") {
+function newBrowserTab(initialUrl = "aetherum://welcome") {
   try {
     tabManager?.openBrowserTab(initialUrl);
   } catch (err) {
@@ -345669,12 +345669,12 @@ function registerTabsIpc() {
         click: () => newMarkdownTab()
       },
       {
-        label: "Open Built-in Terminal (zsh)",
+        label: "Open Yggdrasil",
         icon: menuIcons().home,
         click: () => tabManager?.openTerminalTab?.()
       },
       {
-        label: "New Aetheum Browser Tab (Tor / Web / Proton)",
+        label: "New Aetherum Browser Tab (Tor / Web / Proton)",
         icon: menuIcons().html,
         click: () => newBrowserTab()
       },
@@ -345721,12 +345721,12 @@ function buildHomeMenu() {
         { label: tm("menuNewPdf"), click: () => void newPdfTab() },
         { type: "separator" },
         {
-          label: "New Aetheum Browser Tab (Tor / Web / Proton)",
+          label: "New Aetherum Browser Tab (Tor / Web / Proton)",
           accelerator: "CmdOrCtrl+B",
           click: () => newBrowserTab("https://mail.proton.me")
         },
         {
-          label: "Open Built-in Terminal (zsh)",
+          label: "Open Yggdrasil",
           accelerator: "CmdOrCtrl+T",
           click: () => tabManager?.openTerminalTab?.()
         },
@@ -346597,11 +346597,11 @@ function installDockMenu() {
       { label: tm("menuNewPdf"), click: () => void newPdfTab() },
       { type: "separator" },
       {
-        label: "New Aetheum Browser Tab (Tor / Web / Proton)",
+        label: "New Aetherum Browser Tab (Tor / Web / Proton)",
         click: () => newBrowserTab("https://mail.proton.me")
       },
       {
-        label: "Open Built-in Terminal (zsh)",
+        label: "Open Yggdrasil",
         click: () => tabManager?.openTerminalTab?.()
       }
     ])
@@ -346813,7 +346813,7 @@ require$$1$3.app.whenReady().then(async () => {
   try {
     require("./extensions/index.js").installHyperOfficeExtensions();
     require$$1$3.ipcMain.handle("hyper:browser:open-tab", (_event, url) => {
-      tabManager?.openBrowserTab(url || "ladybird://welcome");
+      tabManager?.openBrowserTab(url || "aetherum://welcome");
     });
     require$$1$3.ipcMain.handle("hyper:term:open-tab", () => {
       tabManager?.openTerminalTab?.();

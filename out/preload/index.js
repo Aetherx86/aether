@@ -2155,7 +2155,7 @@ const hyperOfficeApi = {
   },
   browser: {
     openTab: (url) => electron.ipcRenderer.invoke("hyper:browser:open-tab", url),
-    getLadybirdPage: (page) => electron.ipcRenderer.invoke("hyper:browser:get-ladybird-page", page),
+    getAetherumPage: (page) => electron.ipcRenderer.invoke("hyper:browser:get-aetherum-page", page),
     summarize: (url) => electron.ipcRenderer.invoke("hyper:browser:summarize", url),
     saveDoc: (url, outputPath) => electron.ipcRenderer.invoke("hyper:browser:save-doc", { url, outputPath }),
     setTor: (enabled) => electron.ipcRenderer.invoke("hyper:browser:set-tor", enabled),

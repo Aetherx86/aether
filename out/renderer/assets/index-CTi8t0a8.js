@@ -20761,9 +20761,9 @@ function Home({
           "button",
           {
             className: "nav-item",
-            title: "Ladybird Web Browser",
+            title: "Aetherum Browser",
             onClick: () => {
-              window.hyperOffice?.browser?.openTab?.("ladybird://welcome");
+              window.hyperOffice?.browser?.openTab?.("aetherum://welcome");
             },
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": "true", children: [

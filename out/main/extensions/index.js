@@ -12,7 +12,7 @@ const { registerTerminalIpc, terminalManager } = require("./terminal");
 const { registerOfficeIpc } = require("./office-tools");
 const { registerGitIpc } = require("./git-bridge");
 const { geminiTracker } = require("./gemini-tracker");
-const { registerLadybirdIpc } = require("./ladybird-browser");
+const { registerAetherumIpc } = require("./aetherum-browser");
 
 let installed = false;
 
@@ -41,7 +41,7 @@ function installHyperOfficeExtensions(electronModule = null) {
   registerTerminalIpc(ipcMain);
   registerOfficeIpc(ipcMain);
   registerGitIpc(ipcMain);
-  registerLadybirdIpc(ipcMain);
+  registerAetherumIpc(ipcMain);
 
   // 2. Gemini Quota & Token Tracking
   ipcMain.handle("hyper:gemini:quota", () => geminiTracker.getQuotaStats());

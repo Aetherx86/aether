@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Aetheum Terminal</title>
+  <title>Yggdrasil</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -177,11 +177,11 @@
   <div class="term-header">
     <div class="term-title">
       <span class="term-badge">zsh</span>
-      <span>Aetheum Workspace Shell & Terminal</span>
+      <span>Yggdrasil</span>
       <div class="status-pill"><span class="status-dot"></span><span>Active</span></div>
     </div>
     <div class="quick-bar">
-      <button class="pill-btn" onclick="sendCmd('aetheum --help')">aetheum --help</button>
+      <button class="pill-btn" onclick="sendCmd('aether --help')">aether --help</button>
       <button class="pill-btn" onclick="sendCmd('git status')">git status</button>
       <button class="pill-btn" onclick="sendCmd('ls -la')">ls -la</button>
       <button class="pill-btn" onclick="sendCmd('curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip')">tor check</button>
@@ -191,17 +191,17 @@
 
   <div class="term-body" id="termBody">
     <div class="banner-box">
-      <div class="banner-title">⚡ Aetheum Interactive Terminal</div>
-      <div>• Shell: macOS zsh interactive environment with full ANSI color support</div>
-      <div>• CLI Tools: <code>aetheum</code> (/opt/homebrew/bin/aetheum v0.0.1)</div>
-      <div>• Network Security: Tor SOCKS5 Tunnel on 127.0.0.1:9050</div>
+      <div class="banner-title">⚡ Yggdrasil</div>
+      <div>• Shell: macOS zsh interactive environment with truecolor & ANSI support</div>
+      <div>• Aether Toolchain: <code>aether</code> (/opt/homebrew/bin/aether v0.0.1)</div>
+      <div>• Tor Security Tunnel: 127.0.0.1:9050 [Active]</div>
       <div>• Working Directory: /Users/sushikim/Desktop/app_source</div>
     </div>
     <div id="output"></div>
   </div>
 
   <div class="term-prompt-row">
-    <span class="prompt-label" id="promptText">aetheum:app_source sushikim%</span>
+    <span class="prompt-label" id="promptText">yggdrasil:app_source sushikim%</span>
     <input type="text" class="prompt-input" id="cmdInput" autofocus spellcheck="false" autocomplete="off" />
   </div>
 

@@ -8,6 +8,7 @@ const net = require("node:net");
 const { spawn } = require("node:child_process");
 const { executeAiChat } = require("./env-agent");
 const { convertDocument } = require("./office-tools");
+const { getAetherumPage } = require("./aetherum-pages");
 
 let electronSession = null;
 try {
@@ -15,15 +16,6 @@ try {
 } catch {
   electronSession = null;
 }
-
-const candidatePaths = [
-  "/Users/sushikim/Desktop/app_source/ladybird-master",
-  path.resolve(__dirname, "../../../ladybird-master"),
-  typeof process !== "undefined" && process.resourcesPath ? path.join(process.resourcesPath, "ladybird-master") : ""
-];
-const LADYBIRD_DIR = candidatePaths.find(p => p && fs.existsSync(p)) || "/Users/sushikim/Desktop/app_source/ladybird-master";
-const ABOUT_PAGES_DIR = path.join(LADYBIRD_DIR, "Base/res/ladybird/about-pages");
-const RES_DIR = path.join(LADYBIRD_DIR, "Base/res/ladybird");
 
 let torModeEnabled = true;
 
@@ -58,15 +50,15 @@ async function ensureTorRunning() {
       if (await checkTorPort()) return true;
     }
   } catch (e) {
-    console.error("[Aetheum Tor] Error starting tor daemon:", e.message);
+    console.error("[Aetherum Tor] Error starting tor daemon:", e.message);
   }
   return await checkTorPort();
 }
 
-async function configureLadybirdSession() {
+async function configureAetherumSession() {
   if (!electronSession) return;
   try {
-    const ses = electronSession.fromPartition("persist:ladybird");
+    const ses = electronSession.fromPartition("persist:aetherum");
 
     // Remove restrictive security headers that prevent framing/webview embed
     ses.webRequest.onHeadersReceived((details, callback) => {
@@ -80,29 +72,23 @@ async function configureLadybirdSession() {
       callback({ cancel: false, responseHeaders });
     });
 
-    // Custom Ladybird / Tor user agent
+    // Custom Aetherum / Tor user agent
     ses.setUserAgent(
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Ladybird/1.0 SerenityOS/1.0 AetherBrowser/1.0"
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Aetherum/0.0.1 (Macintosh; Privacy Tor Browser; Aether Platform)"
     );
 
     // Apply Tor proxy if enabled
     await ensureTorRunning();
     if (torModeEnabled) {
       await ses.setProxy({ proxyRules: "socks5://127.0.0.1:9050,socks5://127.0.0.1:9150,direct://" });
-      console.log("[Aetheum Browser] Tor proxy attached: socks5://127.0.0.1:9050");
+      console.log("[Aetherum Browser] Tor proxy attached: socks5://127.0.0.1:9050");
     } else {
       await ses.setProxy({ proxyRules: "" });
-      console.log("[Aetheum Browser] Direct web connection attached.");
+      console.log("[Aetherum Browser] Direct web connection attached.");
     }
   } catch (err) {
-    console.error("[Aetheum Browser] Session configuration error:", err.message);
+    console.error("[Aetherum Browser] Session configuration error:", err.message);
   }
-}
-
-const { getAetheumPage } = require("./aetheum-pages");
-
-function getLadybirdPage(pageName = "welcome") {
-  return getAetheumPage(pageName);
 }
 
 function fetchUrlText(urlStr) {
@@ -110,7 +96,7 @@ function fetchUrlText(urlStr) {
     try {
       const url = new URL(urlStr);
       const client = url.protocol === "https:" ? https : http;
-      const req = client.get(url, { headers: { "User-Agent": "Ladybird/1.0 (SerenityOS; LibWeb; Aetheum Browser)" } }, (res) => {
+      const req = client.get(url, { headers: { "User-Agent": "Aetherum/0.0.1 (Macintosh; Privacy Tor Browser; Aether Platform)" } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           return fetchUrlText(res.headers.location).then(resolve, reject);
         }
@@ -147,7 +133,7 @@ ${pageText}
 
   return await executeAiChat({
     provider: "gemini",
-    system: "당신은 Aetheum Browser에 내장된 웹 분석 AI 도우미입니다. 웹페이지의 본문을 분석하고 간결하며 명확하게 요약합니다.",
+    system: "당신은 Aether의 Aetherum 브라우저에 내장된 웹 분석 AI 도우미입니다. 웹페이지 본문을 분석하고 간결하며 명확하게 요약합니다.",
     user: prompt
   });
 }
@@ -162,7 +148,7 @@ async function saveWebpageAsDoc(urlStr, outputPath) {
 <head><meta charset="utf-8"><title>${title}</title></head>
 <body>
 <h1>Webpage Capture: ${urlStr}</h1>
-<p><em>Captured via Aetheum Browser Browser on ${new Date().toLocaleString()}</em></p>
+<p><em>Captured via Aetherum Browser on ${new Date().toLocaleString()}</em></p>
 <hr/>
 <div>${pageText.split(" ").slice(0, 1000).join(" ")}</div>
 </body>
@@ -174,17 +160,17 @@ async function saveWebpageAsDoc(urlStr, outputPath) {
     await convertDocument(tempHtml, outputPath);
     return { ok: true, path: outputPath };
   } else {
-    const mdContent = `# Webpage Capture: ${urlStr}\n\n*Captured via Aetheum Browser Browser on ${new Date().toLocaleString()}*\n\n---\n\n${pageText}`;
+    const mdContent = `# Webpage Capture: ${urlStr}\n\n*Captured via Aetherum Browser on ${new Date().toLocaleString()}*\n\n---\n\n${pageText}`;
     fs.writeFileSync(outputPath, mdContent, "utf8");
     return { ok: true, path: outputPath };
   }
 }
 
-function registerLadybirdIpc(ipcMain) {
-  configureLadybirdSession();
+function registerAetherumIpc(ipcMain) {
+  configureAetherumSession();
 
-  ipcMain.handle("hyper:browser:get-ladybird-page", (_event, pageName) => {
-    return getLadybirdPage(pageName);
+  ipcMain.handle("hyper:browser:get-aetherum-page", (_event, pageName) => {
+    return getAetherumPage(pageName);
   });
 
   ipcMain.handle("hyper:browser:summarize", async (_event, url) => {
@@ -212,7 +198,7 @@ function registerLadybirdIpc(ipcMain) {
   ipcMain.handle("hyper:browser:set-tor", async (_event, enabled) => {
     torModeEnabled = !!enabled;
     if (electronSession) {
-      const ses = electronSession.fromPartition("persist:ladybird");
+      const ses = electronSession.fromPartition("persist:aetherum");
       if (torModeEnabled) {
         await ensureTorRunning();
         await ses.setProxy({ proxyRules: "socks5://127.0.0.1:9050,socks5://127.0.0.1:9150,direct://" });
@@ -226,10 +212,10 @@ function registerLadybirdIpc(ipcMain) {
 }
 
 module.exports = {
-  getLadybirdPage,
+  getAetherumPage,
   summarizeWebpage,
   saveWebpageAsDoc,
-  registerLadybirdIpc,
+  registerAetherumIpc,
   ensureTorRunning,
   checkTorPort
 };
