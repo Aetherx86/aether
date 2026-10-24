@@ -133,30 +133,39 @@ async function main() {
 
   // 6. Mimisbrunnr Airgapped AI Tests
   await runAsyncTest("Mímisbrunnr: Offline Semantic & Rule Intelligence", async () => {
-    const { executeMimisbrunnrChat, getHardwareInfo } = require("../out/main/extensions/mimisbrunnr");
+    const {
+      executeMimisbrunnrChat,
+      getHardwareInfo,
+      checkLocalLlm,
+      offlineEmailSummarizer,
+      offlineScriptDebugger,
+      offlineKnowledgeResponder
+    } = require("../out/main/extensions/mimisbrunnr");
+
     const hw = getHardwareInfo();
     assert.ok(hw && typeof hw.chip === "string", "Must return Apple Silicon hardware specs");
 
-    const emailRes = await executeMimisbrunnrChat({
-      prompt: "From: boss@corp.com\nSubject: Project Deadline\nPlease finalize the quarterly audit report by Friday.",
-      task: "email"
-    });
-    assert.ok(emailRes.ok, "Mimisbrunnr email analysis must succeed");
-    assert.ok(emailRes.response.includes("Mímisbrunnr Offline Email Analysis"), "Must return structured summary");
+    const llmStatus = await checkLocalLlm();
+    assert.ok(typeof llmStatus.active === "boolean", "Local LLM status must report boolean active state");
+    assert.strictEqual(llmStatus.privacyMode, "airgapped", "Privacy mode must be airgapped");
 
-    const scriptRes = await executeMimisbrunnrChat({
-      prompt: "rm -rf / tmp_files\necho $VARIABLE",
-      task: "script"
-    });
-    assert.ok(scriptRes.ok, "Script debugger must succeed");
-    assert.ok(scriptRes.response.includes("Mímisbrunnr Terminal Script Diagnostic"), "Must flag unsafe command patterns");
+    // Test offline semantic rules directly
+    const offlineEmail = offlineEmailSummarizer("From: boss@corp.com\nSubject: Project Deadline\nPlease finalize the quarterly audit report by Friday.");
+    assert.ok(offlineEmail.includes("Mímisbrunnr Offline Email Analysis"), "Must return structured summary");
 
-    const aiRes = await executeMimisbrunnrChat({
-      prompt: "is it impossible to use apple intelligence for local ai?",
+    const offlineScript = offlineScriptDebugger("rm -rf / tmp_files\necho $VARIABLE");
+    assert.ok(offlineScript.includes("Mímisbrunnr Terminal Script Diagnostic"), "Must flag unsafe command patterns");
+
+    const offlineAi = offlineKnowledgeResponder("is it impossible to use apple intelligence for local ai?", "general");
+    assert.ok(offlineAi.includes("Apple Intelligence"), "Must provide Apple Intelligence explanation");
+
+    // Test executeMimisbrunnrChat (works with both local LLM if present, or offline engine)
+    const chatRes = await executeMimisbrunnrChat({
+      prompt: "Summarize: All systems operating normally.",
       task: "general"
     });
-    assert.ok(aiRes.ok, "Must answer Apple Intelligence architecture query");
-    assert.ok(aiRes.response.includes("Apple Intelligence"), "Must provide Apple Intelligence explanation");
+    assert.ok(chatRes.ok, "Mímisbrunnr chat execution must succeed");
+    assert.ok(typeof chatRes.response === "string" && chatRes.response.length > 5, "Response must not be empty");
   });
 
   // 7. Ratatoskr Visual API Client & DB Engine Tests

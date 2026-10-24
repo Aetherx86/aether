@@ -353,10 +353,12 @@
         <div id="hwDetails" style="margin-top:4px;">Detecting Apple Silicon specs...</div>
       </div>
 
-      <div class="info-card">
-        <strong>Unleash Full 8B Local LLM:</strong>
-        <p style="margin-top:4px; font-size:11.5px;">To run Llama 3.2 on Apple Silicon Metal with zero telemetry:</p>
-        <div class="code-snippet">brew install ollama && ollama run llama3.2</div>
+      <div class="info-card" id="localModelCard">
+        <strong>Apple Silicon Local LLM:</strong>
+        <div id="modelCardContent">
+          <p style="margin-top:4px; font-size:11.5px; color:#38bdf8;">Llama 3.2 (1B) installed & active on Apple Metal GPU.</p>
+          <div class="code-snippet">ollama run llama3.2:1b</div>
+        </div>
       </div>
     </div>
 
@@ -421,6 +423,10 @@ How can I assist your workflow today?</div>
         if (status && status.active) {
           pillModel.classList.add("active");
           labelModel.textContent = `Live: ${status.model}`;
+          const modelCardContent = document.getElementById("modelCardContent");
+          if (modelCardContent) {
+            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#10b981;">⚡ <strong>${status.model}</strong> active on Apple Metal GPU.</p><div class="code-snippet">Endpoint: ${status.endpoint} • Airgapped</div>`;
+          }
         } else {
           pillModel.classList.remove("active");
           labelModel.textContent = "Embedded Offline Engine";

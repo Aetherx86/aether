@@ -576,11 +576,12 @@
              partition="persist:aetherum"
              allowpopups
              webpreferences="contextIsolation=no"
-             src="https://mail.proton.me">
+             style="display:none; width:100%; height:100%;">
     </webview>
 
     <iframe id="aetherumLocalFrame"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups">
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            style="display:block; width:100%; height:100%; border:none; background:#090d16;">
     </iframe>
 
     <!-- AI Drawer -->
@@ -765,18 +766,21 @@
           }
           localFrame.srcdoc = html;
           localFrame.style.display = "block";
+          webview.style.display = "none";
           webview.style.visibility = "hidden";
           webview.style.pointerEvents = "none";
           document.title = `${pageName.toUpperCase()} — Aetherum Browser`;
         } catch (e) {
           localFrame.srcdoc = `<p style="padding:2rem;color:red;">Error: ${e.message}</p>`;
           localFrame.style.display = "block";
+          webview.style.display = "none";
           webview.style.visibility = "hidden";
           webview.style.pointerEvents = "none";
         }
       } else {
         urlIcon.textContent = url.startsWith("https") ? "🔒" : "🌐";
         localFrame.style.display = "none";
+        webview.style.display = "flex";
         webview.style.visibility = "visible";
         webview.style.pointerEvents = "auto";
         try {

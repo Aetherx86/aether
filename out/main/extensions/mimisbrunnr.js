@@ -326,14 +326,28 @@ console.log(executeAirgappedOperation("${prompt.replace(/"/g, '\\"')}"));
 - **Local Model Link**: To enable 8B/70B parameter neural text generation, start Ollama locally (\`brew install ollama && ollama run llama3.2\`). Mímisbrunnr will seamlessly bind to the local port and switch to full streaming generation.`;
 }
 
-async function executeMimisbrunnrChat({ prompt, task = "general", system = "" }) {
-  const localStatus = await checkLocalLlm();
-  if (localStatus.active) {
-    try {
-      const resp = await queryLocalLlm(prompt, system);
-      return { ok: true, engine: `Local LLM (${localStatus.model})`, response: resp };
-    } catch (e) {
-      // Fallback to offline engine
+async function executeMimisbrunnrChat({ prompt, task = "general", system = "", forceOffline = false }) {
+  if (!forceOffline) {
+    const localStatus = await checkLocalLlm();
+    if (localStatus.active) {
+      try {
+        let taskSysPrompt = system;
+        if (!taskSysPrompt) {
+          if (task === "email") {
+            taskSysPrompt = "You are Mímisbrunnr, a privacy-focused offline AI assistant. Summarize the provided email succinctly and draft a professional response for Jeffrey Kim.";
+          } else if (task === "script") {
+            taskSysPrompt = "You are Mímisbrunnr, an offline code security analyzer. Review the shell script, identify potential bugs or dangerous patterns, and provide recommendations.";
+          } else if (task === "code") {
+            taskSysPrompt = "You are Mímisbrunnr, an airgapped coding assistant running on Apple Silicon. Generate clean, secure, and idiomatic code.";
+          } else {
+            taskSysPrompt = "You are Mímisbrunnr, a privacy-first offline AI assistant running locally on Apple Silicon for Jeffrey Kim.";
+          }
+        }
+        const resp = await queryLocalLlm(prompt, taskSysPrompt);
+        return { ok: true, engine: `Local LLM (${localStatus.model})`, response: resp };
+      } catch (e) {
+        // Fallback to offline engine
+      }
     }
   }
 
@@ -373,5 +387,8 @@ module.exports = {
   getHardwareInfo,
   getMimisbrunnrStatus: checkLocalLlm,
   executeMimisbrunnrChat,
-  registerMimisbrunnrIpc
+  registerMimisbrunnrIpc,
+  offlineEmailSummarizer,
+  offlineScriptDebugger,
+  offlineKnowledgeResponder
 };
