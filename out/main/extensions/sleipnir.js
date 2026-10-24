@@ -129,6 +129,7 @@ function startSleipnir(port = 8087) {
       stats.active = true;
       stats.port = listenPort;
       console.log(`[Sleipnir] HTTPS SNI Packet Splitting Proxy active on 127.0.0.1:${listenPort}`);
+      try { require("./aetherum-browser").syncBrowserProxy(); } catch {}
       resolve(stats);
     });
 
@@ -152,6 +153,7 @@ function stopSleipnir() {
       stats.active = false;
       proxyServer = null;
       console.log("[Sleipnir] Proxy stopped.");
+      try { require("./aetherum-browser").syncBrowserProxy(); } catch {}
       resolve(stats);
     });
   });

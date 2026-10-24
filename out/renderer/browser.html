@@ -727,7 +727,7 @@
     // Record visited history in localStorage
     function recordHistory(url, title = "") {
       try {
-        if (!url || url.startsWith("aetherum://") || url.startsWith("aetheum://")) return;
+        if (!url || url.startsWith("aetherum://")) return;
         const raw = localStorage.getItem("aetherum_history");
         const list = raw ? JSON.parse(raw) : [];
         list.unshift({
@@ -743,10 +743,6 @@
     window.navigateTo = async function(url) {
       if (!url) return;
       url = url.trim();
-
-      if (url.startsWith("aetheum://")) {
-        url = url.replace("aetheum://", "aetherum://");
-      }
 
       if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("aetherum://")) {
         if (url.includes(".") && !url.includes(" ")) {
@@ -863,7 +859,7 @@
       aiDrawer.classList.add("open");
       drawerContent.textContent = "웹페이지 본문을 분석하고 요약하는 중입니다...";
       const currentUrl = urlInput.value;
-      if (currentUrl.startsWith("aetherum://") || currentUrl.startsWith("aetheum://")) {
+      if (currentUrl.startsWith("aetherum://")) {
         drawerContent.textContent = `[Aetherum System Page]\n\nAetherum의 내장 대시보드(${currentUrl})입니다.\n완전한 독립형 프라이버시 브라우징 및 Tor 프록시 제어를 지원합니다.`;
         return;
       }

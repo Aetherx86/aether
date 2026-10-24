@@ -104,7 +104,7 @@ function encryptFileToVault(srcPath, passphrase) {
   const targetPath = path.join(VAULT_DIR, targetName);
   fs.writeFileSync(targetPath, encryptedBuf);
 
-  return { ok: true, vaultPath: targetPath, filename: baseName };
+  return { ok: true, vaultPath: targetPath, vaultFileName: targetName, filename: baseName };
 }
 
 function decryptFileFromVault(vaultFileName, destDir, passphrase) {
@@ -114,7 +114,9 @@ function decryptFileFromVault(vaultFileName, destDir, passphrase) {
   const encryptedBuf = fs.readFileSync(fpath);
   const { plaintext, meta } = decryptBuffer(encryptedBuf, passphrase);
 
-  const targetPath = path.join(destDir || os.homedir(), "Desktop", `decrypted_${meta.filename}`);
+  const outDir = destDir || path.join(os.homedir(), "Desktop");
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+  const targetPath = path.join(outDir, `decrypted_${meta.filename}`);
   fs.writeFileSync(targetPath, plaintext);
   return { ok: true, decryptedPath: targetPath, filename: meta.filename };
 }

@@ -15,14 +15,14 @@ async function checkLocalLlm() {
           const json = JSON.parse(data);
           if (json.models && json.models.length > 0) {
             activeLocalModel = json.models[0].name;
-            return resolve({ active: true, model: activeLocalModel, endpoint: localEndpoint });
+            return resolve({ active: true, model: activeLocalModel, endpoint: localEndpoint, offlineFallback: true, privacyMode: "airgapped" });
           }
         } catch {}
-        resolve({ active: false, model: null, endpoint: localEndpoint });
+        resolve({ active: false, model: null, endpoint: localEndpoint, offlineFallback: true, privacyMode: "airgapped" });
       });
     });
-    req.on("error", () => resolve({ active: false, model: null, endpoint: localEndpoint }));
-    req.on("timeout", () => { req.destroy(); resolve({ active: false, model: null, endpoint: localEndpoint }); });
+    req.on("error", () => resolve({ active: false, model: null, endpoint: localEndpoint, offlineFallback: true, privacyMode: "airgapped" }));
+    req.on("timeout", () => { req.destroy(); resolve({ active: false, model: null, endpoint: localEndpoint, offlineFallback: true, privacyMode: "airgapped" }); });
   });
 }
 
@@ -184,6 +184,7 @@ function registerMimisbrunnrIpc(ipcMain) {
 
 module.exports = {
   checkLocalLlm,
+  getMimisbrunnrStatus: checkLocalLlm,
   executeMimisbrunnrChat,
   registerMimisbrunnrIpc
 };

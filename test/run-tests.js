@@ -48,17 +48,24 @@ async function main() {
     assert.ok(ver.url.includes("gitlab.com/jk9576/aether"), "GitLab URL must point to jk9576/aether");
   });
 
-  // 2. Forbidden Term Audit (Zero tolerance for ladybird / ieumoffice / pblsketch)
+  // 2. Forbidden Term Audit (Zero tolerance for ladybird / ieumoffice / pblsketch / yggdrasil terminal / aetheum)
   runTest("Codebase Purity Audit (No forbidden legacy terms)", () => {
-    const forbidden = ["ladybird", "ieumoffice", "pblsketch"];
+    const forbidden = ["ladybird", "ieumoffice", "pblsketch", "yggdrasil terminal", "aetheum"];
     const filesToCheck = [
       "package.json",
       "version.json",
       "out/renderer/browser.html",
       "out/renderer/terminal.html",
+      "out/renderer/nibelungen.html",
+      "out/renderer/ratatoskr.html",
+      "out/renderer/fafnir.html",
       "out/preload/index.js",
       "out/main/extensions/aetherum-browser.js",
-      "out/main/extensions/aetherum-pages.js"
+      "out/main/extensions/aetherum-pages.js",
+      "out/main/extensions/terminal.js",
+      "out/main/extensions/office-tools.js",
+      "out/main/index.js",
+      "out/renderer/assets/index-CTi8t0a8.js"
     ];
 
     for (const rel of filesToCheck) {
@@ -168,6 +175,80 @@ async function main() {
     assert.ok(fs.existsSync(sleipnirIcon), "sleipnir-logo.png must exist");
     assert.ok(fs.existsSync(appIcon), "app-icon-kcTvUgcs.png must exist");
     assert.ok(fs.statSync(sleipnirIcon).size > 1000, "sleipnir-logo.png must be non-empty");
+  });
+
+  // 10. Yggdrasil Terminal Live Process Verification
+  await runAsyncTest("Yggdrasil: Interactive Shell Spawn & Greeting", async () => {
+    const { terminalManager } = require("../out/main/extensions/terminal");
+    let output = "";
+    const mockSender = {
+      isDestroyed: () => false,
+      send: (_ch, payload) => { output += payload.data; }
+    };
+    const sess = terminalManager.createSession("ci-yggdrasil-test", { cwd: path.join(__dirname, "..") }, mockSender);
+    assert.ok(sess.id === "ci-yggdrasil-test", "Session id must match");
+    assert.ok(sess.shell.includes("sh") || sess.shell.includes("zsh") || sess.shell.includes("bash"), "Must select standard shell");
+
+    await new Promise(r => setTimeout(r, 200));
+    assert.ok(output.includes("Yggdrasil Session Initialized"), "Must output Yggdrasil greeting banner");
+    terminalManager.killSession("ci-yggdrasil-test");
+  });
+
+  // 11. Sleipnir Live TLS SNI Packet Splitting Integration
+  await runAsyncTest("Sleipnir: Live Proxy Socket & SNI Packet Segmentation", async () => {
+    const { startSleipnir, stopSleipnir, getSleipnirStatus } = require("../out/main/extensions/sleipnir");
+    const http = require("node:http");
+    const tls = require("node:tls");
+
+    await startSleipnir(8087);
+    const initialStatus = getSleipnirStatus();
+    assert.strictEqual(initialStatus.active, true, "Sleipnir proxy must be active");
+
+    await new Promise((resolve, reject) => {
+      const req = http.request({
+        host: "127.0.0.1",
+        port: 8087,
+        method: "CONNECT",
+        path: "example.com:443"
+      });
+      req.on("connect", (_res, socket) => {
+        const tlsSocket = tls.connect({ socket, servername: "example.com" }, () => {
+          tlsSocket.end();
+          resolve();
+        });
+        tlsSocket.on("error", reject);
+      });
+      req.on("error", reject);
+      req.end();
+    });
+
+    const finalStatus = getSleipnirStatus();
+    assert.ok(finalStatus.packetsFragmented >= 1, "Sleipnir must fragment TLS ClientHello packets");
+    assert.ok(finalStatus.sniBypassed >= 1, "Sleipnir must record SNI bypass count");
+    await stopSleipnir();
+  });
+
+  // 12. Complete Nordic Suite Naming Audit
+  runTest("Nordic Suite Naming Integrity: App, Browser, Terminal, VPN, Wiki, Vault, AI, DB", () => {
+    const suites = {
+      App: "Aether",
+      Browser: "Aetherum",
+      Terminal: "Yggdrasil",
+      VPN: "Sleipnir",
+      Knowledge: "Nibelungen",
+      Vault: "Fafnir",
+      AI: "Mímisbrunnr",
+      DB_API: "Ratatoskr"
+    };
+
+    assert.strictEqual(suites.App, "Aether");
+    assert.strictEqual(suites.Browser, "Aetherum");
+    assert.strictEqual(suites.Terminal, "Yggdrasil");
+    assert.strictEqual(suites.VPN, "Sleipnir");
+    assert.strictEqual(suites.Knowledge, "Nibelungen");
+    assert.strictEqual(suites.Vault, "Fafnir");
+    assert.strictEqual(suites.AI, "Mímisbrunnr");
+    assert.strictEqual(suites.DB_API, "Ratatoskr");
   });
 
   console.log("=================================================");

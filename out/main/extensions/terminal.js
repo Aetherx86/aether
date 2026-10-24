@@ -21,9 +21,7 @@ class TerminalSessionManager {
 
     const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli")
       ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli"
-      : (fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli")
-        ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli"
-        : path.resolve(__dirname, "../../cli"));
+      : path.resolve(__dirname, "../../cli");
     const currentPath = process.env.PATH || "";
     const enhancedPath = `${cliDir}:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${currentPath}`;
 
@@ -46,9 +44,11 @@ class TerminalSessionManager {
     });
 
     const sendData = (data) => {
-      if (sender && !sender.isDestroyed()) {
-        sender.send("hyper:term:output", { id, data: data.toString("utf8") });
-      }
+      try {
+        if (sender && (typeof sender.isDestroyed !== "function" || !sender.isDestroyed())) {
+          sender.send("hyper:term:output", { id, data: data.toString("utf8") });
+        }
+      } catch {}
     };
 
     child.stdout.on("data", sendData);
@@ -110,9 +110,7 @@ class TerminalSessionManager {
     return new Promise((resolve) => {
       const cliDir = fs.existsSync("/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli")
         ? "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli"
-        : (fs.existsSync("/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli")
-          ? "/Users/sushikim/Desktop/Aetheum.app/Contents/Resources/cli"
-          : path.resolve(__dirname, "../../cli"));
+        : path.resolve(__dirname, "../../cli");
       const currentPath = process.env.PATH || "";
       const enhancedPath = `${cliDir}:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${currentPath}`;
 

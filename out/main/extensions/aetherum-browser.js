@@ -77,17 +77,36 @@ async function configureAetherumSession() {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Aetherum/0.0.1 (Macintosh; Privacy Tor Browser; Aether Platform)"
     );
 
-    // Apply Tor proxy if enabled
-    await ensureTorRunning();
-    if (torModeEnabled) {
+    // Apply Tor / Sleipnir proxy if enabled
+    await syncBrowserProxy(torModeEnabled);
+  } catch (err) {
+    console.error("[Aetherum Browser] Session configuration error:", err.message);
+  }
+}
+
+async function syncBrowserProxy(torEnabled = torModeEnabled) {
+  if (!electronSession) return;
+  try {
+    const ses = electronSession.fromPartition("persist:aetherum");
+    let sleipnirActive = false;
+    try {
+      const { getSleipnirStatus } = require("./sleipnir");
+      sleipnirActive = Boolean(getSleipnirStatus()?.active);
+    } catch {}
+
+    if (torEnabled) {
+      await ensureTorRunning();
       await ses.setProxy({ proxyRules: "socks5://127.0.0.1:9050,socks5://127.0.0.1:9150,direct://" });
       console.log("[Aetherum Browser] Tor proxy attached: socks5://127.0.0.1:9050");
+    } else if (sleipnirActive) {
+      await ses.setProxy({ proxyRules: "http=127.0.0.1:8087;https=127.0.0.1:8087;direct://" });
+      console.log("[Aetherum Browser] Sleipnir Anti-DPI proxy attached: http://127.0.0.1:8087");
     } else {
       await ses.setProxy({ proxyRules: "" });
       console.log("[Aetherum Browser] Direct web connection attached.");
     }
-  } catch (err) {
-    console.error("[Aetherum Browser] Session configuration error:", err.message);
+  } catch (e) {
+    console.error("[Aetherum Browser] syncBrowserProxy error:", e.message);
   }
 }
 
@@ -197,15 +216,7 @@ function registerAetherumIpc(ipcMain) {
 
   ipcMain.handle("hyper:browser:set-tor", async (_event, enabled) => {
     torModeEnabled = !!enabled;
-    if (electronSession) {
-      const ses = electronSession.fromPartition("persist:aetherum");
-      if (torModeEnabled) {
-        await ensureTorRunning();
-        await ses.setProxy({ proxyRules: "socks5://127.0.0.1:9050,socks5://127.0.0.1:9150,direct://" });
-      } else {
-        await ses.setProxy({ proxyRules: "" });
-      }
-    }
+    await syncBrowserProxy(torModeEnabled);
     const active = await checkTorPort();
     return { active, torEnabled: torModeEnabled, port: 9050 };
   });
@@ -217,5 +228,7 @@ module.exports = {
   saveWebpageAsDoc,
   registerAetherumIpc,
   ensureTorRunning,
-  checkTorPort
+  checkTorPort,
+  syncBrowserProxy,
+  isTorEnabled: () => torModeEnabled
 };
