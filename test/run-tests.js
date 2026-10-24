@@ -6,8 +6,8 @@ const assert = require("node:assert");
 let JSDOM;
 try {
   JSDOM = require("jsdom").JSDOM;
-} catch {
-  // If JSDOM is not yet installed in runner, tests will report graceful mock fallback
+} catch (err) {
+  console.warn("⚠️ Warning: JSDOM require failed:", err.message);
 }
 
 console.log("=================================================");
