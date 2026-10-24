@@ -267,24 +267,32 @@
     }
 
     function openRatatoskr() {
-      if (window.hyperOffice && window.hyperOffice.browser && window.hyperOffice.browser.openTab) {
-        window.hyperOffice.browser.openTab("aetherum://ratatoskr");
+      const api = window.hyperOffice || window.parent?.hyperOffice;
+      if (api?.ratatoskr?.openTab) {
+        api.ratatoskr.openTab();
+      } else if (api?.browser?.openTab) {
+        api.browser.openTab("aetherum://ratatoskr");
       } else {
         sendCmd("echo 'Ratatoskr API & Database inspector is available at aetherum://ratatoskr'");
       }
     }
 
     function openMimisbrunnr() {
-      const lastOutput = outputEl.innerText.slice(-600);
-      sendCmd("echo '🧠 Mímisbrunnr analyzing terminal context...'");
-      if (window.hyperOffice && window.hyperOffice.mimisbrunnr) {
-        window.hyperOffice.mimisbrunnr.chat({
-          prompt: "Diagnose and optimize terminal shell command:\n" + (lastOutput || cmdInput.value || "zsh command check"),
-          task: "script"
-        }).then(res => {
-          outputEl.innerHTML += `<div style="padding:10px;margin:8px 0;background:#1e1b4b;border-left:3px solid #8b5cf6;border-radius:4px;color:#e0e7ff;font-family:sans-serif;font-size:12px;white-space:pre-wrap;">${res.response}</div>`;
-          termBody.scrollTop = termBody.scrollHeight;
-        });
+      const api = window.hyperOffice || window.parent?.hyperOffice;
+      if (api?.mimisbrunnr?.openTab) {
+        api.mimisbrunnr.openTab();
+      } else {
+        const lastOutput = outputEl.innerText.slice(-600);
+        sendCmd("echo '🧠 Mímisbrunnr analyzing terminal context...'");
+        if (api?.mimisbrunnr?.chat) {
+          api.mimisbrunnr.chat({
+            prompt: "Diagnose and optimize terminal shell command:\n" + (lastOutput || cmdInput.value || "zsh command check"),
+            task: "script"
+          }).then(res => {
+            outputEl.innerHTML += `<div style="padding:10px;margin:8px 0;background:#1e1b4b;border-left:3px solid #8b5cf6;border-radius:4px;color:#e0e7ff;font-family:sans-serif;font-size:12px;white-space:pre-wrap;">${res.response}</div>`;
+            termBody.scrollTop = termBody.scrollHeight;
+          });
+        }
       }
     }
 

@@ -334,6 +334,13 @@ function getWelcomePage() {
             <span>Zero-Knowledge Encrypted Drive</span>
           </div>
         </a>
+        <a class="nav-item" onclick="parentNavigate('aetherum://mimisbrunnr')">
+          <span class="nav-icon">🧠</span>
+          <div class="nav-text">
+            <strong>Mímisbrunnr AI</strong>
+            <span>Airgapped Local Intelligence Assistant</span>
+          </div>
+        </a>
       </div>
     </div>
 
