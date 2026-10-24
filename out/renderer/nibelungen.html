@@ -516,6 +516,10 @@
     });
 
     // Load Data
+    function getNibelungenApi() {
+      return window.hyperOffice?.nibelungen || (typeof window !== "undefined" && window.parent?.hyperOffice?.nibelungen);
+    }
+
     async function refreshGraph() {
       try {
         let bookmarks = [];
@@ -524,9 +528,10 @@
           if (raw) bookmarks = JSON.parse(raw);
         } catch {}
 
-        if (window.hyperOffice && window.hyperOffice.nibelungen) {
-          graphData = await window.hyperOffice.nibelungen.getGraph({ bookmarks });
-          notesCache = await window.hyperOffice.nibelungen.listNotes();
+        const api = getNibelungenApi();
+        if (api) {
+          graphData = await api.getGraph({ bookmarks });
+          notesCache = await api.listNotes();
         }
         initPhysics(graphData);
         renderSidebarNotes();
@@ -587,8 +592,9 @@
         const tags = noteTags.value.split(",").map(t => t.trim()).filter(Boolean);
         const content = noteContent.value;
 
-        if (window.hyperOffice && window.hyperOffice.nibelungen) {
-          await window.hyperOffice.nibelungen.saveNote({
+        const api = getNibelungenApi();
+        if (api) {
+          await api.saveNote({
             id: currentNoteId,
             title,
             tags,
@@ -621,8 +627,9 @@
     btnDeleteNote.addEventListener("click", async () => {
       if (!currentNoteId) return;
       if (confirm("Delete this note from Nibelungen vault?")) {
-        if (window.hyperOffice && window.hyperOffice.nibelungen) {
-          await window.hyperOffice.nibelungen.deleteNote(currentNoteId);
+        const api = getNibelungenApi();
+        if (api) {
+          await api.deleteNote(currentNoteId);
           currentNoteId = null;
           noteTitle.value = "";
           noteTags.value = "";

@@ -362,11 +362,15 @@
       document.getElementById("viewDb").style.display = tab === "db" ? "flex" : "none";
     }
 
+    function getRatatoskrApi() {
+      return window.hyperOffice?.ratatoskr || (typeof window !== "undefined" && window.parent?.hyperOffice?.ratatoskr);
+    }
+
     // Presets
     function loadTorCheck() {
       document.getElementById("apiMethod").value = "GET";
       document.getElementById("apiUrl").value = "https://check.torproject.org/api/ip";
-      document.getElementById("apiBody").value = "";
+      document.getElementById("apiBody").value = JSON.stringify({ headers: { "Accept": "application/json" } }, null, 2);
     }
     function loadDoH() {
       document.getElementById("apiMethod").value = "GET";
@@ -402,8 +406,9 @@
         }
       }
 
-      if (window.hyperOffice && window.hyperOffice.ratatoskr) {
-        const res = await window.hyperOffice.ratatoskr.request({
+      const api = getRatatoskrApi();
+      if (api) {
+        const res = await api.request({
           method,
           url,
           headers,
@@ -431,8 +436,9 @@
       const listEl = document.getElementById("tableList");
       listEl.innerHTML = "Inspecting...";
 
-      if (window.hyperOffice && window.hyperOffice.ratatoskr) {
-        const res = await window.hyperOffice.ratatoskr.listTables(dbPath);
+      const api = getRatatoskrApi();
+      if (api) {
+        const res = await api.listTables(dbPath);
         listEl.innerHTML = "";
         if (res.ok && res.rows && res.rows.length > 0) {
           res.rows.forEach(t => {
@@ -450,6 +456,8 @@
         } else {
           listEl.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">No tables found or invalid DB.</span>';
         }
+      } else {
+        listEl.innerHTML = '<span style="color:#ef4444;font-size:12px;">Ratatoskr IPC bridge not connected.</span>';
       }
     });
 
@@ -459,8 +467,9 @@
       const outEl = document.getElementById("queryResults");
       outEl.innerHTML = "Executing query...";
 
-      if (window.hyperOffice && window.hyperOffice.ratatoskr) {
-        const res = await window.hyperOffice.ratatoskr.querySqlite({ dbPath, sql });
+      const api = getRatatoskrApi();
+      if (api) {
+        const res = await api.querySqlite({ dbPath, sql });
         if (res.ok && res.rows && res.rows.length > 0) {
           const keys = Object.keys(res.rows[0]);
           let html = '<table class="data-grid"><thead><tr>';
@@ -478,6 +487,10 @@
         } else {
           outEl.innerHTML = `<div style="color:#ef4444;padding:20px;">SQL Error: ${res.error}</div>`;
         }
+      } else {
+        outEl.innerHTML = '<div style="color:#ef4444;padding:20px;">Ratatoskr IPC bridge not connected.</div>';
+      }
+    });
       }
     });
   </script>

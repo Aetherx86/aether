@@ -323,7 +323,7 @@
         <span class="dot"></span>
         <span id="labelModel">Embedded Engine</span>
       </div>
-      <button class="pill" onclick="refreshStatus()" title="Refresh Local Model Status" style="cursor:pointer;">
+      <button class="pill" id="btnCheckEngine" onclick="refreshStatus()" title="Refresh Local Model Status" style="cursor:pointer;">
         🔄 Check Engine
       </button>
     </div>
@@ -368,13 +368,16 @@
         <!-- Welcome Greeting -->
         <div class="message assistant">
           <div class="msg-header">🧠 Mímisbrunnr (Local Airgapped Assistant)</div>
-          <div class="msg-bubble">### 🧠 Welcome to Mímisbrunnr
-Mímisbrunnr is your offline, privacy-first local intelligence engine running directly on your **Apple Silicon M4**.
-- **100% Airgapped**: No prompts, notes, or code leave your machine.
-- **Apple Silicon Hardware Acceleration**: Uses unified memory and Apple Neural Engine.
-- **Multi-Task Presets**: Summarize ProtonMail threads, inspect Yggdrasil scripts for root deletion pitfalls, synthesize code, or ask general queries.
-
-How can I assist your workflow today?</div>
+          <div class="msg-bubble">
+            <h3 style="margin:0 0 8px 0; color:#38bdf8; font-size:15px;">🧠 Welcome to Mímisbrunnr</h3>
+            <p style="margin:0 0 10px 0; line-height:1.5;">Mímisbrunnr is your offline, privacy-first local intelligence engine running directly on your <strong>Apple Silicon M4</strong>.</p>
+            <ul style="margin:0 0 10px 0; padding-left:20px; line-height:1.6;">
+              <li><strong>100% Airgapped</strong>: No prompts, notes, or code leave your machine.</li>
+              <li><strong>Apple Silicon Hardware Acceleration</strong>: Uses unified memory and Apple Neural Engine.</li>
+              <li><strong>Multi-Task Presets</strong>: Summarize ProtonMail threads, inspect Yggdrasil scripts for root deletion pitfalls, synthesize code, or ask general queries.</li>
+            </ul>
+            <p style="margin:0; color:#94a3b8;">How can I assist your workflow today?</p>
+          </div>
         </div>
       </div>
 
@@ -410,10 +413,16 @@ How can I assist your workflow today?</div>
     }
 
     async function refreshStatus() {
-      if (!window.hyperOffice || !window.hyperOffice.mimisbrunnr) return;
+      const btn = document.getElementById("btnCheckEngine");
+      if (btn) btn.textContent = "⏳ Checking...";
+      const api = window.hyperOffice?.mimisbrunnr || (typeof window !== "undefined" && window.parent?.hyperOffice?.mimisbrunnr);
+      if (!api) {
+        if (btn) btn.textContent = "🔄 Check Engine";
+        return;
+      }
       try {
-        const status = await window.hyperOffice.mimisbrunnr.status();
-        const hw = await window.hyperOffice.mimisbrunnr.hardware();
+        const status = await api.status();
+        const hw = await api.hardware();
 
         if (hw) {
           labelNeural.textContent = `${hw.chip} (${hw.memory})`;
@@ -430,9 +439,15 @@ How can I assist your workflow today?</div>
         } else {
           pillModel.classList.remove("active");
           labelModel.textContent = "Embedded Offline Engine";
+          const modelCardContent = document.getElementById("modelCardContent");
+          if (modelCardContent) {
+            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#94a3b8;">Embedded engine active. Run Ollama for full local LLM:</p><div class="code-snippet">ollama run llama3.2:1b</div>`;
+          }
         }
       } catch (e) {
         console.error("Status error:", e);
+      } finally {
+        if (btn) btn.textContent = "🔄 Check Engine";
       }
     }
 
@@ -448,6 +463,7 @@ How can I assist your workflow today?</div>
     }
 
     function formatMarkdown(str) {
+      if (!str) return "";
       let escaped = str
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -455,18 +471,32 @@ How can I assist your workflow today?</div>
 
       // Code blocks
       escaped = escaped.replace(/```([a-z0-9_-]*)\n([\s\S]*?)```/gi, (_match, lang, code) => {
-        return `<pre><code class="language-${lang}">${code.trim()}</code></pre>`;
+        return `<pre style="background:rgba(0,0,0,0.4);padding:10px;border-radius:6px;overflow-x:auto;margin:8px 0;"><code class="language-${lang}">${code.trim()}</code></pre>`;
       });
 
       // Inline code
       escaped = escaped.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.08);padding:2px 5px;border-radius:4px;color:#38bdf8;">$1</code>');
 
       // Headings
-      escaped = escaped.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-      escaped = escaped.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+      escaped = escaped.replace(/^#### (.*$)/gim, '<h4 style="margin:8px 0 4px;color:#e2e8f0;">$1</h4>');
+      escaped = escaped.replace(/^### (.*$)/gim, '<h3 style="margin:10px 0 6px;color:#38bdf8;">$1</h3>');
+      escaped = escaped.replace(/^## (.*$)/gim, '<h2 style="margin:12px 0 6px;color:#38bdf8;">$1</h2>');
+      escaped = escaped.replace(/^# (.*$)/gim, '<h1 style="margin:14px 0 8px;color:#38bdf8;">$1</h1>');
+
+      // Bold & Italic
+      escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      escaped = escaped.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
       // Blockquotes
-      escaped = escaped.replace(/^&gt; (.*$)/gim, '<blockquote>$1</blockquote>');
+      escaped = escaped.replace(/^&gt; (.*$)/gim, '<blockquote style="border-left:3px solid #38bdf8;padding-left:10px;margin:6px 0;color:#94a3b8;">$1</blockquote>');
+
+      // Bullet lists
+      escaped = escaped.replace(/(?:^|\n)[-*] (.*)/g, '\n<li style="margin-left:18px;">$1</li>');
+      escaped = escaped.replace(/(<li.*<\/li>)/gs, '<ul style="margin:6px 0;padding-left:4px;">$1</ul>');
+
+      // Line breaks
+      escaped = escaped.replace(/\n\n+/g, '<p style="margin:8px 0;"></p>');
+      escaped = escaped.replace(/\n/g, '<br>');
 
       return escaped;
     }
@@ -489,9 +519,10 @@ How can I assist your workflow today?</div>
       messagesContainer.appendChild(loadingMsg);
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
+      const api = window.hyperOffice?.mimisbrunnr || (typeof window !== "undefined" && window.parent?.hyperOffice?.mimisbrunnr);
       try {
-        if (window.hyperOffice && window.hyperOffice.mimisbrunnr) {
-          const res = await window.hyperOffice.mimisbrunnr.chat({ prompt: q, task: currentTask });
+        if (api) {
+          const res = await api.chat({ prompt: q, task: currentTask });
           loadingMsg.remove();
           appendMessage("assistant", res.response);
         } else {
@@ -500,6 +531,9 @@ How can I assist your workflow today?</div>
         }
       } catch (err) {
         loadingMsg.remove();
+        appendMessage("assistant", `Error: ${err.message}`);
+      }
+    }
         appendMessage("assistant", `Error: ${err.message}`);
       }
     }

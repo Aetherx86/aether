@@ -7,6 +7,7 @@ const https = require("node:https");
 let proxyServer = null;
 let isRunning = false;
 let listenPort = 8087;
+const activeSockets = new Set();
 let stats = {
   active: false,
   port: 8087,
@@ -71,8 +72,15 @@ function startSleipnir(port = 8087) {
       req.pipe(proxyReq);
     });
 
+    proxyServer.on("connection", (socket) => {
+      activeSockets.add(socket);
+      socket.on("close", () => activeSockets.delete(socket));
+    });
+
     // HTTPS CONNECT Tunneling with SNI Packet Splitting (WinDivert/Unicorn HTTPS logic)
     proxyServer.on("connect", async (req, clientSocket, head) => {
+      activeSockets.add(clientSocket);
+      clientSocket.on("close", () => activeSockets.delete(clientSocket));
       stats.connectionsHandled++;
       const [host, rawPort] = req.url.split(":");
       const portNum = parseInt(rawPort, 10) || 443;
@@ -143,19 +151,37 @@ function startSleipnir(port = 8087) {
 }
 
 function stopSleipnir() {
-  if (!isRunning || !proxyServer) {
-    stats.active = false;
-    return Promise.resolve(stats);
+  isRunning = false;
+  stats.active = false;
+  if (!proxyServer) {
+    return Promise.resolve({ ...stats, active: false });
   }
+
   return new Promise((resolve) => {
-    proxyServer.close(() => {
-      isRunning = false;
-      stats.active = false;
-      proxyServer = null;
+    const srv = proxyServer;
+    proxyServer = null;
+
+    try {
+      if (typeof srv.closeAllConnections === "function") {
+        srv.closeAllConnections();
+      }
+      for (const s of activeSockets) {
+        try { s.destroy(); } catch {}
+      }
+      activeSockets.clear();
+    } catch {}
+
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
       console.log("[Sleipnir] Proxy stopped.");
       try { require("./aetherum-browser").syncBrowserProxy(); } catch {}
-      resolve(stats);
-    });
+      resolve({ ...stats, active: false });
+    };
+
+    srv.close(finish);
+    setTimeout(finish, 150);
   });
 }
 

@@ -247,6 +247,7 @@ async function main() {
     assert.ok(finalStatus.packetsFragmented >= 1, "Sleipnir must fragment TLS ClientHello packets");
     assert.ok(finalStatus.sniBypassed >= 1, "Sleipnir must record SNI bypass count");
     await stopSleipnir();
+    assert.strictEqual(getSleipnirStatus().active, false, "Sleipnir must be inactive after stop");
   });
 
   // 12. Complete Nordic Suite Naming Audit

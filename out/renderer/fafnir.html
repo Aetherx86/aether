@@ -160,13 +160,98 @@
     </div>
   </div>
 
+  <!-- In-Page Decrypt Modal -->
+  <div id="decryptModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#0f172a; border:1px solid #334155; border-radius:12px; padding:24px; width:90%; max-width:440px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+      <div style="font-weight:700; font-size:16px; margin-bottom:8px; color:#fff;" id="modalFileTitle">🔒 Decrypt Container</div>
+      <div style="font-size:13px; color:#94a3b8; margin-bottom:16px;">Enter the master passphrase used during encryption. The container will be decrypted directly to your Desktop.</div>
+      <input type="password" id="modalPassphrase" class="input-text" placeholder="Enter master passphrase..." style="margin-bottom:14px; width:100%; box-sizing:border-box;">
+      <div id="modalStatus" style="font-size:12px; margin-bottom:14px; display:none;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn" id="modalCancelBtn" style="background:#1e293b; color:#94a3b8;">Cancel</button>
+        <button class="btn" id="modalConfirmBtn" style="background:#10b981;">Decrypt to Desktop</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    let activeFileForDecrypt = null;
+    const modal = document.getElementById("decryptModal");
+    const modalTitle = document.getElementById("modalFileTitle");
+    const modalPass = document.getElementById("modalPassphrase");
+    const modalStatus = document.getElementById("modalStatus");
+    const modalCancel = document.getElementById("modalCancelBtn");
+    const modalConfirm = document.getElementById("modalConfirmBtn");
+
+    function getFafnirApi() {
+      return window.hyperOffice?.fafnir || (typeof window !== "undefined" && window.parent?.hyperOffice?.fafnir);
+    }
+
+    function openDecryptModal(file) {
+      activeFileForDecrypt = file;
+      modalTitle.textContent = `🔒 Decrypt: ${file.filename}`;
+      modalPass.value = "";
+      modalStatus.style.display = "none";
+      modal.style.display = "flex";
+      modalPass.focus();
+    }
+
+    function closeDecryptModal() {
+      modal.style.display = "none";
+      activeFileForDecrypt = null;
+      modalPass.value = "";
+    }
+
+    modalCancel.addEventListener("click", closeDecryptModal);
+
+    modalConfirm.addEventListener("click", async () => {
+      const pass = modalPass.value;
+      if (!pass) {
+        modalStatus.style.display = "block";
+        modalStatus.style.color = "#ef4444";
+        modalStatus.textContent = "Please enter the vault passphrase.";
+        return;
+      }
+      if (!activeFileForDecrypt) return;
+
+      modalStatus.style.display = "block";
+      modalStatus.style.color = "#38bdf8";
+      modalStatus.textContent = "Decrypting with AES-256-GCM...";
+
+      const api = getFafnirApi();
+      if (api) {
+        try {
+          const res = await api.decrypt({ vaultFileName: activeFileForDecrypt.id, passphrase: pass });
+          if (res.ok) {
+            modalStatus.style.color = "#10b981";
+            modalStatus.textContent = `✅ Successfully decrypted to:\n${res.decryptedPath}`;
+            setTimeout(closeDecryptModal, 2000);
+          } else {
+            modalStatus.style.color = "#ef4444";
+            modalStatus.textContent = `❌ Decryption failed: ${res.error}`;
+          }
+        } catch (err) {
+          modalStatus.style.color = "#ef4444";
+          modalStatus.textContent = `❌ Error: ${err.message}`;
+        }
+      } else {
+        modalStatus.style.color = "#ef4444";
+        modalStatus.textContent = "Fafnir vault IPC not connected.";
+      }
+    });
+
+    modalPass.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") modalConfirm.click();
+      if (e.key === "Escape") closeDecryptModal();
+    });
+
     async function loadVault() {
       const listEl = document.getElementById("vaultList");
       listEl.innerHTML = '<div style="color:var(--text-muted);padding:14px;">Loading vault...</div>';
 
-      if (window.hyperOffice && window.hyperOffice.fafnir) {
-        const files = await window.hyperOffice.fafnir.list();
+      const api = getFafnirApi();
+      if (api) {
+        const files = await api.list();
         listEl.innerHTML = "";
         if (files.length === 0) {
           listEl.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center;">No encrypted containers in vault.</div>';
@@ -186,19 +271,15 @@
           decBtn.style.padding = "4px 10px";
           decBtn.style.fontSize = "12px";
           decBtn.textContent = "Decrypt to Desktop";
-          decBtn.onclick = async () => {
-            const pass = prompt(`Enter passphrase to decrypt ${f.filename}:`);
-            if (!pass) return;
-            const res = await window.hyperOffice.fafnir.decrypt({ vaultFileName: f.id, passphrase: pass });
-            if (res.ok) alert(`Decrypted successfully to:\n${res.decryptedPath}`);
-            else alert("Decryption failed: " + res.error);
-          };
+          decBtn.onclick = () => openDecryptModal(f);
 
           right.appendChild(decBtn);
           row.appendChild(left);
           row.appendChild(right);
           listEl.appendChild(row);
         });
+      } else {
+        listEl.innerHTML = '<div style="color:#ef4444;padding:14px;">Fafnir IPC bridge not connected.</div>';
       }
     }
 
@@ -207,20 +288,33 @@
       const passphrase = document.getElementById("encPass").value;
       const statusEl = document.getElementById("encStatus");
 
-      if (!srcPath || !passphrase) return alert("Please specify both file path and master passphrase.");
+      if (!srcPath || !passphrase) {
+        statusEl.style.display = "block";
+        statusEl.style.color = "#ef4444";
+        statusEl.textContent = "Please specify both file path and master passphrase.";
+        return;
+      }
       statusEl.style.display = "block";
+      statusEl.style.color = "#38bdf8";
       statusEl.textContent = "Encrypting with AES-256-GCM...";
 
-      if (window.hyperOffice && window.hyperOffice.fafnir) {
-        const res = await window.hyperOffice.fafnir.encrypt({ srcPath, passphrase });
-        if (res.ok) {
-          statusEl.textContent = `File encrypted successfully into vault: ${res.vaultPath}`;
-          document.getElementById("encSrcPath").value = "";
-          document.getElementById("encPass").value = "";
-          loadVault();
-        } else {
+      const api = getFafnirApi();
+      if (api) {
+        try {
+          const res = await api.encrypt({ srcPath, passphrase });
+          if (res.ok) {
+            statusEl.style.color = "#10b981";
+            statusEl.textContent = `✅ File encrypted into vault: ${res.vaultPath}`;
+            document.getElementById("encSrcPath").value = "";
+            document.getElementById("encPass").value = "";
+            loadVault();
+          } else {
+            statusEl.style.color = "#ef4444";
+            statusEl.textContent = "Encryption failed: " + res.error;
+          }
+        } catch (e) {
           statusEl.style.color = "#ef4444";
-          statusEl.textContent = "Encryption failed: " + res.error;
+          statusEl.textContent = "Error: " + e.message;
         }
       }
     });

@@ -580,7 +580,7 @@
     </webview>
 
     <iframe id="aetherumLocalFrame"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             style="display:block; width:100%; height:100%; border:none; background:#090d16;">
     </iframe>
 
@@ -675,11 +675,19 @@
     }
 
     sleipnirToggle.addEventListener("click", async () => {
-      if (window.hyperOffice && window.hyperOffice.sleipnir) {
-        const res = await window.hyperOffice.sleipnir.toggle();
-        updateSleipnirUi(res.active);
-        if (localFrame.style.display !== "block") {
-          webview.reload();
+      const api = window.hyperOffice?.sleipnir || window.parent?.hyperOffice?.sleipnir;
+      if (api) {
+        sleipnirToggle.style.pointerEvents = "none";
+        try {
+          const res = await api.toggle();
+          updateSleipnirUi(res && res.active);
+          if (localFrame.style.display !== "block" && webview && webview.style.display !== "none") {
+            webview.reload();
+          }
+        } catch (e) {
+          console.error("Sleipnir toggle failed:", e);
+        } finally {
+          sleipnirToggle.style.pointerEvents = "auto";
         }
       }
     });
