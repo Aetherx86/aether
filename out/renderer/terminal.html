@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Aether Terminal</title>
+  <style>
+    :root {
+      --bg: #18181b;
+      --header-bg: #27272a;
+      --border: #3f3f46;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #6366f1;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --cyan: #06b6d4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* Terminal Header */
+    .term-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .term-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      color: #e4e4e7;
+    }
+
+    .term-badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #312e81;
+      color: #c7d2fe;
+      border: 1px solid var(--accent);
+    }
+
+    .quick-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-btn {
+      background: #3f3f46;
+      border: 1px solid #52525b;
+      color: var(--text);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .pill-btn:hover {
+      background: #52525b;
+    }
+
+    /* Output Scroll View */
+    .term-body {
+      flex: 1;
+      padding: 12px 16px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .term-line {
+      margin-bottom: 2px;
+    }
+
+    /* Active Prompt */
+    .term-prompt-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .prompt-label {
+      color: var(--green);
+      font-weight: 600;
+      user-select: none;
+    }
+
+    .prompt-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      caret-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="term-header">
+    <div class="term-title">
+      <span class="term-badge">zsh</span>
+      <span>Aether Workspace Terminal</span>
+    </div>
+    <div class="quick-bar">
+      <button class="pill-btn" onclick="sendCmd('aether --help')">aether --help</button>
+      <button class="pill-btn" onclick="sendCmd('git status')">git status</button>
+      <button class="pill-btn" onclick="sendCmd('ls -la')">ls -la</button>
+      <button class="pill-btn" onclick="sendCmd('clear')">clear</button>
+    </div>
+  </div>
+
+  <div class="term-body" id="termBody">
+    <div class="term-line" style="color:#a1a1aa;">Welcome to Aether Built-in Terminal.</div>
+    <div class="term-line" style="color:#818cf8;">Direct access to macOS zsh shell, Aether CLI tools, and project repo.</div>
+    <div class="term-line" style="color:#71717a;">Type commands below or use the quick buttons above.</div>
+    <div id="output"></div>
+    <div class="term-prompt-row">
+      <span class="prompt-label" id="promptText">aether ~ %</span>
+      <input type="text" class="prompt-input" id="cmdInput" autofocus spellcheck="false" autocomplete="off" />
+    </div>
+  </div>
+
+  <script>
+    const outputEl = document.getElementById("output");
+    const termBody = document.getElementById("termBody");
+    const cmdInput = document.getElementById("cmdInput");
+    const promptText = document.getElementById("promptText");
+
+    const history = [];
+    let historyIdx = -1;
+    let sessionId = "session-" + Date.now();
+
+    function scrollToBottom() {
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    function appendOutput(text, isError = false) {
+      const span = document.createElement("span");
+      span.innerHTML = ansiToHtml(text);
+      if (isError) span.style.color = "var(--red)";
+      outputEl.appendChild(span);
+      scrollToBottom();
+    }
+
+    function ansiToHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\x1b\[0?m/g, "</span>")
+        .replace(/\x1b\[1m/g, "<span style='font-weight:bold;'>")
+        .replace(/\x1b\[31m/g, "<span style='color:var(--red);'>")
+        .replace(/\x1b\[32m/g, "<span style='color:var(--green);'>")
+        .replace(/\x1b\[33m/g, "<span style='color:var(--yellow);'>")
+        .replace(/\x1b\[34m/g, "<span style='color:#60a5fa;'>")
+        .replace(/\x1b\[35m/g, "<span style='color:#c084fc;'>")
+        .replace(/\x1b\[36m/g, "<span style='color:var(--cyan);'>")
+        .replace(/\x1b\[37m/g, "<span style='color:#f4f4f5;'>")
+        .replace(/\x1b\[90m/g, "<span style='color:#71717a;'>")
+        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, ""); // strip unknown escape codes
+    }
+
+    // Connect with window.hyperOffice.terminal
+    if (window.hyperOffice && window.hyperOffice.terminal) {
+      window.hyperOffice.terminal.create({
+        cwd: "/Users/sushikim/Desktop/app_source"
+      }).then(res => {
+        if (res && res.id) sessionId = res.id;
+      });
+
+      window.hyperOffice.terminal.onOutput((payload) => {
+        if (payload && payload.data) {
+          appendOutput(payload.data);
+        }
+      });
+    }
+
+    function sendCmd(cmd) {
+      if (cmd === "clear") {
+        outputEl.innerHTML = "";
+        return;
+      }
+      if (window.hyperOffice && window.hyperOffice.terminal) {
+        window.hyperOffice.terminal.write(sessionId, cmd + "\n");
+      } else {
+        appendOutput("\n$ " + cmd + "\n[Terminal session offline]\n", true);
+      }
+    }
+
+    cmdInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const cmd = cmdInput.value.trim();
+        cmdInput.value = "";
+        if (cmd) {
+          history.push(cmd);
+          historyIdx = history.length;
+          sendCmd(cmd);
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (historyIdx > 0) {
+          historyIdx--;
+          cmdInput.value = history[historyIdx];
+        }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (historyIdx < history.length - 1) {
+          historyIdx++;
+          cmdInput.value = history[historyIdx];
+        } else {
+          historyIdx = history.length;
+          cmdInput.value = "";
+        }
+      } else if (e.key === "c" && e.ctrlKey) {
+        if (window.hyperOffice && window.hyperOffice.terminal) {
+          window.hyperOffice.terminal.write(sessionId, "\x03");
+        }
+      }
+    });
+
+    // Keep focus
+    document.addEventListener("click", () => cmdInput.focus());
+  </script>
+</body>
+</html>

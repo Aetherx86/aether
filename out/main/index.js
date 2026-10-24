@@ -320757,6 +320757,19 @@ function createBrowserView(initialUrl = "ladybird://welcome") {
   void view.webContents.loadURL(fileUrl);
   return view;
 }
+function createTerminalView() {
+  const view = new require$$1$3.WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  const termPath = path.resolve(__dirname, "../renderer/terminal.html");
+  void view.webContents.loadURL(require$$1$2.pathToFileURL(termPath).toString());
+  return view;
+}
 const MINDMAP_CHANNELS = {
   // ---- open and save (implemented) ----
   /** invoke → `string | null`: the path queued for this view, null for a new map */
@@ -324942,6 +324955,23 @@ class TabManager {
       kind: "browser",
       view,
       title: "Aether Browser",
+      filePath: void 0
+    });
+    this.activateTab(id2);
+    return id2;
+  }
+  openTerminalTab() {
+    const view = createTerminalView();
+    const id2 = `t${this.nextId++}`;
+    this.shellWindow.contentView.addChildView(view);
+    view.setVisible(false);
+    this.trackHtmlFullScreen(view);
+    this.trackPaneFocus(view);
+    this.tabs.push({
+      id: id2,
+      kind: "browser",
+      view,
+      title: "Terminal",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -345625,11 +345655,7 @@ function registerTabsIpc() {
       {
         label: "Open Built-in Terminal (zsh)",
         icon: menuIcons().home,
-        click: () => {
-          if (shellWindow && !shellWindow.isDestroyed()) {
-            shellWindow.webContents.send("hyper:toggle-terminal");
-          }
-        }
+        click: () => tabManager?.openTerminalTab?.()
       },
       {
         label: "New Ladybird Browser Tab (Web/Docs)",
@@ -346752,6 +346778,9 @@ require$$1$3.app.whenReady().then(async () => {
     require("./extensions/index.js").installHyperOfficeExtensions();
     require$$1$3.ipcMain.handle("hyper:browser:open-tab", (_event, url) => {
       tabManager?.openBrowserTab(url || "ladybird://welcome");
+    });
+    require$$1$3.ipcMain.handle("hyper:term:open-tab", () => {
+      tabManager?.openTerminalTab?.();
     });
   } catch (extErr) {
     console.error("[HyperOffice Extension Error]", extErr);

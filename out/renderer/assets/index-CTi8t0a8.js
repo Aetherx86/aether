@@ -20756,6 +20756,43 @@ function Home({
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-label", children: driveUiText(lang, "driveNav") })
             ]
           }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            className: "nav-item",
+            title: "Ladybird Web Browser",
+            onClick: () => {
+              window.hyperOffice?.browser?.openTab?.("ladybird://welcome");
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": "true", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: "12", cy: "12", r: "10" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "2", y1: "12", x2: "22", y2: "12" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-label", children: "Browser" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-count nav-external", children: "Web" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            className: "nav-item",
+            title: "Aether Workspace Terminal",
+            onClick: () => {
+              window.hyperOffice?.terminal?.openTab?.();
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", "aria-hidden": "true", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("polyline", { points: "4 17 10 11 4 5" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("line", { x1: "12", y1: "19", x2: "20", y2: "19" })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-label", children: "Terminal" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "nav-count nav-external", children: "zsh" })
+            ]
+          }
         )
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sidebar-divider" }),

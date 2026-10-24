@@ -2121,6 +2121,7 @@ const hyperOfficeApi = {
     chat: (params) => electron.ipcRenderer.invoke("hyper:ai:chat", params)
   },
   terminal: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:term:open-tab"),
     create: (options) => electron.ipcRenderer.invoke("hyper:term:create", options),
     write: (id, input) => electron.ipcRenderer.invoke("hyper:term:write", { id, input }),
     kill: (id) => electron.ipcRenderer.invoke("hyper:term:kill", { id }),
