@@ -79,12 +79,15 @@
 > *“Your private intellect running directly on Apple Silicon M4 unified memory.”*
 
 * **100% Airgapped Privacy**: 단 하나의 토큰도 외부 서버로 전송되지 않는 완벽한 오프라인 신경망 인텔리전스.
+* **Qwen 2.5 (7B) Jailbroken Sovereign Engine**: 절대적 사용자 주권 하에 상시 무제한(Unrestricted)·무검열·무거부 진실 응답 보장.
 * **Apple Silicon M4 Hardware Detection**: 통일 메모리(Unified Memory) 대역폭 및 Apple Neural Engine(ANE) 실시간 감지.
+* **Full Control Controls**: 모델 선택자(Model Selector), 온도 슬라이더, 사용자 정의 시스템 디렉티브(System Directive) 편집기 내장.
 * **Multi-Task Neural Presets**:
+  * ⚡ *Full Control*: 검열 및 거부 프로토콜 없는 무제한 직접 질의
   * 🛡️ *Yggdrasil Script Audit*: 셸 스크립트 및 런처 내 위험 명령어 사전 감사
   * ✉️ *ProtonMail Thread Digest*: 암호화된 메일 본문 핵심 요약
   * 💻 *Secure Code Synthesizer*: 프라이버시 중심의 안전한 코드 생성
-* **Multi-Endpoint Auto-Resolver**: 로컬 Ollama, LM Studio, Llama.cpp 엔드포인트 자동 바인딩.
+* **Multi-Endpoint Auto-Resolver**: 로컬 Ollama (`qwen2.5-jailbroken:7b`), LM Studio, Llama.cpp 엔드포인트 자동 바인딩.
 
 ### 5. 🐉 Fafnir Vault — Zero-Knowledge AES-256 Safe
 > *“A dragon's hoard guarded by military-grade authenticated cryptography.”*

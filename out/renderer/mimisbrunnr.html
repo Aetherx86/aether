@@ -394,8 +394,8 @@
       <div class="info-card" id="localModelCard">
         <strong>Apple Silicon Local LLM:</strong>
         <div id="modelCardContent">
-          <p style="margin-top:4px; font-size:11.5px; color:#38bdf8;">Qwen 2.5 (7B) installed & active on Apple Metal GPU.</p>
-          <div class="code-snippet">ollama run qwen2.5:7b</div>
+          <p style="margin-top:4px; font-size:11.5px; color:#38bdf8;">Qwen 2.5 (7B) Jailbroken installed & active on Apple Metal GPU.</p>
+          <div class="code-snippet">ollama run qwen2.5-jailbroken:7b</div>
         </div>
       </div>
     </div>
@@ -524,7 +524,7 @@
           labelModel.textContent = "Embedded Offline Engine";
           const modelCardContent = document.getElementById("modelCardContent");
           if (modelCardContent) {
-            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#94a3b8;">Embedded engine active. Run Ollama for full local LLM:</p><div class="code-snippet">ollama run qwen2.5:7b</div>`;
+            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#94a3b8;">Embedded engine active. Run Ollama for full local LLM:</p><div class="code-snippet">ollama run qwen2.5-jailbroken:7b</div>`;
           }
         }
       } catch (e) {
