@@ -862,6 +862,35 @@ async function main() {
     assert.strictEqual(suites.DB_API, "Ratatoskr");
   });
 
+  // 18. Aether CLI Command and Usage Purity Check
+  runTest("CLI Command and Usage Integrity (Usage: aether)", () => {
+    const { execSync } = require("child_process");
+    const candidates = [
+      "/Users/sushikim/.local/bin/aether",
+      "/Users/sushikim/Desktop/Aether.app/Contents/Resources/cli/aether"
+    ];
+
+    let cliPath = null;
+    for (const c of candidates) {
+      if (fs.existsSync(c)) {
+        cliPath = c;
+        break;
+      }
+    }
+
+    if (cliPath) {
+      const output = execSync(`"${cliPath}" --help`, { encoding: "utf8" });
+      assert.ok(output.includes("Usage: aether <command>"), "CLI help must specify 'Usage: aether <command>'");
+      assert.ok(output.includes("Aether command line by Jeffrey Kim"), "CLI help title must specify 'Aether command line by Jeffrey Kim'");
+      assert.ok(!output.toLowerCase().includes("aetheum"), "CLI help must not mention legacy name 'aetheum'");
+
+      const versionOutput = execSync(`"${cliPath}" --version`, { encoding: "utf8" });
+      assert.ok(versionOutput.includes("aether 0.0.1"), "CLI version must output 'aether 0.0.1'");
+    } else {
+      console.log("   (Notice: Packaged CLI binary not in current container path, skipping binary execution check)");
+    }
+  });
+
   console.log("=================================================");
   console.log(`Results: ${passed} passed, ${failed} failed`);
   console.log("=================================================");
