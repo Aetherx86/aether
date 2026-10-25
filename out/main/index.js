@@ -320762,8 +320762,11 @@ function createBrowserView(initialUrl = "aetherum://welcome") {
     }
   });
   const browserPath = path.resolve(__dirname, "../renderer/browser.html");
-  const fileUrl = require$$1$2.pathToFileURL(browserPath).toString() + (initialUrl ? `?url=${encodeURIComponent(initialUrl)}` : "");
-  void view.webContents.loadURL(fileUrl);
+  if (initialUrl) {
+    void view.webContents.loadFile(browserPath, { search: `?url=${encodeURIComponent(initialUrl)}` });
+  } else {
+    void view.webContents.loadFile(browserPath);
+  }
   return view;
 }
 function createTerminalView() {
@@ -320776,7 +320779,7 @@ function createTerminalView() {
     }
   });
   const termPath = path.resolve(__dirname, "../renderer/terminal.html");
-  void view.webContents.loadURL(require$$1$2.pathToFileURL(termPath).toString());
+  void view.webContents.loadFile(termPath);
   return view;
 }
 function createNibelungenView() {
@@ -320789,7 +320792,7 @@ function createNibelungenView() {
     }
   });
   const nibPath = path.resolve(__dirname, "../renderer/nibelungen.html");
-  void view.webContents.loadURL(require$$1$2.pathToFileURL(nibPath).toString());
+  void view.webContents.loadFile(nibPath);
   return view;
 }
 function createRatatoskrView() {
@@ -320802,7 +320805,7 @@ function createRatatoskrView() {
     }
   });
   const ratPath = path.resolve(__dirname, "../renderer/ratatoskr.html");
-  void view.webContents.loadURL(require$$1$2.pathToFileURL(ratPath).toString());
+  void view.webContents.loadFile(ratPath);
   return view;
 }
 function createFafnirView() {
@@ -320815,7 +320818,7 @@ function createFafnirView() {
     }
   });
   const fafPath = path.resolve(__dirname, "../renderer/fafnir.html");
-  void view.webContents.loadURL(require$$1$2.pathToFileURL(fafPath).toString());
+  void view.webContents.loadFile(fafPath);
   return view;
 }
 function createMimisbrunnrView() {
@@ -320828,7 +320831,7 @@ function createMimisbrunnrView() {
     }
   });
   const mimPath = path.resolve(__dirname, "../renderer/mimisbrunnr.html");
-  void view.webContents.loadURL(require$$1$2.pathToFileURL(mimPath).toString());
+  void view.webContents.loadFile(mimPath);
   return view;
 }
 const MINDMAP_CHANNELS = {
