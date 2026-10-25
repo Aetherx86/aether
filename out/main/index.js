@@ -1666,6 +1666,15 @@ function installNavigationGuard(app) {
   if (holder2[INSTALLED]) return;
   holder2[INSTALLED] = true;
   app.on("web-contents-created", (_event, contents) => {
+    // Aetherum Browser webview and browser session webcontents must be allowed to navigate, redirect, and open windows freely
+    const isBrowserWebview = contents.getType() === "webview" ||
+                            contents.session?.partition === "persist:aetherum" ||
+                            (typeof contents.getURL === "function" && contents.getURL().includes("browser.html"));
+    if (isBrowserWebview) {
+      contents.setWindowOpenHandler(() => ({ action: "allow" }));
+      return;
+    }
+
     contents.on("will-navigate", (event) => {
       if (event.url !== contents.getURL()) event.preventDefault();
     });

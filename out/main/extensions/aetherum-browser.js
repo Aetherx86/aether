@@ -60,7 +60,19 @@ async function configureAetherumSession() {
   try {
     const ses = electronSession.fromPartition("persist:aetherum");
 
-    // Remove restrictive security headers that prevent framing/webview embed
+    // Standard Chromium headers to ensure seamless authentication and redirection (Proton, Google, Microsoft)
+    const standardChromeUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+    ses.webRequest.onBeforeSendHeaders((details, callback) => {
+      const requestHeaders = { ...details.requestHeaders };
+      requestHeaders["User-Agent"] = standardChromeUa;
+      requestHeaders["sec-ch-ua"] = '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"';
+      requestHeaders["sec-ch-ua-mobile"] = "?0";
+      requestHeaders["sec-ch-ua-platform"] = '"macOS"';
+      callback({ cancel: false, requestHeaders });
+    });
+
+    // Remove restrictive security headers that prevent framing/webview embed and cross-origin sign-in handshakes
     ses.webRequest.onHeadersReceived((details, callback) => {
       const responseHeaders = { ...details.responseHeaders };
       delete responseHeaders["x-frame-options"];
@@ -69,13 +81,13 @@ async function configureAetherumSession() {
       delete responseHeaders["Content-Security-Policy"];
       delete responseHeaders["x-content-security-policy"];
       delete responseHeaders["X-Content-Security-Policy"];
+      delete responseHeaders["cross-origin-embedder-policy"];
+      delete responseHeaders["Cross-Origin-Embedder-Policy"];
       callback({ cancel: false, responseHeaders });
     });
 
-    // Custom Aetherum / Tor user agent
-    ses.setUserAgent(
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Aetherum/0.0.1 (Macintosh; Privacy Tor Browser; Aether Platform)"
-    );
+    // Custom Aetherum standard Chrome user agent
+    ses.setUserAgent(standardChromeUa);
 
     // Apply Tor / Sleipnir proxy if enabled
     await syncBrowserProxy(torModeEnabled);

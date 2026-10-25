@@ -628,6 +628,46 @@ async function main() {
       quickLinks[0].click();
       await new Promise(r => setTimeout(r, 50));
       assert.strictEqual(urlInput.value, quickLinks[0].dataset.url, "Clicking quick link must navigate to target URL");
+
+      // 10. Multi-Tab System: Creation, Switching, and Closing
+      const btnNewTab = dom.window.document.getElementById("btnNewTab");
+      const tabsContainer = dom.window.document.getElementById("tabsContainer");
+      assert.ok(btnNewTab, "New tab button must exist");
+      assert.strictEqual(tabsContainer.children.length, 1, "Initial browser tab count must be 1");
+
+      btnNewTab.click();
+      await new Promise(r => setTimeout(r, 50));
+      assert.strictEqual(tabsContainer.children.length, 2, "Clicking new tab button must add a tab");
+
+      let currentTabElements = tabsContainer.querySelectorAll(".tab-item");
+      assert.ok(currentTabElements[1].classList.contains("active"), "Newly created tab must be active");
+
+      // Navigate tab 2 to Proton Mail
+      urlInput.value = "https://mail.proton.me";
+      btnGo.click();
+      await new Promise(r => setTimeout(r, 50));
+      assert.strictEqual(urlInput.value, "https://mail.proton.me");
+
+      // Switch back to tab 1 (query freshly rendered elements)
+      currentTabElements = tabsContainer.querySelectorAll(".tab-item");
+      currentTabElements[0].click();
+      await new Promise(r => setTimeout(r, 50));
+      currentTabElements = tabsContainer.querySelectorAll(".tab-item");
+      assert.ok(currentTabElements[0].classList.contains("active"), "Tab 1 must become active upon click");
+      assert.strictEqual(urlInput.value, quickLinks[0].dataset.url, "URL bar must reflect Tab 1 URL");
+
+      // Close tab 2
+      const closeButtons = tabsContainer.querySelectorAll(".tab-close");
+      closeButtons[1].click();
+      await new Promise(r => setTimeout(r, 50));
+      assert.strictEqual(tabsContainer.children.length, 1, "Closing tab must decrement tab count");
+
+      // 11. Redirection Simulation (mail.proton.me -> https://account.proton.me/mail)
+      const activeWebview = dom.window.document.getElementById("contentWebview");
+      const redirectEvent = new dom.window.CustomEvent("did-redirect-navigation");
+      redirectEvent.url = "https://account.proton.me/mail";
+      activeWebview.dispatchEvent(redirectEvent);
+      assert.strictEqual(urlInput.value, "https://account.proton.me/mail", "did-redirect-navigation must update address bar upon redirection");
     });
 
     // 12. DOM & Button Click Tests: Nibelungen (nibelungen.html)

@@ -354,6 +354,130 @@
       opacity: 0;
     }
 
+    /* Tab Strip */
+    .tab-strip {
+      display: flex;
+      align-items: center;
+      background: #090d16;
+      padding: 6px 12px 0 12px;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 30;
+      user-select: none;
+    }
+    .tabs-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs-container::-webkit-scrollbar {
+      display: none;
+    }
+    .tab-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      min-width: 110px;
+      max-width: 200px;
+      height: 32px;
+      box-sizing: border-box;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .tab-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+    }
+    .tab-item.active {
+      background: #111827;
+      color: #fff;
+      font-weight: 600;
+      border-color: var(--border);
+      box-shadow: 0 -2px 6px rgba(0,0,0,0.3);
+    }
+    .tab-favicon {
+      width: 14px;
+      height: 14px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .tab-title {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-close {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0.5;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .tab-item:hover .tab-close {
+      opacity: 0.9;
+    }
+    .tab-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      opacity: 1;
+    }
+    .btn-new-tab {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 15px;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-bottom: 2px;
+      transition: all 0.15s;
+    }
+    .btn-new-tab:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: var(--border-light);
+    }
+    .tab-viewport {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .tab-viewport.active {
+      display: block !important;
+    }
+    .tab-viewport:not(.active) {
+      display: none !important;
+    }
+
     /* Main Viewport Container */
     .viewport-container {
       flex: 1 1 0%;
@@ -429,6 +553,12 @@
   </style>
 </head>
 <body>
+  <!-- Browser Tab Strip -->
+  <div class="tab-strip" id="tabStrip">
+    <div class="tabs-container" id="tabsContainer"></div>
+    <button class="btn-new-tab" id="btnNewTab" title="New Tab (⌘T)">+</button>
+  </div>
+
   <!-- Nav Toolbar -->
   <div class="nav-bar">
     <div class="badge" id="btnBadgeLogo" title="Aetherum Browser Home">
@@ -569,20 +699,24 @@
   </div>
 
   <!-- Viewport -->
-  <div class="viewport-container">
+  <div class="viewport-container" id="viewportContainer">
     <div class="progress-bar" id="progressBar"></div>
 
-    <webview id="contentWebview"
-             partition="persist:aetherum"
-             allowpopups
-             webpreferences="contextIsolation=no"
-             style="display:none; width:100%; height:100%;">
-    </webview>
-
-    <iframe id="aetherumLocalFrame"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-            style="display:block; width:100%; height:100%; border:none; background:#090d16;">
-    </iframe>
+    <!-- Multi-Tab Viewports Container -->
+    <div id="tabViewportsContainer" style="width:100%; height:100%; position:relative;">
+      <div class="tab-viewport active" id="viewport-tab-1">
+        <webview id="contentWebview"
+                 partition="persist:aetherum"
+                 allowpopups
+                 webpreferences="contextIsolation=yes, nodeIntegration=no, sandbox=yes"
+                 style="position:absolute; top:0; left:0; width:100%; height:100%; border:none; background:#ffffff; z-index:1; display:none;">
+        </webview>
+        <iframe id="aetherumLocalFrame"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                style="position:absolute; top:0; left:0; width:100%; height:100%; border:none; background:#090d16; z-index:2; display:block;">
+        </iframe>
+      </div>
+    </div>
 
     <!-- AI Drawer -->
     <div class="ai-drawer" id="aiDrawer">
@@ -597,8 +731,7 @@
   </div>
 
   <script>
-    const webview = document.getElementById("contentWebview");
-    const localFrame = document.getElementById("aetherumLocalFrame");
+    // Primary UI Elements
     const urlInput = document.getElementById("urlInput");
     const urlIcon = document.getElementById("urlIcon");
     const btnGo = document.getElementById("btnGo");
@@ -607,6 +740,9 @@
     const btnReload = document.getElementById("btnReload");
     const btnHome = document.getElementById("btnHome");
     const btnBadgeLogo = document.getElementById("btnBadgeLogo");
+    const btnNewTab = document.getElementById("btnNewTab");
+    const tabsContainer = document.getElementById("tabsContainer");
+    const tabViewportsContainer = document.getElementById("tabViewportsContainer");
     const torToggle = document.getElementById("torToggle");
     const torLabel = document.getElementById("torLabel");
     const sleipnirToggle = document.getElementById("sleipnirToggle");
@@ -622,8 +758,24 @@
     const drawerContent = document.getElementById("drawerContent");
     const progressBar = document.getElementById("progressBar");
 
+    // Compatibility references for test harnesses
+    let webview = document.getElementById("contentWebview");
+    let localFrame = document.getElementById("aetherumLocalFrame");
+
     let torEnabled = true;
     let sleipnirEnabled = true;
+
+    // Security icon update
+    function updateSecurityIcon(url) {
+      if (!url) return;
+      if (url.startsWith("https://")) {
+        urlIcon.textContent = "🔒";
+      } else if (url.startsWith("aetherum://")) {
+        urlIcon.textContent = "🛡️";
+      } else {
+        urlIcon.textContent = "🌐";
+      }
+    }
 
     // Dropdown Toggles
     btnSuiteMenu.addEventListener("click", (e) => {
@@ -682,8 +834,8 @@
         try {
           const res = await api.toggle();
           updateSleipnirUi(res && res.active);
-          if (localFrame.style.display !== "block" && webview && webview.style.display !== "none") {
-            webview.reload();
+          if (activeTab && !activeTab.isLocal && activeTab.webview && typeof activeTab.webview.reload === "function") {
+            activeTab.webview.reload();
           }
         } catch (e) {
           console.error("Sleipnir toggle failed:", e);
@@ -725,8 +877,8 @@
       if (browserApi && browserApi.setTor) {
         const res = await browserApi.setTor(nextState);
         updateTorUi(res.torEnabled, res.active);
-        if (localFrame.style.display !== "block") {
-          webview.reload();
+        if (activeTab && !activeTab.isLocal && activeTab.webview && typeof activeTab.webview.reload === "function") {
+          activeTab.webview.reload();
         }
       }
     });
@@ -748,58 +900,349 @@
       } catch (e) {}
     }
 
-    // Navigation Logic
-    window.navigateTo = async function(url) {
-      if (!url) return;
-      url = url.trim();
+    // Full Multi-Tab Management
+    let tabs = [];
+    let activeTab = null;
+    let tabSeq = 0;
 
-      if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("aetherum://")) {
-        if (url.includes(".") && !url.includes(" ")) {
-          url = "https://" + url;
+    class BrowserTab {
+      constructor(id, initialUrl, title, existingElements = null) {
+        this.id = id;
+        this.url = initialUrl || "aetherum://welcome";
+        this.title = title || "New Tab";
+        this.favicon = "";
+        this.isLoading = false;
+        this.isLocal = this.url.startsWith("aetherum://");
+
+        if (existingElements) {
+          this.viewport = existingElements.viewport;
+          this.webview = existingElements.webview;
+          this.iframe = existingElements.iframe;
         } else {
-          url = "https://duckduckgo.com/?q=" + encodeURIComponent(url);
+          this.viewport = document.createElement("div");
+          this.viewport.className = "tab-viewport";
+          this.viewport.id = `viewport-${this.id}`;
+
+          this.webview = document.createElement("webview");
+          this.webview.setAttribute("partition", "persist:aetherum");
+          this.webview.setAttribute("allowpopups", "");
+          this.webview.setAttribute("webpreferences", "contextIsolation=yes, nodeIntegration=no, sandbox=yes");
+          this.webview.style.cssText = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; background:#ffffff; z-index:1; display:none;";
+
+          this.iframe = document.createElement("iframe");
+          this.iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups allow-modals");
+          this.iframe.style.cssText = "position:absolute; top:0; left:0; width:100%; height:100%; border:none; background:#090d16; z-index:2; display:block;";
+
+          this.viewport.appendChild(this.webview);
+          this.viewport.appendChild(this.iframe);
+          if (tabViewportsContainer) {
+            tabViewportsContainer.appendChild(this.viewport);
+          }
         }
+
+        this.bindEvents();
       }
 
-      urlInput.value = url;
+      bindEvents() {
+        if (!this.webview) return;
 
-      if (url.startsWith("aetherum://")) {
-        urlIcon.textContent = "🛡️";
-        const pageName = url.replace("aetherum://", "") || "welcome";
-        try {
-          let html = "";
-          if (window.hyperOffice && window.hyperOffice.browser) {
-            const getFn = window.hyperOffice.browser.getAetherumPage;
-            if (getFn) html = await getFn(pageName);
+        this.webview.addEventListener("did-start-loading", () => {
+          this.isLoading = true;
+          if (activeTab === this) {
+            btnReload.textContent = "⏳";
+            progressBar.className = "progress-bar active";
           }
-          if (!html) {
-            html = `<!DOCTYPE html><html><body style="background:#090d16;color:#fff;padding:2rem;"><h1>Aetherum: ${pageName}</h1></body></html>`;
+          renderTabs();
+        });
+
+        this.webview.addEventListener("did-stop-loading", () => {
+          this.isLoading = false;
+          if (activeTab === this) {
+            btnReload.textContent = "↻";
+            progressBar.className = "progress-bar done";
           }
-          localFrame.srcdoc = html;
-          localFrame.style.display = "block";
-          webview.style.display = "none";
-          webview.style.visibility = "hidden";
-          webview.style.pointerEvents = "none";
-          document.title = `${pageName.toUpperCase()} — Aetherum Browser`;
-        } catch (e) {
-          localFrame.srcdoc = `<p style="padding:2rem;color:red;">Error: ${e.message}</p>`;
-          localFrame.style.display = "block";
-          webview.style.display = "none";
-          webview.style.visibility = "hidden";
-          webview.style.pointerEvents = "none";
+          renderTabs();
+        });
+
+        this.webview.addEventListener("did-navigate", (e) => {
+          this.url = e.url;
+          this.isLocal = false;
+          if (activeTab === this) {
+            urlInput.value = e.url;
+            updateSecurityIcon(e.url);
+          }
+          recordHistory(e.url, this.title);
+        });
+
+        this.webview.addEventListener("did-navigate-in-page", (e) => {
+          this.url = e.url;
+          if (activeTab === this) {
+            urlInput.value = e.url;
+            updateSecurityIcon(e.url);
+          }
+        });
+
+        // Crucial for redirections (e.g. mail.proton.me -> https://account.proton.me/mail)
+        this.webview.addEventListener("did-redirect-navigation", (e) => {
+          if (e.url) {
+            this.url = e.url;
+            this.isLocal = false;
+            if (activeTab === this) {
+              urlInput.value = e.url;
+              updateSecurityIcon(e.url);
+            }
+            recordHistory(e.url, this.title);
+          }
+        });
+
+        this.webview.addEventListener("will-navigate", (e) => {
+          if (e.url) {
+            this.url = e.url;
+            if (activeTab === this) {
+              urlInput.value = e.url;
+              updateSecurityIcon(e.url);
+            }
+          }
+        });
+
+        this.webview.addEventListener("page-title-updated", (e) => {
+          if (e.title) {
+            this.title = e.title;
+            renderTabs();
+            if (activeTab === this) {
+              document.title = `${e.title} — Aetherum Browser`;
+            }
+          }
+        });
+
+        this.webview.addEventListener("page-favicon-updated", (e) => {
+          if (e.favicons && e.favicons.length > 0) {
+            this.favicon = e.favicons[0];
+            renderTabs();
+          }
+        });
+
+        // Open popups and target="_blank" in a new browser tab
+        this.webview.addEventListener("new-window", (e) => {
+          e.preventDefault();
+          if (e.url) {
+            createTab(e.url, true);
+          }
+        });
+      }
+
+      async navigate(url) {
+        if (!url) return;
+        url = url.trim();
+
+        if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("aetherum://")) {
+          if (url.includes(".") && !url.includes(" ")) {
+            url = "https://" + url;
+          } else {
+            url = "https://duckduckgo.com/?q=" + encodeURIComponent(url);
+          }
         }
+
+        this.url = url;
+        if (activeTab === this) {
+          urlInput.value = url;
+          updateSecurityIcon(url);
+        }
+
+        if (url.startsWith("aetherum://")) {
+          this.isLocal = true;
+          const pageName = url.replace("aetherum://", "") || "welcome";
+          this.title = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+          this.favicon = "";
+          if (this.webview) this.webview.style.display = "none";
+          if (this.iframe) this.iframe.style.display = "block";
+
+          try {
+            let html = "";
+            const browserApi = window.hyperOffice?.browser || window.parent?.hyperOffice?.browser;
+            if (browserApi && browserApi.getAetherumPage) {
+              html = await browserApi.getAetherumPage(pageName);
+            }
+            if (!html) {
+              html = `<!DOCTYPE html><html><body style="background:#090d16;color:#fff;padding:2rem;"><h1>Aetherum: ${pageName}</h1></body></html>`;
+            }
+            if (this.iframe) this.iframe.srcdoc = html;
+            if (activeTab === this) {
+              document.title = `${pageName.toUpperCase()} — Aetherum Browser`;
+            }
+          } catch (e) {
+            if (this.iframe) this.iframe.srcdoc = `<p style="padding:2rem;color:red;">Error: ${e.message}</p>`;
+          }
+          renderTabs();
+        } else {
+          this.isLocal = false;
+          if (this.iframe) this.iframe.style.display = "none";
+          if (this.webview) {
+            this.webview.style.display = "flex";
+            this.webview.style.visibility = "visible";
+            this.webview.style.pointerEvents = "auto";
+
+            try {
+              if (typeof this.webview.loadURL === "function") {
+                this.webview.loadURL(url);
+              } else {
+                this.webview.src = url;
+              }
+            } catch (e) {
+              try { this.webview.src = url; } catch {}
+            }
+          }
+          recordHistory(url);
+          renderTabs();
+        }
+      }
+    }
+
+    function renderTabs() {
+      if (!tabsContainer) return;
+      tabsContainer.innerHTML = "";
+
+      tabs.forEach(tab => {
+        const tabEl = document.createElement("div");
+        tabEl.className = `tab-item ${tab === activeTab ? "active" : ""}`;
+        tabEl.title = tab.title || tab.url;
+
+        const iconEl = document.createElement("span");
+        iconEl.className = "tab-favicon";
+        if (tab.isLoading) {
+          iconEl.textContent = "⏳";
+        } else if (tab.favicon) {
+          const img = document.createElement("img");
+          img.src = tab.favicon;
+          img.style.cssText = "width:14px; height:14px; border-radius:2px;";
+          iconEl.appendChild(img);
+        } else if (tab.url.startsWith("https://")) {
+          iconEl.textContent = "🔒";
+        } else if (tab.url.startsWith("aetherum://")) {
+          iconEl.textContent = "🛡️";
+        } else {
+          iconEl.textContent = "🌐";
+        }
+        tabEl.appendChild(iconEl);
+
+        const titleEl = document.createElement("span");
+        titleEl.className = "tab-title";
+        titleEl.textContent = tab.title || (tab.url.startsWith("aetherum://") ? tab.url.replace("aetherum://", "") : tab.url);
+        tabEl.appendChild(titleEl);
+
+        const closeBtn = document.createElement("span");
+        closeBtn.className = "tab-close";
+        closeBtn.innerHTML = "✕";
+        closeBtn.title = "Close Tab (⌘W)";
+        closeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeTab(tab.id);
+        });
+        tabEl.appendChild(closeBtn);
+
+        tabEl.addEventListener("click", () => {
+          activateTab(tab);
+        });
+
+        tabsContainer.appendChild(tabEl);
+      });
+    }
+
+    function activateTab(tab) {
+      if (!tab) return;
+      activeTab = tab;
+      webview = tab.webview;
+      localFrame = tab.iframe;
+
+      tabs.forEach(t => {
+        if (t.viewport) {
+          if (t === tab) {
+            t.viewport.classList.add("active");
+            t.viewport.style.display = "block";
+          } else {
+            t.viewport.classList.remove("active");
+            t.viewport.style.display = "none";
+          }
+        }
+      });
+
+      urlInput.value = tab.url;
+      updateSecurityIcon(tab.url);
+      document.title = `${tab.title || "Aetherum"} — Aetherum Browser`;
+
+      if (tab.isLoading) {
+        btnReload.textContent = "⏳";
+        progressBar.className = "progress-bar active";
       } else {
-        urlIcon.textContent = url.startsWith("https") ? "🔒" : "🌐";
-        localFrame.style.display = "none";
-        webview.style.display = "flex";
-        webview.style.visibility = "visible";
-        webview.style.pointerEvents = "auto";
+        btnReload.textContent = "↻";
+        progressBar.className = "progress-bar done";
+      }
+
+      renderTabs();
+    }
+
+    function createTab(initialUrl = "aetherum://welcome", activate = true) {
+      tabSeq++;
+      const id = `tab-${tabSeq}`;
+      const tab = new BrowserTab(id, initialUrl, "New Tab");
+      tabs.push(tab);
+
+      if (activate) {
+        activateTab(tab);
+      } else {
+        renderTabs();
+      }
+
+      tab.navigate(initialUrl);
+      return tab;
+    }
+
+    function closeTab(tabId) {
+      const index = tabs.findIndex(t => t.id === tabId);
+      if (index === -1) return;
+
+      const tabToClose = tabs[index];
+
+      if (tabs.length === 1) {
+        tabToClose.navigate("aetherum://welcome");
+        return;
+      }
+
+      if (tabToClose.viewport && tabToClose.viewport.parentNode) {
         try {
-          webview.loadURL(url);
-        } catch (e) {
-          webview.src = url;
-        }
-        recordHistory(url);
+          tabToClose.viewport.parentNode.removeChild(tabToClose.viewport);
+        } catch (e) {}
+      }
+
+      tabs.splice(index, 1);
+
+      if (activeTab === tabToClose) {
+        const nextTab = tabs[index] || tabs[index - 1];
+        activateTab(nextTab);
+      } else {
+        renderTabs();
+      }
+    }
+
+    // Initialize first tab with pre-existing elements
+    tabSeq = 1;
+    const initialParam = new URLSearchParams(window.location.search).get("url") || "aetherum://welcome";
+    const firstTab = new BrowserTab("tab-1", initialParam, "Welcome", {
+      viewport: document.getElementById("viewport-tab-1"),
+      webview: document.getElementById("contentWebview"),
+      iframe: document.getElementById("aetherumLocalFrame")
+    });
+    tabs.push(firstTab);
+    activateTab(firstTab);
+    firstTab.navigate(initialParam);
+
+    // Global navigation helper
+    window.navigateTo = async function(url) {
+      if (!url) return;
+      if (activeTab) {
+        await activeTab.navigate(url);
+      } else {
+        createTab(url, true);
       }
     };
 
@@ -810,6 +1253,12 @@
       }
     });
 
+    if (btnNewTab) {
+      btnNewTab.addEventListener("click", () => {
+        createTab("aetherum://welcome", true);
+      });
+    }
+
     btnGo.addEventListener("click", () => window.navigateTo(urlInput.value));
     urlInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") window.navigateTo(urlInput.value);
@@ -818,52 +1267,55 @@
     btnHome.addEventListener("click", () => window.navigateTo("aetherum://welcome"));
     btnBadgeLogo.addEventListener("click", () => window.navigateTo("aetherum://welcome"));
     btnReload.addEventListener("click", () => {
-      if (localFrame.style.display === "block") {
-        window.navigateTo(urlInput.value);
-      } else {
-        webview.reload();
+      if (activeTab) {
+        if (activeTab.isLocal) {
+          activeTab.navigate(activeTab.url);
+        } else if (activeTab.webview && typeof activeTab.webview.reload === "function") {
+          activeTab.webview.reload();
+        }
       }
     });
 
     btnBack.addEventListener("click", () => {
-      if (webview.canGoBack && webview.canGoBack()) webview.goBack();
+      if (activeTab && activeTab.webview && typeof activeTab.webview.canGoBack === "function" && activeTab.webview.canGoBack()) {
+        activeTab.webview.goBack();
+      }
     });
 
     btnForward.addEventListener("click", () => {
-      if (webview.canGoForward && webview.canGoForward()) webview.goForward();
+      if (activeTab && activeTab.webview && typeof activeTab.webview.canGoForward === "function" && activeTab.webview.canGoForward()) {
+        activeTab.webview.goForward();
+      }
     });
 
     document.querySelectorAll(".quick-link").forEach(link => {
-      link.addEventListener("click", () => window.navigateTo(link.dataset.url));
+      link.addEventListener("click", (e) => {
+        if (e.metaKey || e.ctrlKey) {
+          createTab(link.dataset.url, true);
+        } else {
+          window.navigateTo(link.dataset.url);
+        }
+      });
     });
 
-    // Webview Events
-    webview.addEventListener("did-start-loading", () => {
-      btnReload.textContent = "⏳";
-      progressBar.className = "progress-bar active";
-    });
-
-    webview.addEventListener("did-stop-loading", () => {
-      btnReload.textContent = "↻";
-      progressBar.className = "progress-bar done";
-    });
-
-    webview.addEventListener("did-navigate", (e) => {
-      urlInput.value = e.url;
-      recordHistory(e.url);
-    });
-
-    webview.addEventListener("did-navigate-in-page", (e) => {
-      urlInput.value = e.url;
-    });
-
-    webview.addEventListener("page-title-updated", (e) => {
-      if (e.title) document.title = `${e.title} — Aetherum Browser`;
-    });
-
-    webview.addEventListener("new-window", (e) => {
-      e.preventDefault();
-      window.navigateTo(e.url);
+    // Keyboard Shortcuts (⌘T for new tab, ⌘W for close tab, ⌘R for reload, ⌘1-9 for switch)
+    window.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "t") {
+        e.preventDefault();
+        createTab("aetherum://welcome", true);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "w") {
+        e.preventDefault();
+        if (activeTab) closeTab(activeTab.id);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        if (btnReload) btnReload.click();
+      } else if ((e.metaKey || e.ctrlKey) && e.key >= "1" && e.key <= "9") {
+        const idx = parseInt(e.key, 10) - 1;
+        if (tabs[idx]) {
+          e.preventDefault();
+          activateTab(tabs[idx]);
+        }
+      }
     });
 
     // Gemini AI Summary
@@ -932,10 +1384,6 @@
         }
       }
     });
-
-    // Initial navigation
-    const initialParam = new URLSearchParams(window.location.search).get("url");
-    window.navigateTo(initialParam || "aetherum://welcome");
   </script>
 </body>
 </html>
