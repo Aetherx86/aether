@@ -49,7 +49,11 @@ function probeEndpoint(ep) {
         try {
           const json = JSON.parse(data);
           if (ep.type === "ollama" && json.models && json.models.length > 0) {
-            return resolve({ active: true, model: json.models[0].name, endpoint: ep.url, type: ep.type });
+            const preferred = json.models.find(m => m.name.includes("qwen2.5:7b"))
+              || json.models.find(m => m.name.includes("qwen2.5"))
+              || json.models.find(m => m.name.includes("llama3.2"))
+              || json.models[0];
+            return resolve({ active: true, model: preferred.name, endpoint: ep.url, type: ep.type });
           }
           if (ep.type === "openai" && json.data && json.data.length > 0) {
             return resolve({ active: true, model: json.data[0].id, endpoint: ep.url, type: ep.type });
@@ -100,7 +104,7 @@ async function queryLocalLlm(prompt, systemPrompt = "") {
   if (activeEndpoint.type === "ollama") {
     return new Promise((resolve, reject) => {
       const payload = JSON.stringify({
-        model: activeLocalModel || "llama3.2",
+        model: activeLocalModel || "qwen2.5:7b",
         prompt,
         system: systemPrompt,
         stream: false
@@ -249,7 +253,7 @@ Your machine features **${hw.memory}** and the **${hw.neuralEngine}**. You can r
 1. **Ollama (Apple Metal GPU Accelerated)**:
    \`\`\`bash
    brew install ollama
-   ollama run llama3.2
+   ollama run qwen2.5:7b
    \`\`\`
 2. **Apple MLX (\`mlx-lm\`)** — Apple's official open-source framework:
    \`\`\`bash
@@ -327,7 +331,7 @@ console.log(executeAirgappedOperation("${prompt.replace(/"/g, '\\"')}"));
 #### 💡 Insight & Guidance
 - **Privacy Assurance**: This query was processed strictly in memory on **${hw.chip}** with zero network telemetry or cloud data leakage.
 - **Hardware Acceleration**: Your system features **${hw.memory}** and **${hw.neuralEngine}**.
-- **Local Model Link**: To enable 8B/70B parameter neural text generation, start Ollama locally (\`brew install ollama && ollama run llama3.2\`). Mímisbrunnr will seamlessly bind to the local port and switch to full streaming generation.`;
+- **Local Model Link**: To enable 7B/14B parameter neural text generation, start Ollama locally (\`brew install ollama && ollama run qwen2.5:7b\`). Mímisbrunnr will seamlessly bind to the local port and switch to full streaming generation.`;
 }
 
 async function executeMimisbrunnrChat({ prompt, task = "general", system = "", forceOffline = false }) {

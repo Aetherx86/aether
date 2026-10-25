@@ -398,7 +398,7 @@ async function main() {
 
       const mockHyperOffice = {
         mimisbrunnr: {
-          status: async () => ({ active: true, model: "llama3.2:1b", endpoint: "http://127.0.0.1:11434" }),
+          status: async () => ({ active: true, model: "qwen2.5:7b", endpoint: "http://127.0.0.1:11434" }),
           hardware: async () => ({ chip: "Apple M4", memory: "16 GB Unified Memory", neuralEngine: "16-Core ANE" }),
           chat: async (payload) => {
             sentChatPayload = payload;
@@ -432,7 +432,7 @@ async function main() {
       checkEngineBtn.click();
       await new Promise(r => setTimeout(r, 50));
       assert.strictEqual(checkEngineBtn.textContent.trim(), "🔄 Check Engine", "Button text must restore after check");
-      assert.strictEqual(dom.window.document.getElementById("labelModel").textContent, "Live: llama3.2:1b");
+      assert.strictEqual(dom.window.document.getElementById("labelModel").textContent, "Live: qwen2.5:7b");
       assert.ok(dom.window.document.getElementById("pillModel").classList.contains("active"));
 
       // 4. Send button & message execution
