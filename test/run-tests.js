@@ -418,7 +418,13 @@ async function main() {
 
       // 2. Mode buttons click test
       const modeButtons = dom.window.document.querySelectorAll(".mode-btn");
-      assert.ok(modeButtons.length >= 4, "Must have mode presets");
+      assert.ok(modeButtons.length >= 5, "Must have mode presets including Full Control");
+
+      const fullControlBtn = Array.from(modeButtons).find(b => b.dataset.task === "full_control");
+      assert.ok(fullControlBtn, "Full Control mode button must exist");
+      fullControlBtn.click();
+      assert.ok(fullControlBtn.classList.contains("active"), "Full Control mode must become active");
+      assert.ok(dom.window.document.getElementById("promptInput").placeholder.includes("Full Control"), "Placeholder must update for full control");
 
       const emailModeBtn = Array.from(modeButtons).find(b => b.dataset.task === "email");
       assert.ok(emailModeBtn, "Email mode button must exist");
