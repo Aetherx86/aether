@@ -55,6 +55,7 @@
 ### 1. 🌐 Aetherum — Privacy-Hardened Multi-Tab Tor Browser
 > *“No trackers. No fingerprints. Pure uncompromised web freedom.”*
 
+* **Native Multi-Layer Adblock & Tracker Shield**: 네트워크 레벨 광고/트래커/팝업 실시간 차단(글로벌 애드테크 + 네이버·다음·카카오 등 국내 광고 서버 KR-Shield), EasyList CSS 빈 광고 슬롯 제거, 유튜브 프리롤 광고 자동 스킵, `utm_*`·`fbclid`·`gclid` 추적 파라미터 자동 정제 및 도메인별 화이트리스트/커스텀 필터(`aetherum://adblock`) 기본 내장.
 * **Native Multi-Tab Workspace**: Chrome 스타일의 직관적인 다중 탭 인터페이스(`⌘T`, `⌘W`, `⌘1`~`⌘9`). 탭 간 독립된 뷰포트 상태 보존.
 * **Onion Routing SOCKS5**: 토르 데몬(포트 9050) 연동을 통한 `.onion` 히든 서비스 및 다크웹 보안 브라우징. 원클릭 토르 토글 지원.
 * **Flawless Redirection & OAuth**: Chromium 131 순정 헤더 및 `sec-ch-ua` 클라이언트 힌트 적용으로 Proton Mail, Google, Microsoft 365, Turnstile 등 까다로운 로그인/리디렉션 완벽 호환.

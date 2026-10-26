@@ -341,6 +341,13 @@ function getWelcomePage() {
             <span>Airgapped Local Intelligence Assistant</span>
           </div>
         </a>
+        <a class="nav-item" onclick="parentNavigate('aetherum://adblock')">
+          <span class="nav-icon">🛡️</span>
+          <div class="nav-text">
+            <strong>Adblock Shield</strong>
+            <span>Ad, Tracker, Popup & YT Defuser</span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -720,6 +727,12 @@ function getSettingsPage() {
     </div>
 
     <div class="card">
+      <div class="card-title">🛡️ Aetherum Adblock & Tracker Shield</div>
+      <p style="color:var(--text-muted);margin-bottom:14px;">Multi-layer network adblocking, EasyList cosmetic element hiding, YouTube video ad skipping, and UTM/fbclid tracking parameter removal are built natively into Aetherum.</p>
+      <button class="btn primary" onclick="if (window.parent && window.parent.navigateTo) { window.parent.navigateTo('aetherum://adblock'); }">Open Adblock Shield Studio →</button>
+    </div>
+
+    <div class="card">
       <div class="card-title">🧅 Tor Onion Routing</div>
       <p style="color:var(--text-muted);margin-bottom:14px;">Aetherum routes web traffic through local SOCKS5 Tor daemon to protect your privacy and resolve .onion hidden services.</p>
       <div class="grid-2">
@@ -886,6 +899,12 @@ function getAetherumPage(pageName = "welcome") {
         return fs.readFileSync(path.resolve(__dirname, "../../renderer/heimdall.html"), "utf8");
       } catch (e) {
         return `<p style="padding:2rem;color:red;">Error loading Heimdall: ${e.message}</p>`;
+      }
+    case "adblock":
+      try {
+        return fs.readFileSync(path.resolve(__dirname, "../../renderer/adblock.html"), "utf8");
+      } catch (e) {
+        return `<p style="padding:2rem;color:red;">Error loading Adblock Shield: ${e.message}</p>`;
       }
     default:
       return getAboutPage();

@@ -9,6 +9,7 @@ const { spawn } = require("node:child_process");
 const { executeAiChat } = require("./env-agent");
 const { convertDocument } = require("./office-tools");
 const { getAetherumPage } = require("./aetherum-pages");
+const { attachAdblockToSession } = require("./adblock");
 
 let electronSession = null;
 try {
@@ -59,6 +60,9 @@ async function configureAetherumSession() {
   if (!electronSession) return;
   try {
     const ses = electronSession.fromPartition("persist:aetherum");
+
+    // Attach Aetherum Multi-Layer Adblock & Tracker Shield to browser session
+    attachAdblockToSession(ses);
 
     // Standard Chromium headers to ensure seamless authentication and redirection (Proton, Google, Microsoft)
     const standardChromeUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";

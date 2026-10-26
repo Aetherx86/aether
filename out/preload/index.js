@@ -2161,6 +2161,25 @@ const hyperOfficeApi = {
     setTor: (enabled) => electron.ipcRenderer.invoke("hyper:browser:set-tor", enabled),
     getTorStatus: () => electron.ipcRenderer.invoke("hyper:browser:tor-status")
   },
+  adblock: {
+    getStatus: (currentUrl) => electron.ipcRenderer.invoke("hyper:adblock:status", currentUrl),
+    toggle: () => electron.ipcRenderer.invoke("hyper:adblock:toggle"),
+    setEnabled: (enabled) => electron.ipcRenderer.invoke("hyper:adblock:set-enabled", enabled),
+    setConfig: (partial) => electron.ipcRenderer.invoke("hyper:adblock:set-config", partial),
+    toggleSite: (payload) => electron.ipcRenderer.invoke("hyper:adblock:toggle-site", payload),
+    addRule: (rule) => electron.ipcRenderer.invoke("hyper:adblock:add-rule", rule),
+    removeRule: (rule) => electron.ipcRenderer.invoke("hyper:adblock:remove-rule", rule),
+    updateLists: () => electron.ipcRenderer.invoke("hyper:adblock:update-lists"),
+    resetStats: (includeLifetime) => electron.ipcRenderer.invoke("hyper:adblock:reset-stats", includeLifetime),
+    cleanUrl: (url) => electron.ipcRenderer.invoke("hyper:adblock:clean-url", url),
+    getCosmeticPayload: (url) => electron.ipcRenderer.invoke("hyper:adblock:cosmetic", url),
+    checkUrl: (payload) => electron.ipcRenderer.invoke("hyper:adblock:check-url", payload),
+    onStatsUpdated: (listener) => {
+      const handler = (_event, data) => listener(data);
+      electron.ipcRenderer.on("hyper:adblock:stats-updated", handler);
+      return () => electron.ipcRenderer.removeListener("hyper:adblock:stats-updated", handler);
+    }
+  },
   git: {
     getStatus: (cwd) => electron.ipcRenderer.invoke("hyper:git:status", cwd),
     getDiff: (cwd, filePath, staged) => electron.ipcRenderer.invoke("hyper:git:diff", { cwd, filePath, staged }),

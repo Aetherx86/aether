@@ -67,6 +67,7 @@ async function main() {
       "out/renderer/fafnir.html",
       "out/renderer/mimisbrunnr.html",
       "out/renderer/heimdall.html",
+      "out/renderer/adblock.html",
       "out/main/extensions/aetherum-browser.js",
       "out/main/extensions/aetherum-pages.js",
       "out/main/extensions/sleipnir.js",
@@ -74,7 +75,8 @@ async function main() {
       "out/main/extensions/fafnir.js",
       "out/main/extensions/mimisbrunnr.js",
       "out/main/extensions/ratatoskr.js",
-      "out/main/extensions/heimdall.js"
+      "out/main/extensions/heimdall.js",
+      "out/main/extensions/adblock.js"
     ];
 
     for (const relPath of filesToCheck) {
@@ -1133,6 +1135,270 @@ async function main() {
       console.log("   (Notice: Packaged CLI binary not in current container path, skipping binary execution check)");
     }
   });
+
+  // 19. Aetherum Adblock & Tracker Shield Engine Unit & Edge-Case Tests
+  runTest("Aetherum Adblock: Network Blocking, KR-Shield, Whitelist, URL Cleaning & Cosmetics", () => {
+    const adblock = require("../out/main/extensions/adblock");
+    const { getAetherumPage } = require("../out/main/extensions/aetherum-pages");
+
+    const origStatus = adblock.getAdblockStatus();
+    try {
+      adblock.updateAdblockConfig({
+        enabled: true,
+        mode: "standard",
+        cosmeticFiltering: true,
+        stripTrackingParams: true,
+        blockPopups: true,
+        youtubeAdSkip: true,
+        whitelistedDomains: [],
+        customRules: []
+      });
+      adblock.resetAdblockStats(false);
+
+      // 1. Blocks global ad networks & trackers
+      const adVerdict = adblock.evaluateRequest({
+        url: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
+        initiator: "https://news.ycombinator.com",
+        resourceType: "script"
+      });
+      assert.strictEqual(adVerdict.cancel, true, "Must block Google Syndication ad scripts");
+      assert.strictEqual(adVerdict.category, "ad");
+
+      const trackerVerdict = adblock.evaluateRequest({
+        url: "https://www.google-analytics.com/g/collect?v=2",
+        initiator: "https://blog.example.com",
+        resourceType: "xhr"
+      });
+      assert.strictEqual(trackerVerdict.cancel, true, "Must block Google Analytics beacons");
+      assert.strictEqual(trackerVerdict.category, "tracker");
+
+      // 2. Blocks Korean regional ad endpoints while preserving portal static CDNs
+      const naverAd = adblock.evaluateRequest({
+        url: "https://siape.veta.naver.com/fxshow?su=SU100",
+        initiator: "https://www.naver.com",
+        resourceType: "subFrame"
+      });
+      assert.strictEqual(naverAd.cancel, true, "Must block Naver Veta ad iframe");
+
+      const naverTveta = adblock.evaluateRequest({
+        url: "https://ssl.pstatic.net/tveta/libs/glad/prod/gfp-core.js",
+        initiator: "https://www.naver.com",
+        resourceType: "script"
+      });
+      assert.strictEqual(naverTveta.cancel, true, "Must block pstatic /tveta/ ad library");
+
+      const naverSafeCss = adblock.evaluateRequest({
+        url: "https://ssl.pstatic.net/static/newsstand/2026/common.css",
+        initiator: "https://www.naver.com",
+        resourceType: "stylesheet"
+      });
+      assert.strictEqual(naverSafeCss.cancel, false, "Must NOT block legitimate pstatic stylesheets");
+
+      // 3. Preserves critical authentication & captcha origins
+      const protonAuth = adblock.evaluateRequest({
+        url: "https://account.proton.me/api/auth/v4",
+        initiator: "https://mail.proton.me",
+        resourceType: "xhr"
+      });
+      assert.strictEqual(protonAuth.cancel, false, "Must never block Proton Mail authentication");
+
+      // 4. Popup blocker checks
+      assert.strictEqual(
+        adblock.shouldBlockPopup("https://popads.net/popunder.html", "https://streaming-site.example"),
+        true,
+        "Must block malvertising popup window"
+      );
+      assert.strictEqual(
+        adblock.shouldBlockPopup("https://accounts.google.com/o/oauth2/v2/auth", "https://gitlab.com"),
+        false,
+        "Must allow OAuth sign-in popup window"
+      );
+
+      // 5. URL Tracking Parameter Stripper
+      const cleaned = adblock.cleanTrackingUrl(
+        "https://example.com/article?id=42&utm_source=twitter&utm_medium=social&fbclid=IwAR123&gclid=Cj0KC#top"
+      );
+      assert.strictEqual(cleaned.cleanedUrl, "https://example.com/article?id=42#top", "Must strip UTM, fbclid, and gclid while keeping id & hash");
+      assert.strictEqual(cleaned.removedCount, 4);
+
+      // 6. Per-site whitelist pause & resume
+      adblock.toggleSiteWhitelist("https://www.nytimes.com/section/tech", true);
+      assert.strictEqual(adblock.isSiteWhitelisted("www.nytimes.com"), true, "Subdomain must match whitelisted domain");
+      const whitelistedReq = adblock.evaluateRequest({
+        url: "https://securepubads.g.doubleclick.net/tag/js/gpt.js",
+        initiator: "https://www.nytimes.com",
+        resourceType: "script"
+      });
+      assert.strictEqual(whitelistedReq.cancel, false, "Whitelisted site must bypass adblocking");
+      adblock.toggleSiteWhitelist("nytimes.com", false);
+      assert.strictEqual(adblock.isSiteWhitelisted("www.nytimes.com"), false, "Must remove site from whitelist");
+
+      // 7. Custom EasyList & Cosmetic Rules + YouTube payload
+      adblock.addCustomRule("||custom-annoying-ad.org^");
+      adblock.addCustomRule("##.custom-floating-ad");
+      const customCheck = adblock.evaluateRequest({
+        url: "https://cdn.custom-annoying-ad.org/banner.js",
+        initiator: "https://forum.example.com",
+        resourceType: "script"
+      });
+      assert.strictEqual(customCheck.cancel, true, "Custom ||domain^ rule must block subdomain");
+
+      const ytPayload = adblock.getCosmeticPayload("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+      assert.strictEqual(ytPayload.enabled, true);
+      assert.ok(ytPayload.css.includes(".custom-floating-ad"), "Cosmetic CSS must include custom ## rule");
+      assert.ok(ytPayload.css.includes("ytd-ad-slot-renderer"), "Cosmetic CSS must include YouTube ad slot selectors");
+      assert.ok(ytPayload.script.includes("ytp-ad-skip-button"), "YouTube payload must include auto-skip script");
+
+      // 8. Verify session webRequest hook attachment & internal page routing
+      let hookedHandler = null;
+      const mockSession = {
+        webRequest: {
+          onBeforeRequest: (fn) => { hookedHandler = fn; }
+        }
+      };
+      adblock.attachAdblockToSession(mockSession);
+      assert.strictEqual(typeof hookedHandler, "function", "Must attach onBeforeRequest handler to session");
+      let callbackResult = null;
+      hookedHandler({ url: "https://ad.doubleclick.net/ddm/ad/123", resourceType: "image" }, (res) => {
+        callbackResult = res;
+      });
+      assert.strictEqual(callbackResult.cancel, true, "Session hook must cancel blocked ad request");
+
+      const adblockPageHtml = getAetherumPage("adblock");
+      assert.ok(adblockPageHtml.includes("Aetherum Adblock & Tracker Shield"), "aetherum://adblock route must render Adblock Studio");
+    } finally {
+      adblock.updateAdblockConfig({
+        enabled: origStatus.enabled,
+        mode: origStatus.mode,
+        cosmeticFiltering: origStatus.cosmeticFiltering,
+        stripTrackingParams: origStatus.stripTrackingParams,
+        blockPopups: origStatus.blockPopups,
+        youtubeAdSkip: origStatus.youtubeAdSkip,
+        whitelistedDomains: origStatus.whitelistedDomains,
+        customRules: origStatus.customRules
+      });
+    }
+  });
+
+  // 20. DOM & Button Click Tests: Aetherum Adblock Toolbar Popover & Studio UI
+  if (JSDOM) {
+    await runAsyncTest("DOM & Buttons: Aetherum Adblock Shield (Toolbar Pill, Popover, Studio Page)", async () => {
+      // Part A: Browser Toolbar Adblock Controls
+      const browserHtml = fs.readFileSync(path.join(__dirname, "../out/renderer/browser.html"), "utf8");
+      let shieldEnabled = true;
+      let whitelisted = [];
+      let customRules = [];
+
+      const buildMockStatus = () => ({
+        enabled: shieldEnabled,
+        mode: "standard",
+        cosmeticFiltering: true,
+        stripTrackingParams: true,
+        blockPopups: true,
+        youtubeAdSkip: true,
+        whitelistedDomains: [...whitelisted],
+        customRules: [...customRules],
+        stats: {
+          sessionAdsBlocked: 14,
+          sessionTrackersBlocked: 9,
+          sessionPopupsBlocked: 2,
+          sessionParamsStripped: 5,
+          sessionTotalBlocked: 25,
+          lifetimeAdsBlocked: 140,
+          lifetimeTrackersBlocked: 90,
+          lifetimePopupsBlocked: 10,
+          lifetimeParamsStripped: 30,
+          lifetimeTotalBlocked: 240
+        },
+        rulesSummary: {
+          builtinAdDomains: 150,
+          builtinTrackerDomains: 80,
+          subscribedDomains: 0,
+          totalActiveRules: 620 + customRules.length
+        },
+        recentBlocked: [
+          { id: 1, timestamp: new Date().toISOString(), domain: "doubleclick.net", resourceType: "script", category: "ad", rule: "||doubleclick.net^" }
+        ]
+      });
+
+      const mockHyperOffice = {
+        sleipnir: { getStatus: async () => ({ active: true }), toggle: async () => ({ active: false }) },
+        browser: {
+          getTorStatus: async () => ({ torEnabled: true, active: true }),
+          setTor: async (en) => ({ torEnabled: en, active: en }),
+          getAetherumPage: async (p) => `<h1>${p}</h1>`,
+          summarize: async () => ({ ok: true, summary: "ok" }),
+          saveDoc: async () => ({ ok: true })
+        },
+        adblock: {
+          getStatus: async () => buildMockStatus(),
+          toggle: async () => { shieldEnabled = !shieldEnabled; return buildMockStatus(); },
+          setConfig: async () => buildMockStatus(),
+          toggleSite: async (payload) => {
+            const d = typeof payload === "string" ? payload : payload.domain;
+            if (whitelisted.includes(d)) whitelisted = whitelisted.filter(x => x !== d);
+            else whitelisted.push(d);
+            return buildMockStatus();
+          },
+          addRule: async (r) => { customRules.push(r); return buildMockStatus(); },
+          removeRule: async (r) => { customRules = customRules.filter(x => x !== r); return buildMockStatus(); },
+          updateLists: async () => ({ ok: true, importedDomainsCount: 3200, status: buildMockStatus() }),
+          resetStats: async () => buildMockStatus(),
+          cleanUrl: async (u) => ({ cleanedUrl: u.replace(/[?&]utm_source=[^&]+/g, "") }),
+          getCosmeticPayload: async () => ({ enabled: true, css: ".ad{display:none!important}", script: "" }),
+          checkUrl: async ({ url }) => ({ cancel: url.includes("doubleclick.net"), category: "ad", matchedRule: "||doubleclick.net^" }),
+          onStatsUpdated: () => () => {}
+        }
+      };
+
+      const bDom = new JSDOM(browserHtml, { runScripts: "outside-only" });
+      bDom.window.hyperOffice = mockHyperOffice;
+      bDom.window.eval(browserHtml.match(/<script>([\s\S]*?)<\/script>/)[1]);
+      await new Promise(r => setTimeout(r, 50));
+
+      assert.strictEqual(bDom.window.document.getElementById("adblockCountBadge").textContent, "25", "Toolbar badge must show blocked count");
+      assert.strictEqual(bDom.window.document.getElementById("adblockLabel").textContent, "Adblock: ON");
+
+      // Open Adblock Popover
+      const btnAdblockPanel = bDom.window.document.getElementById("btnAdblockPanel");
+      const adblockDropdown = bDom.window.document.getElementById("adblockDropdown");
+      btnAdblockPanel.click();
+      await new Promise(r => setTimeout(r, 30));
+      assert.ok(adblockDropdown.classList.contains("show"), "Clicking chevron must open Adblock Popover");
+      assert.ok(bDom.window.document.getElementById("abRecentList").textContent.includes("doubleclick.net"), "Popover must list blocked domains");
+
+      // Toggle Adblock Pill OFF and ON
+      const adblockToggle = bDom.window.document.getElementById("adblockToggle");
+      adblockToggle.click();
+      await new Promise(r => setTimeout(r, 40));
+      assert.strictEqual(bDom.window.document.getElementById("adblockLabel").textContent, "Adblock: OFF");
+      adblockToggle.click();
+      await new Promise(r => setTimeout(r, 40));
+      assert.strictEqual(bDom.window.document.getElementById("adblockLabel").textContent, "Adblock: ON");
+
+      // Part B: Adblock Studio Page (adblock.html)
+      const studioHtml = fs.readFileSync(path.join(__dirname, "../out/renderer/adblock.html"), "utf8");
+      const sDom = new JSDOM(studioHtml, { runScripts: "outside-only" });
+      sDom.window.hyperOffice = mockHyperOffice;
+      sDom.window.eval(studioHtml.match(/<script>([\s\S]*?)<\/script>/)[1]);
+      await new Promise(r => setTimeout(r, 50));
+
+      assert.strictEqual(sDom.window.document.getElementById("statAds").textContent, "14");
+      assert.strictEqual(sDom.window.document.getElementById("statTrackers").textContent, "9");
+
+      // Test URL Diagnostics Button
+      sDom.window.document.getElementById("testUrlInput").value = "https://ad.doubleclick.net/pixel.js";
+      sDom.window.document.getElementById("btnTestUrl").click();
+      await new Promise(r => setTimeout(r, 40));
+      assert.ok(sDom.window.document.getElementById("testVerdictBox").textContent.includes("BLOCKED"), "URL diagnostics must report BLOCKED for ad URL");
+
+      // Add Custom Rule in Studio
+      sDom.window.document.getElementById("customRuleInput").value = "||spam-banner.biz^";
+      sDom.window.document.getElementById("btnAddRule").click();
+      await new Promise(r => setTimeout(r, 40));
+      assert.ok(sDom.window.document.getElementById("customRulesList").textContent.includes("||spam-banner.biz^"), "Studio must render newly added custom rule");
+    });
+  }
 
   console.log("=================================================");
   console.log(`Results: ${passed} passed, ${failed} failed`);

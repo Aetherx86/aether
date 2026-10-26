@@ -159,6 +159,208 @@
       box-shadow: none;
     }
 
+    /* Adblock Shield Pill & Popover */
+    .adblock-pill-wrap {
+      display: inline-flex;
+      align-items: stretch;
+      position: relative;
+      border-radius: var(--radius);
+      border: 1px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.14);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .adblock-pill-wrap.off {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .adblock-pill-wrap.site-paused {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.14);
+    }
+    .adblock-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #bae6fd;
+      cursor: pointer;
+    }
+    .adblock-pill-wrap.off .adblock-toggle {
+      color: var(--text-muted);
+    }
+    .adblock-pill-wrap.site-paused .adblock-toggle {
+      color: #fde68a;
+    }
+    .adblock-count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 16px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: rgba(14, 165, 233, 0.3);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #f0f9ff;
+      font-size: 10px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .adblock-pill-wrap.off .adblock-count-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+    }
+    .adblock-chevron {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 7px;
+      border: none;
+      border-left: 1px solid rgba(56, 189, 248, 0.28);
+      background: transparent;
+      color: #bae6fd;
+      font-size: 10px;
+      cursor: pointer;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      transition: background 0.15s;
+    }
+    .adblock-chevron:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .adblock-pill-wrap.off .adblock-chevron {
+      border-left-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+    }
+
+    .adblock-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 348px;
+      background: #0f172a;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.72);
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 120;
+    }
+    .adblock-popover.show {
+      display: flex;
+    }
+    .ab-pop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .ab-pop-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .ab-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .ab-stat-box {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 4px;
+      text-align: center;
+    }
+    .ab-stat-num {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      font-variant-numeric: tabular-nums;
+    }
+    .ab-stat-lbl {
+      display: block;
+      font-size: 9.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ab-site-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .ab-site-domain {
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 175px;
+    }
+    .ab-site-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .ab-switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      padding: 3px 2px;
+    }
+    .ab-recent-box {
+      max-height: 112px;
+      overflow-y: auto;
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .ab-recent-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 10.5px;
+      color: #cbd5e1;
+      padding: 3px 5px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .ab-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .ab-tag.ad { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
+    .ab-tag.tracker { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .ab-tag.popup { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.35); }
+
     .url-box {
       flex: 1;
       display: flex;
@@ -579,6 +781,95 @@
 
     <!-- Unified Shields Group -->
     <div class="shields-group">
+      <!-- Aetherum Adblock & Tracker Shield -->
+      <div class="adblock-pill-wrap" id="adblockPillWrap">
+        <div class="adblock-toggle" id="adblockToggle" title="Toggle Aetherum Adblock & Tracker Shield ON/OFF">
+          <span>🛡️</span>
+          <span id="adblockLabel">Adblock: ON</span>
+          <span class="adblock-count-badge" id="adblockCountBadge">0</span>
+        </div>
+        <button class="adblock-chevron" id="btnAdblockPanel" title="Open Adblock Shield Controls & Blocked Log">▾</button>
+
+        <!-- Brave/uBlock-Style Adblock Shield Popover -->
+        <div class="adblock-popover" id="adblockDropdown">
+          <div class="ab-pop-header">
+            <div class="ab-pop-title">
+              <span>🛡️ Aetherum Adblock Shield</span>
+            </div>
+            <span id="abRulesCountLabel" style="font-size:10.5px;color:#38bdf8;font-weight:600;">Active</span>
+          </div>
+
+          <div class="ab-stats-grid">
+            <div class="ab-stat-box">
+              <span class="ab-stat-num" id="abStatAds">0</span>
+              <span class="ab-stat-lbl">Ads</span>
+            </div>
+            <div class="ab-stat-box">
+              <span class="ab-stat-num" id="abStatTrackers" style="color:#fbbf24;">0</span>
+              <span class="ab-stat-lbl">Trackers</span>
+            </div>
+            <div class="ab-stat-box">
+              <span class="ab-stat-num" id="abStatPopups" style="color:#c084fc;">0</span>
+              <span class="ab-stat-lbl">Popups</span>
+            </div>
+            <div class="ab-stat-box">
+              <span class="ab-stat-num" id="abStatLifetime" style="color:#34d399;">0</span>
+              <span class="ab-stat-lbl">Total</span>
+            </div>
+          </div>
+
+          <div class="ab-site-card">
+            <div>
+              <div class="ab-site-domain" id="abCurrentDomain">System Page</div>
+              <div class="ab-site-sub" id="abCurrentSiteState">Shields active across web</div>
+            </div>
+            <button class="btn" id="btnToggleSiteWhitelist" style="padding:4px 9px;font-size:11px;">Pause Site</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:4px;padding:2px 0;">
+            <div class="ab-switch-row">
+              <span>Protection Level</span>
+              <select id="abModeSelect" style="background:#090d16;color:#f8fafc;border:1px solid var(--border-light);border-radius:6px;padding:2px 6px;font-size:11px;">
+                <option value="standard">Standard (Recommended)</option>
+                <option value="aggressive">Aggressive (Strict 3P)</option>
+              </select>
+            </div>
+            <label class="ab-switch-row" style="cursor:pointer;">
+              <span>Cosmetic Ad-Slot Hiding & YT Skip</span>
+              <input type="checkbox" id="abCosmeticToggle" checked />
+            </label>
+            <label class="ab-switch-row" style="cursor:pointer;">
+              <span>Strip URL Trackers (UTM / fbclid / gclid)</span>
+              <input type="checkbox" id="abStripParamsToggle" checked />
+            </label>
+            <label class="ab-switch-row" style="cursor:pointer;">
+              <span>Block Malvertising Popups</span>
+              <input type="checkbox" id="abPopupToggle" checked />
+            </label>
+          </div>
+
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="abQuickRuleInput" placeholder="||ads.site.com^ or ##.banner"
+                   style="flex:1;background:#090d16;border:1px solid var(--border-light);border-radius:6px;color:#f8fafc;padding:5px 8px;font-size:11px;outline:none;" />
+            <button class="btn primary" id="btnAbAddRule" style="padding:4px 9px;font-size:11px;">+ Block</button>
+          </div>
+
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em;">
+              Recent Blocked Requests
+            </div>
+            <div class="ab-recent-box" id="abRecentList">
+              <div style="font-size:11px;color:#64748b;text-align:center;padding:8px 0;">Protected — waiting for network traffic</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:6px;padding-top:4px;border-top:1px solid var(--border);">
+            <button class="btn" id="btnAbUpdateLists" style="flex:1;justify-content:center;padding:5px 8px;font-size:11px;">🔄 Update Lists</button>
+            <button class="btn primary" id="btnAbOpenDashboard" style="flex:1;justify-content:center;padding:5px 8px;font-size:11px;">🛡️ Full Studio</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Sleipnir VPN / SNI Packet Splitting Toggle -->
       <div class="sleipnir-toggle" id="sleipnirToggle" title="Sleipnir HTTPS SNI Packet Splitting (WinDivert/Unicorn HTTPS Anti-DPI engine on Port 8087)">
         <img src="./assets/sleipnir-logo.png" class="sleipnir-icon" alt="">
@@ -646,6 +937,13 @@
       <button class="btn" id="btnToolsMenu" title="Browser Settings & Tools">⚙️ ▾</button>
       <div class="dropdown-menu" id="toolsDropdown">
         <div class="dropdown-header">Browser Tools</div>
+        <div class="dropdown-item" onclick="window.navigateTo('aetherum://adblock'); closeDropdowns();">
+          <span class="dropdown-icon">🛡️</span>
+          <div class="dropdown-text">
+            <strong>Adblock & Tracker Shield</strong>
+            <span>Filter lists, custom rules & blocked telemetry</span>
+          </div>
+        </div>
         <div class="dropdown-item" onclick="window.navigateTo('aetherum://bookmarks'); closeDropdowns();">
           <span class="dropdown-icon">⭐</span>
           <div class="dropdown-text">
@@ -699,6 +997,7 @@
 
     <!-- Right: Browser Tools -->
     <div class="bar-section">
+      <button class="btn-subtle" onclick="window.navigateTo('aetherum://adblock')" title="Open Adblock & Tracker Shield">🛡️ Adblock</button>
       <button class="btn-subtle" onclick="window.navigateTo('aetherum://bookmarks')" title="Open Bookmarks Manager">⭐ Bookmarks</button>
       <button class="btn-subtle" onclick="window.navigateTo('aetherum://history')" title="Open History">🕒 History</button>
       <button class="btn-subtle" onclick="window.navigateTo('aetherum://settings')" title="Open Settings">⚙️ Settings</button>
@@ -754,6 +1053,29 @@
     const torLabel = document.getElementById("torLabel");
     const sleipnirToggle = document.getElementById("sleipnirToggle");
     const sleipnirLabel = document.getElementById("sleipnirLabel");
+    const adblockPillWrap = document.getElementById("adblockPillWrap");
+    const adblockToggle = document.getElementById("adblockToggle");
+    const adblockLabel = document.getElementById("adblockLabel");
+    const adblockCountBadge = document.getElementById("adblockCountBadge");
+    const btnAdblockPanel = document.getElementById("btnAdblockPanel");
+    const adblockDropdown = document.getElementById("adblockDropdown");
+    const abRulesCountLabel = document.getElementById("abRulesCountLabel");
+    const abStatAds = document.getElementById("abStatAds");
+    const abStatTrackers = document.getElementById("abStatTrackers");
+    const abStatPopups = document.getElementById("abStatPopups");
+    const abStatLifetime = document.getElementById("abStatLifetime");
+    const abCurrentDomain = document.getElementById("abCurrentDomain");
+    const abCurrentSiteState = document.getElementById("abCurrentSiteState");
+    const btnToggleSiteWhitelist = document.getElementById("btnToggleSiteWhitelist");
+    const abModeSelect = document.getElementById("abModeSelect");
+    const abCosmeticToggle = document.getElementById("abCosmeticToggle");
+    const abStripParamsToggle = document.getElementById("abStripParamsToggle");
+    const abPopupToggle = document.getElementById("abPopupToggle");
+    const abQuickRuleInput = document.getElementById("abQuickRuleInput");
+    const btnAbAddRule = document.getElementById("btnAbAddRule");
+    const abRecentList = document.getElementById("abRecentList");
+    const btnAbUpdateLists = document.getElementById("btnAbUpdateLists");
+    const btnAbOpenDashboard = document.getElementById("btnAbOpenDashboard");
     const btnSuiteMenu = document.getElementById("btnSuiteMenu");
     const suiteDropdown = document.getElementById("suiteDropdown");
     const btnToolsMenu = document.getElementById("btnToolsMenu");
@@ -771,6 +1093,36 @@
 
     let torEnabled = true;
     let sleipnirEnabled = true;
+    let adblockEnabled = true;
+    let adblockWhitelistedSet = new Set();
+    let tabs = [];
+    let activeTab = null;
+    let tabSeq = 0;
+
+    function getAdblockApi() {
+      return window.hyperOffice?.adblock || window.parent?.hyperOffice?.adblock || null;
+    }
+
+    function extractHostFromUrl(rawUrl) {
+      if (!rawUrl || typeof rawUrl !== "string" || rawUrl.startsWith("aetherum://")) return "";
+      try {
+        return new URL(rawUrl).hostname.toLowerCase().replace(/^www\./, "");
+      } catch {
+        return "";
+      }
+    }
+
+    function isDomainInSet(host, set) {
+      if (!host || !set || set.size === 0) return false;
+      let cur = host;
+      while (cur) {
+        if (set.has(cur)) return true;
+        const dot = cur.indexOf(".");
+        if (dot === -1) break;
+        cur = cur.slice(dot + 1);
+      }
+      return false;
+    }
 
     // Security icon update
     function updateSecurityIcon(url) {
@@ -782,24 +1134,43 @@
       } else {
         urlIcon.textContent = "🌐";
       }
+      updateCurrentSiteAdblockUi(url);
     }
 
     // Dropdown Toggles
     btnSuiteMenu.addEventListener("click", (e) => {
       e.stopPropagation();
       toolsDropdown.classList.remove("show");
+      if (adblockDropdown) adblockDropdown.classList.remove("show");
       suiteDropdown.classList.toggle("show");
     });
 
     btnToolsMenu.addEventListener("click", (e) => {
       e.stopPropagation();
       suiteDropdown.classList.remove("show");
+      if (adblockDropdown) adblockDropdown.classList.remove("show");
       toolsDropdown.classList.toggle("show");
     });
+
+    if (btnAdblockPanel && adblockDropdown) {
+      btnAdblockPanel.addEventListener("click", (e) => {
+        e.stopPropagation();
+        suiteDropdown.classList.remove("show");
+        toolsDropdown.classList.remove("show");
+        adblockDropdown.classList.toggle("show");
+        if (adblockDropdown.classList.contains("show")) {
+          refreshAdblockStatus();
+        }
+      });
+      adblockDropdown.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+    }
 
     window.closeDropdowns = function() {
       suiteDropdown.classList.remove("show");
       toolsDropdown.classList.remove("show");
+      if (adblockDropdown) adblockDropdown.classList.remove("show");
     };
 
     window.addEventListener("click", () => closeDropdowns());
@@ -892,6 +1263,243 @@
 
     initTorStatus();
 
+    // Adblock Shield Initialization & Live Telemetry
+    function updateCurrentSiteAdblockUi(urlOverride) {
+      const targetUrl = urlOverride !== undefined ? urlOverride : (activeTab ? activeTab.url : urlInput.value);
+      const host = extractHostFromUrl(targetUrl);
+      const sitePaused = host ? isDomainInSet(host, adblockWhitelistedSet) : false;
+
+      if (adblockPillWrap) {
+        adblockPillWrap.classList.toggle("off", !adblockEnabled);
+        adblockPillWrap.classList.toggle("site-paused", adblockEnabled && sitePaused);
+      }
+      if (adblockLabel) {
+        if (!adblockEnabled) {
+          adblockLabel.textContent = "Adblock: OFF";
+        } else if (sitePaused) {
+          adblockLabel.textContent = "Adblock: PAUSED";
+        } else {
+          adblockLabel.textContent = "Adblock: ON";
+        }
+      }
+      if (abCurrentDomain) {
+        abCurrentDomain.textContent = host || "System Page (Internal)";
+      }
+      if (abCurrentSiteState && btnToggleSiteWhitelist) {
+        if (!host) {
+          abCurrentSiteState.textContent = "Internal Aetherum UI";
+          btnToggleSiteWhitelist.disabled = true;
+          btnToggleSiteWhitelist.textContent = "Protected";
+        } else {
+          btnToggleSiteWhitelist.disabled = false;
+          if (sitePaused) {
+            abCurrentSiteState.textContent = "Whitelisted (Ads allowed on this site)";
+            btnToggleSiteWhitelist.textContent = "Resume Site";
+          } else {
+            abCurrentSiteState.textContent = adblockEnabled ? "Active — blocking ads & trackers" : "Global shield disabled";
+            btnToggleSiteWhitelist.textContent = "Pause Site";
+          }
+        }
+      }
+    }
+
+    function updateAdblockUi(status) {
+      if (!status) return;
+      adblockEnabled = Boolean(status.enabled);
+      adblockWhitelistedSet = new Set((status.whitelistedDomains || []).map(d => String(d).toLowerCase()));
+
+      const stats = status.stats || {};
+      const sessionTotal = stats.sessionTotalBlocked || 0;
+      if (adblockCountBadge) {
+        adblockCountBadge.textContent = sessionTotal > 999 ? "999+" : String(sessionTotal);
+      }
+      if (abStatAds) abStatAds.textContent = String(stats.sessionAdsBlocked || 0);
+      if (abStatTrackers) abStatTrackers.textContent = String(stats.sessionTrackersBlocked || 0);
+      if (abStatPopups) abStatPopups.textContent = String(stats.sessionPopupsBlocked || 0);
+      if (abStatLifetime) abStatLifetime.textContent = String(stats.lifetimeTotalBlocked || 0);
+
+      if (abRulesCountLabel && status.rulesSummary) {
+        abRulesCountLabel.textContent = adblockEnabled
+          ? `${(status.rulesSummary.totalActiveRules || 0).toLocaleString()} rules`
+          : "Disabled";
+      }
+
+      if (abModeSelect && status.mode) abModeSelect.value = status.mode;
+      if (abCosmeticToggle) abCosmeticToggle.checked = Boolean(status.cosmeticFiltering);
+      if (abStripParamsToggle) abStripParamsToggle.checked = Boolean(status.stripTrackingParams);
+      if (abPopupToggle) abPopupToggle.checked = Boolean(status.blockPopups);
+
+      if (abRecentList && Array.isArray(status.recentBlocked)) {
+        if (status.recentBlocked.length === 0) {
+          abRecentList.innerHTML = "";
+          const empty = document.createElement("div");
+          empty.style.cssText = "font-size:11px;color:#64748b;text-align:center;padding:8px 0;";
+          empty.textContent = "No ads or trackers blocked yet in this session.";
+          abRecentList.appendChild(empty);
+        } else {
+          abRecentList.innerHTML = "";
+          status.recentBlocked.slice(0, 8).forEach((item) => {
+            const row = document.createElement("div");
+            row.className = "ab-recent-item";
+            row.title = item.url || item.domain;
+
+            const left = document.createElement("div");
+            left.style.cssText = "display:flex;align-items:center;gap:6px;overflow:hidden;";
+
+            const tag = document.createElement("span");
+            const cat = item.category === "tracker" ? "tracker" : (item.category === "popup" ? "popup" : "ad");
+            tag.className = `ab-tag ${cat}`;
+            tag.textContent = cat === "tracker" ? "TRK" : (cat === "popup" ? "POP" : "AD");
+
+            const domSpan = document.createElement("span");
+            domSpan.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Menlo,monospace;";
+            domSpan.textContent = item.domain || "unknown";
+
+            left.appendChild(tag);
+            left.appendChild(domSpan);
+
+            const typeSpan = document.createElement("span");
+            typeSpan.style.cssText = "font-size:9.5px;color:#64748b;flex-shrink:0;";
+            typeSpan.textContent = item.resourceType || "";
+
+            row.appendChild(left);
+            row.appendChild(typeSpan);
+            abRecentList.appendChild(row);
+          });
+        }
+      }
+
+      updateCurrentSiteAdblockUi();
+    }
+
+    async function refreshAdblockStatus() {
+      const api = getAdblockApi();
+      if (!api || !api.getStatus) return;
+      try {
+        const curUrl = activeTab ? activeTab.url : urlInput.value;
+        const status = await api.getStatus(curUrl);
+        updateAdblockUi(status);
+      } catch (e) {}
+    }
+
+    async function applyAdblockCosmetics(wv, pageUrl) {
+      if (!wv || !pageUrl || pageUrl.startsWith("aetherum://")) return;
+      const api = getAdblockApi();
+      if (!api || !api.getCosmeticPayload) return;
+      try {
+        const payload = await api.getCosmeticPayload(pageUrl);
+        if (!payload || !payload.enabled) return;
+        if (payload.css && typeof wv.insertCSS === "function") {
+          await wv.insertCSS(payload.css);
+        }
+        if (payload.script && typeof wv.executeJavaScript === "function") {
+          await wv.executeJavaScript(payload.script);
+        }
+      } catch (e) {}
+    }
+
+    if (adblockToggle) {
+      adblockToggle.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const api = getAdblockApi();
+        if (api && api.toggle) {
+          const res = await api.toggle();
+          updateAdblockUi(res);
+          if (activeTab && !activeTab.isLocal && activeTab.webview && typeof activeTab.webview.reload === "function") {
+            activeTab.webview.reload();
+          }
+        } else {
+          adblockEnabled = !adblockEnabled;
+          updateCurrentSiteAdblockUi();
+        }
+      });
+    }
+
+    if (btnToggleSiteWhitelist) {
+      btnToggleSiteWhitelist.addEventListener("click", async () => {
+        const curUrl = activeTab ? activeTab.url : urlInput.value;
+        const host = extractHostFromUrl(curUrl);
+        const api = getAdblockApi();
+        if (host && api && api.toggleSite) {
+          const res = await api.toggleSite(host);
+          updateAdblockUi(res);
+          if (activeTab && !activeTab.isLocal && activeTab.webview && typeof activeTab.webview.reload === "function") {
+            activeTab.webview.reload();
+          }
+        }
+      });
+    }
+
+    async function pushAdblockSettingsChange() {
+      const api = getAdblockApi();
+      if (!api || !api.setConfig) return;
+      const res = await api.setConfig({
+        mode: abModeSelect ? abModeSelect.value : "standard",
+        cosmeticFiltering: abCosmeticToggle ? abCosmeticToggle.checked : true,
+        stripTrackingParams: abStripParamsToggle ? abStripParamsToggle.checked : true,
+        blockPopups: abPopupToggle ? abPopupToggle.checked : true
+      });
+      updateAdblockUi(res);
+    }
+
+    if (abModeSelect) abModeSelect.addEventListener("change", pushAdblockSettingsChange);
+    if (abCosmeticToggle) abCosmeticToggle.addEventListener("change", pushAdblockSettingsChange);
+    if (abStripParamsToggle) abStripParamsToggle.addEventListener("change", pushAdblockSettingsChange);
+    if (abPopupToggle) abPopupToggle.addEventListener("change", pushAdblockSettingsChange);
+
+    if (btnAbAddRule && abQuickRuleInput) {
+      const submitQuickRule = async () => {
+        const val = abQuickRuleInput.value.trim();
+        if (!val) return;
+        const api = getAdblockApi();
+        if (api && api.addRule) {
+          const res = await api.addRule(val);
+          abQuickRuleInput.value = "";
+          updateAdblockUi(res);
+          if (activeTab && !activeTab.isLocal && activeTab.webview && typeof activeTab.webview.reload === "function") {
+            activeTab.webview.reload();
+          }
+        }
+      };
+      btnAbAddRule.addEventListener("click", submitQuickRule);
+      abQuickRuleInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submitQuickRule();
+      });
+    }
+
+    if (btnAbUpdateLists) {
+      btnAbUpdateLists.addEventListener("click", async () => {
+        const api = getAdblockApi();
+        if (!api || !api.updateLists) return;
+        const orig = btnAbUpdateLists.textContent;
+        btnAbUpdateLists.textContent = "⏳ Updating...";
+        btnAbUpdateLists.disabled = true;
+        try {
+          const res = await api.updateLists();
+          if (res && res.status) updateAdblockUi(res.status);
+          btnAbUpdateLists.textContent = "✓ Updated!";
+          setTimeout(() => { btnAbUpdateLists.textContent = orig; }, 2000);
+        } catch (e) {
+          btnAbUpdateLists.textContent = orig;
+        } finally {
+          btnAbUpdateLists.disabled = false;
+        }
+      });
+    }
+
+    if (btnAbOpenDashboard) {
+      btnAbOpenDashboard.addEventListener("click", () => {
+        closeDropdowns();
+        window.navigateTo("aetherum://adblock");
+      });
+    }
+
+    const initialAdblockApi = getAdblockApi();
+    if (initialAdblockApi && typeof initialAdblockApi.onStatsUpdated === "function") {
+      initialAdblockApi.onStatsUpdated((status) => updateAdblockUi(status));
+    }
+    refreshAdblockStatus();
+
     // Record visited history in localStorage
     function recordHistory(url, title = "") {
       try {
@@ -908,10 +1516,6 @@
     }
 
     // Full Multi-Tab Management
-    let tabs = [];
-    let activeTab = null;
-    let tabSeq = 0;
-
     class BrowserTab {
       constructor(id, initialUrl, title, existingElements = null) {
         this.id = id;
@@ -962,12 +1566,17 @@
           renderTabs();
         });
 
+        this.webview.addEventListener("dom-ready", () => {
+          applyAdblockCosmetics(this.webview, this.url);
+        });
+
         this.webview.addEventListener("did-stop-loading", () => {
           this.isLoading = false;
           if (activeTab === this) {
             btnReload.textContent = "↻";
             progressBar.className = "progress-bar done";
           }
+          refreshAdblockStatus();
           renderTabs();
         });
 
@@ -978,6 +1587,7 @@
             urlInput.value = e.url;
             updateSecurityIcon(e.url);
           }
+          applyAdblockCosmetics(this.webview, e.url);
           recordHistory(e.url, this.title);
         });
 
@@ -987,6 +1597,7 @@
             urlInput.value = e.url;
             updateSecurityIcon(e.url);
           }
+          applyAdblockCosmetics(this.webview, e.url);
         });
 
         // Crucial for redirections (e.g. mail.proton.me -> https://account.proton.me/mail)
@@ -1029,10 +1640,20 @@
           }
         });
 
-        // Open popups and target="_blank" in a new browser tab
-        this.webview.addEventListener("new-window", (e) => {
+        // Open popups and target="_blank" in a new browser tab unless blocked by Adblock Popup Shield
+        this.webview.addEventListener("new-window", async (e) => {
           e.preventDefault();
           if (e.url) {
+            const api = getAdblockApi();
+            if (adblockEnabled && api && api.checkUrl) {
+              try {
+                const verdict = await api.checkUrl({ url: e.url, initiator: this.url, resourceType: "mainFrame" });
+                if (verdict && verdict.cancel) {
+                  refreshAdblockStatus();
+                  return;
+                }
+              } catch {}
+            }
             createTab(e.url, true);
           }
         });
@@ -1047,6 +1668,18 @@
             url = "https://" + url;
           } else {
             url = "https://duckduckgo.com/?q=" + encodeURIComponent(url);
+          }
+        }
+
+        if ((url.startsWith("http://") || url.startsWith("https://")) && adblockEnabled) {
+          const api = getAdblockApi();
+          if (api && api.cleanUrl) {
+            try {
+              const cleaned = await api.cleanUrl(url);
+              if (cleaned && cleaned.cleanedUrl) {
+                url = cleaned.cleanedUrl;
+              }
+            } catch {}
           }
         }
 

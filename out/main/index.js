@@ -1671,7 +1671,16 @@ function installNavigationGuard(app) {
                             contents.session?.partition === "persist:aetherum" ||
                             (typeof contents.getURL === "function" && contents.getURL().includes("browser.html"));
     if (isBrowserWebview) {
-      contents.setWindowOpenHandler(() => ({ action: "allow" }));
+      contents.setWindowOpenHandler(({ url }) => {
+        try {
+          const { shouldBlockPopup } = require("./extensions/adblock");
+          const opener = typeof contents.getURL === "function" ? contents.getURL() : "";
+          if (shouldBlockPopup(url, opener)) {
+            return { action: "deny" };
+          }
+        } catch {}
+        return { action: "allow" };
+      });
       return;
     }
 

@@ -19,6 +19,7 @@ const { registerFafnirIpc } = require("./fafnir");
 const { registerMimisbrunnrIpc } = require("./mimisbrunnr");
 const { registerRatatoskrIpc } = require("./ratatoskr");
 const { registerHeimdallIpc } = require("./heimdall");
+const { registerAdblockIpc } = require("./adblock");
 
 let installed = false;
 
@@ -54,6 +55,7 @@ function installHyperOfficeExtensions(electronModule = null) {
   registerMimisbrunnrIpc(ipcMain);
   registerRatatoskrIpc(ipcMain);
   registerHeimdallIpc(ipcMain, el.dialog);
+  registerAdblockIpc(ipcMain);
 
   ipcMain.handle("hyper:heimdall:request-mic", async () => {
     try {
