@@ -13,7 +13,7 @@ variables:
 test_modules:
   stage: test
   before_script:
-    - apk add --no-cache sqlite bash
+    - apk add --no-cache sqlite bash python3
     - cp -n .env.example .env || true
     - mkdir -p ~/.aether && cp -n .env.example ~/.aether/.env || true
   script:
@@ -28,7 +28,7 @@ build_stable:
   script:
     - echo "Packaging Aether Stable channel..."
     - rm -rf /tmp/aether_pack && mkdir -p /tmp/aether_pack
-    - cp -r package.json out /tmp/aether_pack/
+    - cp -r package.json out scripts /tmp/aether_pack/
     - npx --yes @electron/asar pack /tmp/aether_pack app.asar
     - echo "Stable build completed."
   artifacts:
@@ -45,7 +45,7 @@ build_beta:
   script:
     - echo "Packaging Aether Beta channel..."
     - rm -rf /tmp/aether_pack && mkdir -p /tmp/aether_pack
-    - cp -r package.json out /tmp/aether_pack/
+    - cp -r package.json out scripts /tmp/aether_pack/
     - npx --yes @electron/asar pack /tmp/aether_pack app.asar
     - echo "Beta build completed."
   artifacts:

@@ -5,7 +5,15 @@ const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
 
-const PYTHON_SCRIPT_PATH = "/Users/sushikim/Documents/antigravity_council.py";
+const PYTHON_SCRIPT_PATH = fs.existsSync(path.join(__dirname, "../../../scripts/antigravity_council.py"))
+  ? path.join(__dirname, "../../../scripts/antigravity_council.py")
+  : (fs.existsSync(path.join(__dirname, "../../scripts/antigravity_council.py"))
+    ? path.join(__dirname, "../../scripts/antigravity_council.py")
+    : (fs.existsSync(path.join(process.cwd(), "scripts/antigravity_council.py"))
+      ? path.join(process.cwd(), "scripts/antigravity_council.py")
+      : (fs.existsSync("/Users/sushikim/Documents/antigravity_council.py")
+        ? "/Users/sushikim/Documents/antigravity_council.py"
+        : path.join(__dirname, "antigravity_council.py"))));
 
 const HIGH_TABLE_SEATS = [
   {
@@ -152,7 +160,9 @@ function registerHighTableIpc(ipcMain) {
 
       const pythonBin = fs.existsSync("/Library/Frameworks/Python.framework/Versions/3.15/bin/python3")
         ? "/Library/Frameworks/Python.framework/Versions/3.15/bin/python3"
-        : (fs.existsSync("/opt/homebrew/bin/python3") ? "/opt/homebrew/bin/python3" : "python3");
+        : (fs.existsSync("/opt/homebrew/bin/python3")
+          ? "/opt/homebrew/bin/python3"
+          : (fs.existsSync("/usr/bin/python3") ? "/usr/bin/python3" : "python3"));
 
       const proc = spawn(pythonBin, args, {
         env: {

@@ -1907,13 +1907,19 @@ async function main() {
   });
 
   test(277, "The High Table: antigravity_council.py supports --json-events flag", () => {
-    const py = fs.readFileSync("/Users/sushikim/Documents/antigravity_council.py", "utf8");
+    const p = fs.existsSync(path.join(rootDir, "scripts/antigravity_council.py"))
+      ? path.join(rootDir, "scripts/antigravity_council.py")
+      : "/Users/sushikim/Documents/antigravity_council.py";
+    const py = fs.readFileSync(p, "utf8");
     assert.ok(py.includes("--json-events"));
     assert.ok(py.includes("__HT_EVENT__:"));
   });
 
   test(278, "The High Table: antigravity_council.py implements stream_with_fallback for 503/429 errors", () => {
-    const py = fs.readFileSync("/Users/sushikim/Documents/antigravity_council.py", "utf8");
+    const p = fs.existsSync(path.join(rootDir, "scripts/antigravity_council.py"))
+      ? path.join(rootDir, "scripts/antigravity_council.py")
+      : "/Users/sushikim/Documents/antigravity_council.py";
+    const py = fs.readFileSync(p, "utf8");
     assert.ok(py.includes("def stream_with_fallback"));
     assert.ok(py.includes("gemini-3.5-flash-lite"));
   });
