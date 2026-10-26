@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>The High Table — Multi-Agent Epistemic Council</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
   <style>
     :root {
       --bg: #07090e;
@@ -437,13 +439,117 @@
       background: rgba(255, 255, 255, 0.06);
       color: var(--text-muted);
     }
-    .opinion-body {
-      font-size: 13px;
-      line-height: 1.6;
+    .opinion-body, .decree-content, #crossReviewBody {
+      font-size: 13.5px;
+      line-height: 1.65;
       color: #e2e8f0;
-      white-space: pre-wrap;
       word-break: break-word;
       min-height: 60px;
+    }
+    .opinion-body p, .decree-content p, #crossReviewBody p {
+      margin-bottom: 8px;
+      line-height: 1.65;
+    }
+    .opinion-body h3, .decree-content h3, #crossReviewBody h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin: 14px 0 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 4px;
+    }
+    .opinion-body h4, .decree-content h4, #crossReviewBody h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #93c5fd;
+      margin: 10px 0 4px 0;
+    }
+    .opinion-body h5, .decree-content h5, #crossReviewBody h5 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin: 8px 0 4px 0;
+    }
+    .opinion-body strong, .decree-content strong, #crossReviewBody strong {
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .opinion-body em, .decree-content em, #crossReviewBody em {
+      color: #cbd5e1;
+      font-style: italic;
+    }
+    .opinion-body ul, .decree-content ul, #crossReviewBody ul,
+    .opinion-body ol, .decree-content ol, #crossReviewBody ol {
+      margin: 6px 0 10px 20px;
+      padding-left: 4px;
+    }
+    .opinion-body li, .decree-content li, #crossReviewBody li {
+      margin-bottom: 4px;
+      line-height: 1.55;
+    }
+    .opinion-body code, .decree-content code, #crossReviewBody code {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #93c5fd;
+    }
+    .opinion-body pre.code-block, .decree-content pre.code-block, #crossReviewBody pre.code-block {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin: 8px 0;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #f1f5f9;
+    }
+    .opinion-body blockquote, .decree-content blockquote, #crossReviewBody blockquote {
+      border-left: 3px solid var(--gold);
+      padding: 4px 12px;
+      margin: 8px 0;
+      background: rgba(212, 175, 55, 0.05);
+      color: #e2e8f0;
+      font-style: italic;
+    }
+    .opinion-body hr.section-hr, .decree-content hr.section-hr, #crossReviewBody hr.section-hr {
+      border: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 12px 0;
+    }
+    .math-inline {
+      display: inline-block;
+      font-family: "KaTeX_Math", "Cambria Math", "Latin Modern Math", "STIX Two Math", "Times New Roman", serif;
+      font-style: italic;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0 5px;
+      border-radius: 4px;
+      color: #e0e7ff;
+      margin: 0 2px;
+      line-height: 1.3;
+    }
+    .math-display {
+      display: block;
+      text-align: center;
+      margin: 10px 0;
+      padding: 10px;
+      font-family: "KaTeX_Math", "Cambria Math", "Latin Modern Math", "STIX Two Math", "Times New Roman", serif;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #f1f5f9;
+      font-size: 1.05em;
+    }
+    .math-frac {
+      display: inline-block;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 0.9em;
+      padding: 0 2px;
     }
 
     /* Stage 2 & 3 Full-Width Cards */
@@ -710,6 +816,138 @@
     let isDeliberating = false;
     let fullTranscriptData = { query: "", opinions: {}, crossReview: "", decree: "" };
 
+    // Raw streaming buffers for markdown & math rendering
+    let seatRawBuffers = { 1: "", 2: "", 3: "", 4: "" };
+    let crossReviewRaw = "";
+    let decreeRaw = "";
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function formatMath(tex) {
+      if (!tex) return "";
+      let s = tex.trim().replace(/^\{+|\}+$/g, "");
+
+      // If KaTeX CDN is loaded, use it
+      if (window.katex && typeof window.katex.renderToString === "function") {
+        try {
+          return window.katex.renderToString(s, { throwOnError: false, displayMode: false });
+        } catch (_) {}
+      }
+
+      // Built-in offline fallback: strip math macro wrappers
+      s = s.replace(/\\(mathbb|mathcal|mathbf|mathit|mathrm|text)\{([^{}]+)\}/g, "$2");
+      s = s.replace(/\\(mathbb|mathcal|mathbf|mathit|mathrm|text)\b/g, "");
+
+      // Greek & special symbols
+      const syms = {
+        "\\\\rightarrow": "→", "\\\\to": "→", "\\\\leftarrow": "←",
+        "\\\\implies": "⇒", "\\\\iff": "⇔",
+        "\\\\forall": "∀", "\\\\exists": "∃",
+        "\\\\in": "∈", "\\\\notin": "∉",
+        "\\\\subset": "⊂", "\\\\subseteq": "⊆",
+        "\\\\cap": "∩", "\\\\cup": "∪",
+        "\\\\land": "∧", "\\\\lor": "∨", "\\\\neg": "¬",
+        "\\\\vdash": "⊢", "\\\\models": "⊨",
+        "\\\\leq": "≤", "\\\\le": "≤", "\\\\geq": "≥", "\\\\ge": "≥",
+        "\\\\neq": "≠", "\\\\ne": "≠", "\\\\approx": "≈",
+        "\\\\times": "×", "\\\\cdot": "·", "\\\\pm": "±",
+        "\\\\alpha": "α", "\\\\beta": "β", "\\\\gamma": "γ", "\\\\delta": "δ",
+        "\\\\epsilon": "ε", "\\\\theta": "θ", "\\\\lambda": "λ", "\\\\mu": "μ",
+        "\\\\pi": "π", "\\\\sigma": "σ", "\\\\tau": "τ", "\\\\phi": "φ", "\\\\omega": "ω",
+        "\\\\Delta": "Δ", "\\\\Sigma": "Σ", "\\\\Omega": "Ω"
+      };
+      for (const [k, v] of Object.entries(syms)) {
+        s = s.replace(new RegExp(k, "g"), v);
+      }
+
+      // Subscripts & superscripts (handles nested like S_{t_2} and unclosed like S_{t_2)
+      for (let i = 0; i < 3; i++) {
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])_\{([^{}]+)\}/g, "$1<sub>$2</sub>");
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])_\{([^{}]+)$/g, "$1<sub>$2</sub>");
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])_([A-Za-z0-9α-ωΑ-Ω])/g, "$1<sub>$2</sub>");
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])\^\{([^{}]+)\}/g, "$1<sup>$2</sup>");
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])\^\{([^{}]+)$/g, "$1<sup>$2</sup>");
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])\^([A-Za-z0-9α-ωΑ-Ω])/g, "$1<sup>$2</sup>");
+      }
+
+      // Fractions
+      s = s.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "<span class=\"math-frac\">($1/$2)</span>");
+
+      // Strip leftover unescaped backslashes
+      s = s.replace(/\\/g, "");
+
+      return s;
+    }
+
+    function renderMarkdown(md) {
+      if (!md) return "";
+
+      let text = md.replace(/\r\n/g, "\n");
+
+      // Display math $$...$$
+      text = text.replace(/\$\$([^\$]+)\$\$/g, (m, g) => {
+        return `<div class="math-display">${formatMath(g)}</div>`;
+      });
+
+      // Inline math: handles standard $x$, and broken syntax like ${S_{t_2}$ or ${S_{t_2}}
+      text = text.replace(/\$\{([^$]+)\}\$|\$\{([^$]+)\$|\$([^\$\n]+)\$/g, (m, g1, g2, g3) => {
+        const raw = g1 || g2 || g3;
+        return `<span class="math-inline">${formatMath(raw)}</span>`;
+      });
+
+      // Code blocks ```...```
+      text = text.replace(/```([\s\S]*?)```/g, (m, code) => {
+        return `<pre class="code-block"><code>${escapeHtml(code.trim())}</code></pre>`;
+      });
+
+      // Inline code `...`
+      text = text.replace(/`([^`]+)`/g, (m, c) => `<code>${escapeHtml(c)}</code>`);
+
+      // Headers
+      text = text.replace(/^#### (.*$)/gim, "<h5>$1</h5>");
+      text = text.replace(/^### (.*$)/gim, "<h4>$1</h4>");
+      text = text.replace(/^## (.*$)/gim, "<h3>$1</h3>");
+      text = text.replace(/^# (.*$)/gim, "<h3>$1</h3>");
+
+      // Bold & Italic
+      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+      text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+      text = text.replace(/_([^_]+)_/g, "<em>$1</em>");
+
+      // Horizontal rules
+      text = text.replace(/^---$/gim, "<hr class=\"section-hr\"/>");
+
+      // Blockquotes
+      text = text.replace(/^> (.*$)/gim, "<blockquote>$1</blockquote>");
+
+      // Bullet lists
+      text = text.replace(/^[-*•]\s+(.*$)/gim, "<li>$1</li>");
+      text = text.replace(/(<li>.*<\/li>)/gim, "<ul>$1</ul>");
+      text = text.replace(/<\/ul>\s*<ul>/g, "");
+
+      // Numbered lists
+      text = text.replace(/^\d+\.\s+(.*$)/gim, "<li class=\"num-li\">$1</li>");
+      text = text.replace(/(<li class="num-li">.*<\/li>)/gim, "<ol>$1</ol>");
+      text = text.replace(/<\/ol>\s*<ol>/g, "");
+
+      // Paragraphs
+      const paragraphs = text.split("\n\n");
+      const processed = paragraphs.map(p => {
+        p = p.trim();
+        if (!p) return "";
+        if (p.startsWith("<h") || p.startsWith("<pre") || p.startsWith("<ul") || p.startsWith("<ol") || p.startsWith("<blockquote") || p.startsWith("<div") || p.startsWith("<hr")) {
+          return p;
+        }
+        return `<p>${p.replace(/\n/g, "<br/>")}</p>`;
+      });
+
+      return processed.join("");
+    }
+
     // Initialize UI
     function initSeats() {
       const grid = document.getElementById("seatsGrid");
@@ -811,6 +1049,9 @@
 
       isDeliberating = true;
       fullTranscriptData = { query, opinions: {}, crossReview: "", decree: "" };
+      seatRawBuffers = { 1: "", 2: "", 3: "", 4: "" };
+      crossReviewRaw = "";
+      decreeRaw = "";
 
       // Update UI state
       document.getElementById("btnConvene").disabled = true;
@@ -825,8 +1066,8 @@
       document.getElementById("stage2Wrap").style.display = "none";
       document.getElementById("stage3Wrap").style.display = "none";
 
-      document.getElementById("crossReviewBody").innerText = "";
-      document.getElementById("decreeBody").innerText = "";
+      document.getElementById("crossReviewBody").innerHTML = "";
+      document.getElementById("decreeBody").innerHTML = "";
 
       // Call IPC
       try {
@@ -908,18 +1149,22 @@
       } else if (ev.type === "seat_start") {
         const tag = document.getElementById(`modelTag${ev.seat}`);
         if (tag) tag.innerText = ev.model;
+        seatRawBuffers[ev.seat] = "";
         const body = document.getElementById(`opinionBody${ev.seat}`);
-        if (body) body.innerText = "";
+        if (body) body.innerHTML = `<span style="color:var(--text-muted);font-style:italic;">Formulating thesis...</span>`;
       } else if (ev.type === "chunk") {
         if (ev.seat >= 1 && ev.seat <= 4) {
+          seatRawBuffers[ev.seat] = (seatRawBuffers[ev.seat] || "") + ev.text;
           const body = document.getElementById(`opinionBody${ev.seat}`);
-          if (body) body.innerText += ev.text;
+          if (body) body.innerHTML = renderMarkdown(seatRawBuffers[ev.seat]);
         } else if (ev.seat === 5) {
           const s3Visible = document.getElementById("stage3Wrap").style.display === "flex";
           if (s3Visible) {
-            document.getElementById("decreeBody").innerText += ev.text;
+            decreeRaw += ev.text;
+            document.getElementById("decreeBody").innerHTML = renderMarkdown(decreeRaw);
           } else {
-            document.getElementById("crossReviewBody").innerText += ev.text;
+            crossReviewRaw += ev.text;
+            document.getElementById("crossReviewBody").innerHTML = renderMarkdown(crossReviewRaw);
           }
         }
       } else if (ev.type === "fallback") {
@@ -929,13 +1174,14 @@
           `[Seat ${ev.seat}] ${ev.from} encountered ${ev.reason}. Auto-switched to lighter model: ${ev.to}`;
       } else if (ev.type === "done") {
         if (ev.decree) {
-          document.getElementById("decreeBody").innerText = ev.decree;
+          decreeRaw = ev.decree;
+          document.getElementById("decreeBody").innerHTML = renderMarkdown(decreeRaw);
         }
       }
     }
 
     function copyDecree() {
-      const text = document.getElementById("decreeBody").innerText;
+      const text = decreeRaw || document.getElementById("decreeBody").innerText;
       navigator.clipboard.writeText(text).then(() => {
         alert("High Table Decree copied to clipboard!");
       });
@@ -943,12 +1189,12 @@
 
     function exportTranscript() {
       const q = document.getElementById("inquiryInput").value;
-      const op1 = document.getElementById("opinionBody1")?.innerText || "";
-      const op2 = document.getElementById("opinionBody2")?.innerText || "";
-      const op3 = document.getElementById("opinionBody3")?.innerText || "";
-      const op4 = document.getElementById("opinionBody4")?.innerText || "";
-      const cr = document.getElementById("crossReviewBody")?.innerText || "";
-      const decree = document.getElementById("decreeBody")?.innerText || "";
+      const op1 = seatRawBuffers[1] || "";
+      const op2 = seatRawBuffers[2] || "";
+      const op3 = seatRawBuffers[3] || "";
+      const op4 = seatRawBuffers[4] || "";
+      const cr = crossReviewRaw || "";
+      const decree = decreeRaw || "";
 
       const md = `# 🏛️ THE HIGH TABLE COUNCIL TRANSCRIPT\n\n` +
         `**Inquiry:**\n> ${q}\n\n` +
