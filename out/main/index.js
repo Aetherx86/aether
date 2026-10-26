@@ -344371,6 +344371,12 @@ function createShellWindow() {
       splitMemoryTimer = null;
     }
   });
+  win2.once("ready-to-show", () => {
+    if (!win2.isDestroyed()) {
+      win2.show();
+      win2.focus();
+    }
+  });
   if (process.env.ELECTRON_RENDERER_URL) {
     void win2.loadURL(process.env.ELECTRON_RENDERER_URL);
   } else {
@@ -346847,10 +346853,19 @@ async function installMainProcessProxy() {
 let pendingLaunchPaths = collectLaunchPaths(process.argv);
 let controlServer = null;
 function revealShellWindow() {
-  if (!shellWindow) createShellWindow();
-  if (shellWindow?.isMinimized()) shellWindow.restore();
-  shellWindow?.show();
-  shellWindow?.focus();
+  const created = !shellWindow || shellWindow.isDestroyed();
+  if (created) {
+    createShellWindow();
+    restoreSplitMemoryOrHome();
+  }
+  if (process.platform === "darwin" && typeof require$$1$3.app.show === "function") {
+    require$$1$3.app.show();
+  }
+  if (shellWindow && !shellWindow.isDestroyed()) {
+    if (shellWindow.isMinimized()) shellWindow.restore();
+    shellWindow.show();
+    shellWindow.focus();
+  }
 }
 function openLaunchPaths(paths) {
   let opened = false;
@@ -347448,7 +347463,7 @@ require$$1$3.app.whenReady().then(async () => {
     (err) => console.warn("[control] not listening:", err)
   );
   require$$1$3.app.on("activate", () => {
-    if (require$$1$3.BrowserWindow.getAllWindows().length === 0) createShellWindow();
+    revealShellWindow();
   });
 });
 require$$1$3.app.on("window-all-closed", () => {
