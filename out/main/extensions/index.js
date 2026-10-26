@@ -71,53 +71,8 @@ function installHyperOfficeExtensions(electronModule = null) {
     }
   });
 
-  // 2. Gemini Quota & Token Tracking
+  // 2. Gemini Quota & Token Tracking (native ai:chat / ai:free-quota / ai:free-disconnect stay in main/index.js)
   ipcMain.handle("hyper:gemini:quota", () => geminiTracker.getQuotaStats());
-
-  // Intercept built-in ai:free-quota for Gemini
-  try { ipcMain.removeHandler("ai:free-quota"); } catch {}
-  ipcMain.handle("ai:free-quota", async (event, input) => {
-    const provider = input?.provider || (typeof input === "string" ? input : "");
-    if (provider === "gemini") {
-      return geminiTracker.getQuotaStats();
-    }
-    return null;
-  });
-
-  // Intercept built-in ai:free-disconnect to lock Gemini key
-  try { ipcMain.removeHandler("ai:free-disconnect"); } catch {}
-  ipcMain.handle("ai:free-disconnect", async (event, input) => {
-    const provider = input?.provider || (typeof input === "string" ? input : "");
-    if (provider === "gemini") {
-      console.log("[HyperOffice] Gemini key is locked; disconnect prevented.");
-      return;
-    }
-  });
-
-  // 3. Fallback hook for built-in ai:chat
-  try { ipcMain.removeHandler("ai:chat"); } catch {}
-  ipcMain.handle("ai:chat", async (event, request) => {
-    const envCfg = getEnvConfig();
-    const activeProvider = envCfg.gemini ? "gemini" :
-                           envCfg.anthropic ? "anthropic" :
-                           envCfg.openai ? "openai" :
-                           envCfg.deepseek ? "deepseek" :
-                           envCfg.openrouter ? "openrouter" : "ollama";
-
-    if (envCfg[activeProvider] || activeProvider === "ollama") {
-      try {
-        return await executeAiChat({
-          provider: activeProvider,
-          system: request.system,
-          user: request.user
-        });
-      } catch (err) {
-        return { ok: false, error: `[.env AI Error] ${err.message}` };
-      }
-    }
-
-    return { ok: false, error: "No AI provider configured. Set GEMINI_API_KEY in .env." };
-  });
 
   // 4. Clean up on app exit
   app.on("before-quit", () => {

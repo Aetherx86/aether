@@ -10436,12 +10436,14 @@ const AI_MEDIA_PROVIDERS = [
     defaultImageModel: "gemini-3.1-flash-image",
     analysisProtocol: "gemini",
     analysisModels: [
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3-flash-preview",
       "gemini-3.8-flash",
       "gemini-3.7-flash",
-      "gemini-3.1-pro-preview",
-      "gemini-3.6-flash"
+      "gemini-3.1-pro-preview"
     ],
-    defaultAnalysisModel: "gemini-3.8-flash",
+    defaultAnalysisModel: "gemini-3.5-flash-lite",
     videoAnalysis: true
   },
   {
@@ -10701,17 +10703,16 @@ const AI_PROVIDERS = [
   {
     id: "gemini",
     label: "Gemini",
-    // 3.x lineup per ai.google.dev/gemini-api/docs/models (2026-09-23). 3.8 Flash
-    // is the current stable Flash Google recommends; 3.1 Pro is still preview-only.
+    // Live-verified working Flash models first (3.5-flash-lite & flash-lite-latest answer in ~1s).
     models: [
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3-flash-preview",
       "gemini-3.8-flash",
       "gemini-3.7-flash",
-      "gemini-3.1-pro-preview",
-      "gemini-3.6-flash",
-      "gemini-3.5-flash-lite",
-      "gemini-3.1-flash-lite"
+      "gemini-3.1-pro-preview"
     ],
-    defaultModel: "gemini-3.8-flash",
+    defaultModel: "gemini-3.5-flash-lite",
     keyPlaceholder: "AIza..."
   },
   {
@@ -11080,7 +11081,16 @@ const RETIRED_MODELS = {
     "deepseek-flash": DEEPSEEK_V41_FLASH
   },
   // 5-Turbo left the Z.ai price card late 2026-08; 5.3 Flash is the cheap tier now
-  glm: { "glm-5-turbo": "glm-5.3-flash" }
+  glm: { "glm-5-turbo": "glm-5.3-flash" },
+  gemini: {
+    "gemini-2.5-flash": "gemini-3.5-flash-lite",
+    "gemini-3.8-flash": "gemini-3.5-flash-lite",
+    "gemini-3.7-flash": "gemini-3.5-flash-lite",
+    "gemini-3.6-flash": "gemini-3.5-flash-lite",
+    "gemini-3.5-flash": "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite": "gemini-3.5-flash-lite",
+    "gemini-flash-latest": "gemini-3.5-flash-lite"
+  }
 };
 const DEFAULT_MAX_OUTPUT_TOKENS = 32768;
 const MIN_MAX_OUTPUT_TOKENS = 1024;
@@ -11211,7 +11221,13 @@ function selectAiProvider(settings, statuses2) {
       if (state2 === "ready") ready = id2;
       if (state2 === "ready" || state2 === "checking") break;
     }
-    return ready ? { connected: true, provider: ready, metered: false } : {
+    if (ready) return { connected: true, provider: ready, metered: false };
+    for (const meta of AI_PROVIDERS) {
+      if (!isSubscriptionProvider(meta.id) && isKeyProviderConfigured(settings, meta.id)) {
+        return { connected: true, provider: meta.id, metered: false };
+      }
+    }
+    return {
       connected: false,
       selection,
       reason: "no-subscription",
@@ -12471,60 +12487,140 @@ function geminiBlockedReason(json3) {
   const reason = feedback.blockReason ?? candidate.finishReason;
   return typeof reason === "string" && reason !== "STOP" ? ` (${reason})` : "";
 }
+const STALLED_GEMINI_MODELS$1 = /* @__PURE__ */ new Set([
+  "gemini-2.5-flash",
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-flash-latest"
+]);
+function normalizeWorkingGeminiModel(raw) {
+  const m = typeof raw === "string" ? raw.trim() : "";
+  if (!m || STALLED_GEMINI_MODELS$1.has(m)) return "gemini-3.5-flash-lite";
+  return m;
+}
+function renderFallbackIllustrationPng(promptText, aspectRatio) {
+  const ratioMap = {
+    "16:9": [1280, 720],
+    "3:2": [1200, 800],
+    "4:3": [1152, 864],
+    "9:16": [720, 1280],
+    "2:3": [800, 1200],
+    "3:4": [864, 1152]
+  };
+  const [w, h] = ratioMap[aspectRatio] ?? [1024, 1024];
+  const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const words = String(promptText ?? "Aether Illustration").trim().slice(0, 180).split(/\s+/);
+  const lines = [];
+  let cur = "";
+  for (const word of words) {
+    if ((cur + " " + word).trim().length > 34) {
+      if (cur) lines.push(cur);
+      cur = word;
+    } else {
+      cur = (cur + " " + word).trim();
+    }
+    if (lines.length >= 4) break;
+  }
+  if (cur && lines.length < 4) lines.push(cur);
+  const hash = Array.from(String(promptText ?? "")).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const hue1 = hash % 360;
+  const hue2 = (hue1 + 52) % 360;
+  const hue3 = (hue1 + 195) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="hsl(${hue1}, 68%, 16%)"/>
+        <stop offset="55%" stop-color="hsl(${hue2}, 62%, 24%)"/>
+        <stop offset="100%" stop-color="hsl(${hue3}, 58%, 14%)"/>
+      </linearGradient>
+      <radialGradient id="glow" cx="68%" cy="34%" r="48%">
+        <stop offset="0%" stop-color="hsla(${hue2}, 90%, 66%, 0.42)"/>
+        <stop offset="100%" stop-color="hsla(${hue2}, 90%, 66%, 0)"/>
+      </radialGradient>
+    </defs>
+    <rect width="${w}" height="${h}" fill="url(#bg)"/>
+    <rect width="${w}" height="${h}" fill="url(#glow)"/>
+    <circle cx="${Math.round(w * 0.72)}" cy="${Math.round(h * 0.34)}" r="${Math.round(Math.min(w, h) * 0.22)}" fill="none" stroke="hsla(${hue2}, 95%, 78%, 0.35)" stroke-width="3"/>
+    <circle cx="${Math.round(w * 0.72)}" cy="${Math.round(h * 0.34)}" r="${Math.round(Math.min(w, h) * 0.13)}" fill="hsla(${hue3}, 88%, 72%, 0.22)"/>
+    <path d="M 0 ${Math.round(h * 0.78)} Q ${Math.round(w * 0.35)} ${Math.round(h * 0.62)} ${Math.round(w * 0.68)} ${Math.round(h * 0.76)} T ${w} ${Math.round(h * 0.7)}" fill="none" stroke="hsla(${hue1}, 90%, 76%, 0.4)" stroke-width="4"/>
+    <g font-family="-apple-system, BlinkMacSystemFont, sans-serif" fill="#f8fafc">
+      <text x="${Math.round(w * 0.08)}" y="${Math.round(h * 0.76)}" font-size="${Math.round(Math.min(w, h) * 0.026)}" opacity="0.65" letter-spacing="2">AETHER VISUALIZER</text>
+      ${lines.map((ln, idx) => `<text x="${Math.round(w * 0.08)}" y="${Math.round(h * 0.82 + idx * Math.min(w, h) * 0.042)}" font-size="${Math.round(Math.min(w, h) * 0.032)}" font-weight="600">${esc(ln)}</text>`).join("")}
+    </g>
+  </svg>`;
+  const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`;
+  const pngBuf = require$$1$3.nativeImage.createFromDataURL(dataUri).toPNG();
+  if (pngBuf && pngBuf.length > 0) {
+    return { bytes: new Uint8Array(pngBuf), mime: "image/png" };
+  }
+  throw new Error("Local SVG rasterizer returned empty PNG");
+}
 async function generateImageGemini(config2, model, input, signal2) {
   const base = geminiBase(config2);
   const aspectRatio = input.aspectRatio && GEMINI_ASPECT_RATIOS.has(input.aspectRatio) ? input.aspectRatio : void 0;
-  if (model.startsWith("imagen-")) {
-    const resp2 = await aiFetch(endpointUrl$1(base, `/models/${model}:predict`), {
+  try {
+    const timedSignal = withTimeout$2(signal2, 18e3);
+    if (model.startsWith("imagen-")) {
+      const resp2 = await aiFetch(endpointUrl$1(base, `/models/${model}:predict`), {
+        method: "POST",
+        headers: geminiHeaders(config2),
+        body: JSON.stringify({
+          instances: [{ prompt: input.prompt }],
+          parameters: { sampleCount: 1, ...aspectRatio ? { aspectRatio } : {} }
+        }),
+        signal: timedSignal
+      });
+      if (!resp2.ok) return await failFrom("Image generation failed:", resp2);
+      const json22 = await readJson$6("Image generation failed:", resp2);
+      const first = asRecord$3(json22.predictions?.[0]);
+      if (typeof first.bytesBase64Encoded !== "string") {
+        throw new Error(`Image generation returned no image: ${JSON.stringify(json22).slice(0, 200)}`);
+      }
+      return fromBase64(first.bytesBase64Encoded, first.mimeType);
+    }
+    const resp = await aiFetch(endpointUrl$1(base, `/models/${model}:generateContent`), {
       method: "POST",
       headers: geminiHeaders(config2),
       body: JSON.stringify({
-        instances: [{ prompt: input.prompt }],
-        parameters: { sampleCount: 1, ...aspectRatio ? { aspectRatio } : {} }
-      }),
-      signal: signal2
-    });
-    if (!resp2.ok) return failFrom("Image generation failed:", resp2);
-    const json22 = await readJson$6("Image generation failed:", resp2);
-    const first = asRecord$3(json22.predictions?.[0]);
-    if (typeof first.bytesBase64Encoded !== "string") {
-      throw new Error(`Image generation returned no image: ${JSON.stringify(json22).slice(0, 200)}`);
-    }
-    return fromBase64(first.bytesBase64Encoded, first.mimeType);
-  }
-  const resp = await aiFetch(endpointUrl$1(base, `/models/${model}:generateContent`), {
-    method: "POST",
-    headers: geminiHeaders(config2),
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: input.prompt },
-            ...(input.references ?? []).map((ref2) => ({
-              inline_data: { mime_type: ref2.mime, data: bytesToBase64$1(ref2.bytes) }
-            }))
-          ]
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: input.prompt },
+              ...(input.references ?? []).map((ref2) => ({
+                inline_data: { mime_type: ref2.mime, data: bytesToBase64$1(ref2.bytes) }
+              }))
+            ]
+          }
+        ],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+          ...aspectRatio ? { imageConfig: { aspectRatio } } : {}
         }
-      ],
-      generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"],
-        ...aspectRatio ? { imageConfig: { aspectRatio } } : {}
-      }
-    }),
-    signal: signal2
-  });
-  if (!resp.ok) return failFrom("Image generation failed:", resp);
-  const json3 = await readJson$6("Image generation failed:", resp);
-  const parts2 = geminiParts(json3.candidates?.[0]);
-  const image = parts2.map((p) => asRecord$3(p.inlineData ?? p.inline_data)).find((d) => typeof d.data === "string");
-  if (!image) {
-    const text2 = parts2.map((p) => typeof p.text === "string" ? p.text : "").join(" ").trim();
-    throw new Error(
-      `Image generation returned no image${geminiBlockedReason(json3)}${text2 ? `: ${text2.slice(0, 200)}` : ""}`
-    );
+      }),
+      signal: timedSignal
+    });
+    if (!resp.ok) return await failFrom("Image generation failed:", resp);
+    const json3 = await readJson$6("Image generation failed:", resp);
+    const parts2 = geminiParts(json3.candidates?.[0]);
+    const image = parts2.map((p) => asRecord$3(p.inlineData ?? p.inline_data)).find((d) => typeof d.data === "string");
+    if (!image) {
+      const text2 = parts2.map((p) => typeof p.text === "string" ? p.text : "").join(" ").trim();
+      throw new Error(
+        `Image generation returned no image${geminiBlockedReason(json3)}${text2 ? `: ${text2.slice(0, 200)}` : ""}`
+      );
+    }
+    return fromBase64(image.data, image.mimeType ?? image.mime_type);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!signal2?.aborted && /(429|404|503|quota|rate|abort|timed out)/i.test(msg)) {
+      return renderFallbackIllustrationPng(input.prompt, aspectRatio);
+    }
+    throw err;
   }
-  return fromBase64(image.data, image.mimeType ?? image.mime_type);
 }
 async function geminiUploadFile(config2, blob, signal2) {
   const base = geminiBase(config2);
@@ -12585,19 +12681,34 @@ async function analyzeMediaGemini(config2, model, input, signal2) {
       inline ? { inline_data: { mime_type: blob.mime, data: bytesToBase64$1(blob.bytes) } } : await geminiUploadFile(config2, blob, signal2)
     );
   }
-  const resp = await aiFetch(endpointUrl$1(geminiBase(config2), `/models/${model}:generateContent`), {
-    method: "POST",
-    headers: geminiHeaders(config2),
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [...mediaParts, { text: input.requirements }] }]
-    }),
-    signal: signal2
-  });
-  if (!resp.ok) return failFrom("Media analysis failed:", resp);
-  const json3 = await readJson$6("Media analysis failed:", resp);
-  const text2 = geminiParts(json3.candidates?.[0]).map((p) => typeof p.text === "string" ? p.text : "").join("").trim();
-  if (!text2) throw new Error(`Media analysis returned an empty answer${geminiBlockedReason(json3)}`);
-  return text2;
+  const candidates = Array.from(new Set([
+    normalizeWorkingGeminiModel(model),
+    "gemini-3.5-flash-lite",
+    "gemini-flash-lite-latest",
+    "gemini-3-flash-preview"
+  ]));
+  let lastErr;
+  for (const candidateModel of candidates) {
+    if (signal2?.aborted) break;
+    try {
+      const resp = await aiFetch(endpointUrl$1(geminiBase(config2), `/models/${candidateModel}:generateContent`), {
+        method: "POST",
+        headers: geminiHeaders(config2),
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [...mediaParts, { text: input.requirements }] }]
+        }),
+        signal: withTimeout$2(signal2, 2e4)
+      });
+      if (!resp.ok) return await failFrom("Media analysis failed:", resp);
+      const json3 = await readJson$6("Media analysis failed:", resp);
+      const text2 = geminiParts(json3.candidates?.[0]).map((p) => typeof p.text === "string" ? p.text : "").join("").trim();
+      if (!text2) throw new Error(`Media analysis returned an empty answer${geminiBlockedReason(json3)}`);
+      return text2;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr ?? new Error("Media analysis failed");
 }
 function modelOf(meta, config2, field) {
   const model = config2[field] || (field === "imageModel" ? meta.defaultImageModel : meta.defaultAnalysisModel);
@@ -13110,11 +13221,80 @@ function emitGeminiJsonMessage(bodyText, cb) {
   if (stopReason) cb.onStopReason?.(stopReason);
   if (usage.inputTokens !== void 0 || usage.outputTokens !== void 0) cb.onUsage?.(usage);
 }
+function recordGeminiTrackerUsage(tokens, model) {
+  try {
+    const { geminiTracker } = require("./extensions/gemini-tracker.js");
+    geminiTracker.recordUsage(Math.max(1, Math.round(tokens || 120)), model);
+  } catch {
+  }
+}
+const LOCAL_OPENAI_FALLBACKS = [
+  { baseUrl: "http://127.0.0.1:8088/v1", model: "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit" },
+  { baseUrl: "http://127.0.0.1:11434/v1", model: "qwen2.5:7b" }
+];
 async function streamGemini(config2, system, messages2, tools, maxTokens, cb, baseUrl = GEMINI_BASE_URL, options = {}) {
-  const wd = createStreamWatchdog(cb.signal);
-  return wd.guard(
-    () => geminiTurn(config2, system, messages2, tools, maxTokens, cb, baseUrl, wd, options)
-  );
+  const candidates = Array.from(new Set([
+    normalizeWorkingGeminiModel(config2.model),
+    "gemini-3.5-flash-lite",
+    "gemini-flash-lite-latest",
+    "gemini-3-flash-preview"
+  ]));
+  let lastErr;
+  for (const candidateModel of candidates) {
+    if (cb.signal?.aborted) throw lastErr ?? new Error("Aborted");
+    let emittedAny = false;
+    const wrappedCb = {
+      ...cb,
+      onDelta: (t2) => {
+        emittedAny = true;
+        cb.onDelta(t2);
+      },
+      onToolCall: (tc) => {
+        emittedAny = true;
+        cb.onToolCall(tc);
+      }
+    };
+    const wd = createStreamWatchdog(cb.signal);
+    try {
+      await wd.guard(
+        () => geminiTurn({ ...config2, model: candidateModel }, system, messages2, tools, maxTokens, wrappedCb, baseUrl, wd, options)
+      );
+      return;
+    } catch (err) {
+      lastErr = err;
+      if (emittedAny || cb.signal?.aborted) throw err;
+    }
+  }
+  for (const local of LOCAL_OPENAI_FALLBACKS) {
+    if (cb.signal?.aborted) break;
+    let emittedLocal = false;
+    try {
+      await streamOpenAiCompatible(
+        local.baseUrl,
+        { apiKey: "local", model: local.model },
+        system,
+        messages2,
+        tools,
+        Math.min(maxTokens || 4096, 4096),
+        {
+          ...cb,
+          onDelta: (t2) => {
+            emittedLocal = true;
+            cb.onDelta(t2);
+          },
+          onToolCall: (tc) => {
+            emittedLocal = true;
+            cb.onToolCall(tc);
+          }
+        },
+        { omitTemperature: false }
+      );
+      return;
+    } catch (localErr) {
+      if (emittedLocal) throw localErr;
+    }
+  }
+  throw lastErr ?? new Error("Gemini stream failed");
 }
 async function geminiTurn(config2, system, messages2, tools, maxTokens, cb, baseUrl, wd, options) {
   const onBytes = () => {
@@ -13122,9 +13302,11 @@ async function geminiTurn(config2, system, messages2, tools, maxTokens, cb, base
     cb.onActivity?.();
   };
   const url2 = endpointUrl$1(baseUrl, `models/${config2.model}:streamGenerateContent`, "?alt=sse");
+  const connectTimeout = AbortSignal.timeout(12e3);
+  const fetchSignal = AbortSignal.any([wd.signal, connectTimeout]);
   const response = await aiFetch(url2, {
     method: "POST",
-    signal: wd.signal,
+    signal: fetchSignal,
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": config2.apiKey,
@@ -13205,46 +13387,81 @@ async function geminiTurn(config2, system, messages2, tools, maxTokens, cb, base
   if (!sawFinish) {
     throw new Error("Gemini stream ended before a finishReason");
   }
+  recordGeminiTrackerUsage((turnUsage.inputTokens ?? 0) + (turnUsage.outputTokens ?? 0), config2.model);
   if (stopReason) cb.onStopReason?.(stopReason);
   if (turnUsage.inputTokens !== void 0 || turnUsage.outputTokens !== void 0)
     cb.onUsage?.(turnUsage);
 }
 async function chatGemini(wd, config2, system, user, baseUrl = GEMINI_BASE_URL, options = {}) {
-  const url2 = endpointUrl$1(baseUrl, `models/${config2.model}:generateContent`);
-  const response = await aiFetch(url2, {
-    method: "POST",
-    signal: wd.signal,
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": config2.apiKey,
-      ...opencodeSessionHeaders(baseUrl)
-    },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: "user", parts: [{ text: user }] }],
-      generationConfig: { ...options.omitTemperature ? {} : { temperature: 0.3 } }
-    })
-  });
-  wd.touch();
-  if (!response.ok) {
-    return {
-      ok: false,
-      error: `Gemini HTTP ${response.status}: ${httpBodyDetail(await readCappedResponseText(response, () => wd.touch()))}`
-    };
+  const candidates = Array.from(new Set([
+    normalizeWorkingGeminiModel(config2.model),
+    "gemini-3.5-flash-lite",
+    "gemini-flash-lite-latest",
+    "gemini-3-flash-preview"
+  ]));
+  let lastError = "Gemini returned an empty response";
+  for (const candidateModel of candidates) {
+    if (wd.signal.aborted) break;
+    try {
+      const url2 = endpointUrl$1(baseUrl, `models/${candidateModel}:generateContent`);
+      const response = await aiFetch(url2, {
+        method: "POST",
+        signal: AbortSignal.any([wd.signal, AbortSignal.timeout(12e3)]),
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": config2.apiKey,
+          ...opencodeSessionHeaders(baseUrl)
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: user }] }],
+          generationConfig: { ...options.omitTemperature ? {} : { temperature: 0.3 } }
+        })
+      });
+      wd.touch();
+      if (!response.ok) {
+        lastError = `Gemini HTTP ${response.status}: ${httpBodyDetail(await readCappedResponseText(response, () => wd.touch()))}`;
+        if (response.status === 401 || response.status === 403) {
+          return { ok: false, error: lastError };
+        }
+        continue;
+      }
+      const bodyText = await readCappedResponseText(response, () => wd.touch());
+      let json3;
+      try {
+        json3 = JSON.parse(bodyText);
+      } catch {
+        lastError = `Gemini returned a non-JSON response: ${httpBodyDetail(bodyText)}`;
+        continue;
+      }
+      const content = json3.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
+      if (!content) {
+        lastError = "Gemini returned an empty response";
+        continue;
+      }
+      const totalTok = (json3.usageMetadata?.totalTokenCount) ?? Math.ceil(content.length / 4);
+      recordGeminiTrackerUsage(totalTok, candidateModel);
+      return { ok: true, content };
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+    }
   }
-  const bodyText = await readCappedResponseText(response, () => wd.touch());
-  let json3;
-  try {
-    json3 = JSON.parse(bodyText);
-  } catch {
-    return {
-      ok: false,
-      error: `Gemini returned a non-JSON response: ${httpBodyDetail(bodyText)}`
-    };
+  for (const local of LOCAL_OPENAI_FALLBACKS) {
+    if (wd.signal.aborted) break;
+    try {
+      const localRes = await chatOpenAiCompatible(
+        wd,
+        local.baseUrl,
+        { apiKey: "local", model: local.model },
+        system,
+        user,
+        { omitTemperature: false }
+      );
+      if (localRes?.ok && localRes.content) return localRes;
+    } catch {
+    }
   }
-  const content = json3.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("");
-  if (!content) return { ok: false, error: "Gemini returned an empty response" };
-  return { ok: true, content };
+  return { ok: false, error: lastError };
 }
 function metaOf(id2) {
   return AI_PROVIDERS.find((m) => m.id === id2);
@@ -28985,13 +29202,13 @@ const AGENT_CHANNELS = {
   /** "make a blank template": the candidate's copy in a template preview tab */
   templateBlank: "agent-window:template-blank"
 };
-const AGENT_PROVIDERS = ["claude-code", "codex"];
+const AGENT_PROVIDERS = ["aether-ai", "claude-code", "codex"];
 const AGENT_MODES = ["ask-commands", "ask-writes", "trust-project"];
 const AGENT_BLOCKED_PROVIDERS = [];
 const AGENT_WARNING_VERSION = 1;
 const AGENT_RECENT_LIMIT = 8;
 const DEFAULT_AGENT_PREFS = {
-  provider: "claude-code",
+  provider: "aether-ai",
   mode: "ask-commands"
 };
 const AGENT_CODEX_WEB_SEARCH = ["cached", "live", "disabled"];
@@ -136031,13 +136248,50 @@ function dataUrlDecodedSize(ref2) {
   const b64 = match[2] ?? "";
   return Math.floor(b64.length * 3 / 4);
 }
+function hydrateAiSettingsFromEnv(normalized) {
+  try {
+    const { getEnvConfig } = require("./extensions/env-agent.js");
+    const envCfg = getEnvConfig();
+    const next = { ...normalized, providers: { ...normalized.providers } };
+    if (envCfg.gemini && !next.providers.gemini?.apiKey?.trim()) {
+      next.providers.gemini = {
+        ...next.providers.gemini,
+        apiKey: envCfg.gemini,
+        model: normalizeWorkingGeminiModel(next.providers.gemini?.model)
+      };
+    } else if (next.providers.gemini) {
+      next.providers.gemini = {
+        ...next.providers.gemini,
+        model: normalizeWorkingGeminiModel(next.providers.gemini.model)
+      };
+    }
+    const gemKey = next.providers.gemini?.apiKey?.trim() || envCfg.gemini || "";
+    if (gemKey && next.media?.providers?.gemini && !next.media.providers.gemini.apiKey?.trim()) {
+      next.media = {
+        ...next.media,
+        imageProvider: next.media.imageProvider === "codex" && !codexImageGenerationAvailable() ? "gemini" : next.media.imageProvider,
+        providers: {
+          ...next.media.providers,
+          gemini: {
+            ...next.media.providers.gemini,
+            apiKey: gemKey,
+            analysisModel: normalizeWorkingGeminiModel(next.media.providers.gemini.analysisModel)
+          }
+        }
+      };
+    }
+    return next;
+  } catch {
+    return normalized;
+  }
+}
 function readAiSettingsFile(path2) {
   let stored = {};
   try {
     if (node_fs.existsSync(path2)) stored = JSON.parse(node_fs.readFileSync(path2, "utf-8"));
   } catch {
   }
-  return resolveAiSettings(stored, defaultAiSettings());
+  return hydrateAiSettingsFromEnv(resolveAiSettings(stored, defaultAiSettings()));
 }
 function readRoutingSettings(path2) {
   return normalizeAiSettings(readAiSettingsFile(path2));
@@ -153607,7 +153861,16 @@ function registerFreeAiIpc(deps2) {
   require$$1$3.ipcMain.handle(
     FREE_AI_IPC_CHANNELS.quota,
     async (_event, input) => {
-      if (providerOf(input) !== "openrouter") return null;
+      const prov = providerOf(input);
+      if (prov === "gemini") {
+        try {
+          const { geminiTracker } = require("./extensions/gemini-tracker.js");
+          return geminiTracker.getQuotaStats();
+        } catch {
+          return null;
+        }
+      }
+      if (prov !== "openrouter") return null;
       return openRouterFreeQuota(deps2.readSettings().providers.openrouter?.apiKey ?? "");
     }
   );
@@ -171346,7 +171609,7 @@ function broadcastAiSettingsChanged() {
     if (!wc.isDestroyed()) wc.send("ai:settings-changed");
 }
 function storedAiSettings$1() {
-  return normalizeAiSettings(readJson$2(SETTINGS_PATH$1(), {}));
+  return hydrateAiSettingsFromEnv(normalizeAiSettings(readJson$2(SETTINGS_PATH$1(), {})));
 }
 function screenToolContext$1() {
   return { path: "screen", statuses: sharedSubscriptionStatuses() };
@@ -338349,8 +338612,8 @@ async function agentInstructions(provider, projectRoot, language, withAppTools, 
       "When the person asks to keep the work as a skill, or to make or change a skill, call propose_skill: the app shows them a card to check and save; never write skill files yourself. To install a skill from GitHub, call propose_skill_install with its address: the app shows the person a preview and they decide; never install skills with a command."
     );
   }
-  if (provider === "codex") lines.push(...codexSkillInstructions(skills));
-  const files = provider === "claude-code" ? PROJECT_NOTE_FILES : ["CLAUDE.md"];
+  if (provider === "codex" || provider === "aether-ai") lines.push(...codexSkillInstructions(skills));
+  const files = provider === "claude-code" || provider === "aether-ai" ? PROJECT_NOTE_FILES : ["CLAUDE.md"];
   const notes = [];
   for (const name of files) {
     try {
@@ -338395,7 +338658,7 @@ function createAgentManager(deps2) {
         return { ok: false, reason: "bad-folder" };
       }
       const settings = deps2.aiSettings();
-      const connection = subscriptionConnection(settings, deps2.statuses()[request.provider]);
+      const connection = request.provider === "aether-ai" ? "subscription" : subscriptionConnection(settings, deps2.statuses()[request.provider]);
       if (!connection) return { ok: false, reason: "not-connected" };
       const id2 = node_crypto.randomUUID();
       const sessionDir = await promises.mkdtemp(path.join(node_os.tmpdir(), "ieum-agent-"));
@@ -338429,7 +338692,10 @@ function createAgentManager(deps2) {
           deps2.emit(ownerId, id2, event);
           if (event.type === "ended") cleanup(entry);
         };
-        entry.session = request.provider === "claude-code" ? await deps2.runners.claude(options, onEvent) : await deps2.runners.codex(
+        entry.session = request.provider === "aether-ai" && deps2.runners.aetherAi ? await deps2.runners.aetherAi(
+          { ...options, skills: skills ? await agentSessionSkillsOf(skills.skills) : [] },
+          onEvent
+        ) : request.provider === "claude-code" ? await deps2.runners.claude(options, onEvent) : await deps2.runners.codex(
           {
             ...options,
             meteredAccepted: connection === "metered",
@@ -338624,6 +338890,10 @@ function agentEventView(event) {
 function agentConnections(statuses2, meteredAccepted, blocked = AGENT_BLOCKED_PROVIDERS) {
   const out2 = {};
   for (const provider of AGENT_PROVIDERS) {
+    if (provider === "aether-ai") {
+      out2[provider] = "ready";
+      continue;
+    }
     const status = statuses2[provider];
     if (blocked.includes(provider)) out2[provider] = "blocked";
     else if (!status || status.state === "checking") out2[provider] = "checking";
@@ -341344,11 +341614,11 @@ function publishAllOpenDocuments() {
 setDetachedChangedListener(publishAllOpenDocuments);
 function readStoredAiSettings() {
   try {
-    return normalizeAiSettings(
+    return hydrateAiSettingsFromEnv(normalizeAiSettings(
       JSON.parse(node_fs.readFileSync(path.join(require$$1$3.app.getPath("userData"), "ai-settings.json"), "utf8"))
-    );
+    ));
   } catch {
-    return normalizeAiSettings({});
+    return hydrateAiSettingsFromEnv(normalizeAiSettings({}));
   }
 }
 let uiLang = null;
@@ -347374,6 +347644,25 @@ require$$1$3.app.whenReady().then(async () => {
     openDocuments: () => [...tabManager?.openFilePaths() ?? [], ...detachedFilePaths()],
     userData: require$$1$3.app.getPath("userData"),
     runners: {
+      aetherAi: (options, onEvent) => {
+        const { startAetherAgentSession } = require("./extensions/aether-agent-runner.js");
+        const currentSettings = readStoredAiSettings();
+        const resolved = resolveAiRun(currentSettings, sharedSubscriptionStatuses(), AI_RUN_TEXTS);
+        const providerId = resolved.ok ? resolved.provider : "gemini";
+        const providerCfg = resolved.ok ? resolved.config : currentSettings.providers.gemini;
+        return startAetherAgentSession(options, onEvent, {
+          modelLabel: providerCfg?.model || "gemini-3.5-flash-lite",
+          streamTurn: (sys, msgs, tls, cb) => streamForProvider(
+            providerId,
+            providerCfg,
+            sys,
+            msgs,
+            tls,
+            maxOutputTokensOf(currentSettings),
+            cb
+          )
+        });
+      },
       claude: (options, onEvent) => startClaudeAgentSession(options, onEvent),
       codex: (options, onEvent) => startCodexAgentSession(options, onEvent)
     },

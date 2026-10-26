@@ -509,10 +509,10 @@ function formatKbSize(bytes) {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
 }
-const KB_SYSTEM_PROMPT = `## Knowledge base
+const KB_SYSTEM_PROMPT = `## Knowledge base & General AI Assistant
 The user's starred files form a knowledge base; each turn's context
 lists them (index | folder | file | type | size, with the absolute path).
-- When the request touches the knowledge base, search it first (search_knowledge_base)
+- When starred files exist and the request touches the knowledge base, search it first (search_knowledge_base)
   and read the promising files (read_knowledge_file, paged by offset) before
   answering. Never answer corpus questions from file names alone.
 - A full-text search matches literal words only: if it returns nothing, retry
@@ -524,7 +524,7 @@ lists them (index | folder | file | type | size, with the absolute path).
   [file name](cite link) — copy the cite link exactly as the list or a search
   result gives it (it is already encoded). Cite ONLY links that appear there;
   never invent or edit one.
-- Say so plainly when the knowledge base does not contain the answer.`;
+- When no starred files exist or when the user asks a general question not covered by the starred files, answer directly and helpfully using your own AI knowledge (only note that the knowledge base lacked a match if the user specifically asked about their starred files).`;
 function kbCiteHref(path) {
   const encoded = encodeURIComponent(path).replace(/%2F/g, "/").replace(/\(/g, "%28").replace(/\)/g, "%29");
   return FILE_NAV_SCHEME$1 + encoded;
@@ -13724,12 +13724,12 @@ function KbAskPanel({
       endRunScope();
       return;
     }
-    if (corpusRef.current.length === 0) {
+    if (corpusRef.current.length === 0 && scope !== void 0) {
       endRunScope();
       setMessages((prev) => [
         ...prev,
         asked,
-        scope === void 0 ? { role: "assistant", text: t("askEmptyCorpus"), toolNotes: [] } : { role: "assistant", text: t("askScopeGone"), toolNotes: [], isError: true }
+        { role: "assistant", text: t("askScopeGone"), toolNotes: [], isError: true }
       ]);
       setBusy(false);
       return;

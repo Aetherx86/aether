@@ -8,17 +8,45 @@ const http = require("node:http");
 
 let cachedEnv = null;
 
+const STALLED_GEMINI_MODELS = new Set([
+  "gemini-2.5-flash",
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-flash-latest"
+]);
+
+function normalizeGeminiModel(raw) {
+  const m = typeof raw === "string" ? raw.trim() : "";
+  if (!m || STALLED_GEMINI_MODELS.has(m)) return "gemini-3.5-flash-lite";
+  return m;
+}
+
+function readStoredAiSettingsFallback() {
+  try {
+    const p = path.join(os.homedir(), "Library", "Application Support", "Aether", "ai-settings.json");
+    if (fs.existsSync(p)) {
+      return JSON.parse(fs.readFileSync(p, "utf8"));
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 function findEnvPath() {
   const candidates = [
-    path.join(process.cwd(), ".env"),
     path.join(__dirname, "../../../.env"),
     path.join(os.homedir(), ".aether", ".env"),
+    path.join(process.cwd(), ".env"),
     path.join(os.homedir(), ".env")
   ];
   for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
+    try {
+      if (fs.existsSync(c)) return c;
+    } catch { /* ignore */ }
   }
-  return candidates[0]; // default save location
+  return path.join(os.homedir(), ".aether", ".env"); // writable fallback outside app.asar
 }
 
 function parseEnv(filePath) {
@@ -45,16 +73,18 @@ function getEnvConfig(forceReload = false) {
   if (cachedEnv && !forceReload) return cachedEnv;
   const envFile = findEnvPath();
   const fileVars = parseEnv(envFile);
-  
+  const stored = readStoredAiSettingsFallback();
+  const providers = stored?.providers || {};
+
   cachedEnv = {
     envFile,
-    openai: fileVars.OPENAI_API_KEY || process.env.OPENAI_API_KEY || "",
-    anthropic: fileVars.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY || "",
-    gemini: fileVars.GEMINI_API_KEY || process.env.GEMINI_API_KEY || "",
-    deepseek: fileVars.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY || "",
-    openrouter: fileVars.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY || "",
-    ollamaBase: fileVars.OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-    defaultModel: fileVars.DEFAULT_MODEL || process.env.DEFAULT_MODEL || "gemini-flash-lite-latest"
+    openai: fileVars.OPENAI_API_KEY || process.env.OPENAI_API_KEY || providers.openai?.apiKey || "",
+    anthropic: fileVars.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY || providers.anthropic?.apiKey || "",
+    gemini: fileVars.GEMINI_API_KEY || process.env.GEMINI_API_KEY || providers.gemini?.apiKey || "",
+    deepseek: fileVars.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY || providers.deepseek?.apiKey || "",
+    openrouter: fileVars.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY || providers.openrouter?.apiKey || "",
+    ollamaBase: fileVars.OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434",
+    defaultModel: normalizeGeminiModel(fileVars.DEFAULT_MODEL || process.env.DEFAULT_MODEL || "gemini-3.5-flash-lite")
   };
   return cachedEnv;
 }
@@ -162,30 +192,47 @@ async function executeAiChat({ provider, model, system, user, messages, apiKey, 
 
   if (provider === "gemini") {
     const key = effectiveKey || config.gemini;
-    if (!key) throw new Error("Gemini API Key not found in .env");
-    const m = model || "gemini-flash-lite-latest";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-    const contents = formattedMessages.map(msg => ({
+    if (!key) throw new Error("Gemini API Key not found in .env or AI settings");
+    const candidates = Array.from(new Set([
+      normalizeGeminiModel(model || config.defaultModel),
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3-flash-preview"
+    ]));
+    const contents = formattedMessages.filter(msg => msg.role !== "system").map(msg => ({
       role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }]
+      parts: [{ text: String(msg.content ?? "") }]
     }));
-    const res = await rawRequest(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" }
-    }, JSON.stringify({
-      contents,
-      systemInstruction: system ? { parts: [{ text: system }] } : undefined,
-      generationConfig: { temperature }
-    }));
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || `Gemini HTTP ${res.status}`);
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    try {
-      const { geminiTracker } = require("./gemini-tracker");
-      const tokens = data.usageMetadata?.totalTokenCount || (text.length / 4);
-      geminiTracker.recordUsage(Math.round(tokens), m);
-    } catch { /* ignore */ }
-    return { ok: true, content: text, raw: data };
+    let lastErr = null;
+    for (const m of candidates) {
+      try {
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), 12000);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+        const res = await rawRequest(url, {
+          method: "POST",
+          signal: ac.signal,
+          headers: { "Content-Type": "application/json" }
+        }, JSON.stringify({
+          contents,
+          systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+          generationConfig: { temperature }
+        })).finally(() => clearTimeout(timer));
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || `Gemini HTTP ${res.status}`);
+        const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
+        if (!text) throw new Error("Gemini returned empty text");
+        try {
+          const { geminiTracker } = require("./gemini-tracker");
+          const tokens = data.usageMetadata?.totalTokenCount || (text.length / 4);
+          geminiTracker.recordUsage(Math.round(tokens), m);
+        } catch { /* ignore */ }
+        return { ok: true, content: text, raw: data };
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error("Gemini request failed");
   }
 
   // Default: OpenAI-compatible (OpenAI, DeepSeek, OpenRouter, Ollama)

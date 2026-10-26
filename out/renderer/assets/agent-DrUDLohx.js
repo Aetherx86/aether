@@ -1,6 +1,6 @@
 import { c as createI18n, d as defineStrings, r as reactExports, j as jsxRuntimeExports, h as htmlLang, a as htmlDir, b as clientExports, R as React } from "./index-DMHLWY5B.js";
 import { S as SkillCardLine, a as SkillCardPreviewLine, b as SkillProposalCard, s as skillCardBridge, c as skillCardText, d as skillTemplateText, e as skillsText, f as SkillImportPreviewDialog, g as failureKey, p as pickerSkillsOf, w as withSkillChip, h as skillChipOf, u as useSkillPickerInput, i as agentText, j as skillPickerText } from "./skills-CkmNaLwM.js";
-const AGENT_PROVIDERS = ["claude-code", "codex"];
+const AGENT_PROVIDERS = ["aether-ai", "claude-code", "codex"];
 const AGENT_MODES = ["ask-commands", "ask-writes", "trust-project"];
 const AGENT_WARNING_VERSION = 1;
 const AGENT_CODEX_WEB_SEARCH = ["cached", "live", "disabled"];
@@ -1296,10 +1296,12 @@ function agentLogWithSkillItem(state, item) {
   return { ...state, entries: [...state.entries, { kind: item.kind, key: item.key }] };
 }
 const PROVIDER_LABEL = {
+  "aether-ai": "providerAether",
   "claude-code": "providerClaude",
   codex: "providerCodex"
 };
 const PROVIDER_NOTE = {
+  "aether-ai": "providerAetherNote",
   "claude-code": "providerClaudeNote",
   codex: "providerCodexNote"
 };

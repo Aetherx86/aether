@@ -4014,12 +4014,14 @@ const AI_MEDIA_PROVIDERS = [
     defaultImageModel: "gemini-3.1-flash-image",
     analysisProtocol: "gemini",
     analysisModels: [
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3-flash-preview",
       "gemini-3.8-flash",
       "gemini-3.7-flash",
-      "gemini-3.1-pro-preview",
-      "gemini-3.6-flash"
+      "gemini-3.1-pro-preview"
     ],
-    defaultAnalysisModel: "gemini-3.8-flash",
+    defaultAnalysisModel: "gemini-3.5-flash-lite",
     videoAnalysis: true
   },
   {
@@ -4253,17 +4255,15 @@ const AI_PROVIDERS = [
   {
     id: "gemini",
     label: "Gemini",
-    // 3.x lineup per ai.google.dev/gemini-api/docs/models (2026-09-23). 3.8 Flash
-    // is the current stable Flash Google recommends; 3.1 Pro is still preview-only.
     models: [
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3-flash-preview",
       "gemini-3.8-flash",
       "gemini-3.7-flash",
-      "gemini-3.1-pro-preview",
-      "gemini-3.6-flash",
-      "gemini-3.5-flash-lite",
-      "gemini-3.1-flash-lite"
+      "gemini-3.1-pro-preview"
     ],
-    defaultModel: "gemini-3.8-flash",
+    defaultModel: "gemini-3.5-flash-lite",
     keyPlaceholder: "AIza..."
   },
   {
@@ -4632,7 +4632,17 @@ const RETIRED_MODELS = {
     "deepseek-flash": DEEPSEEK_V41_FLASH
   },
   // 5-Turbo left the Z.ai price card late 2026-08; 5.3 Flash is the cheap tier now
-  glm: { "glm-5-turbo": "glm-5.3-flash" }
+  glm: { "glm-5-turbo": "glm-5.3-flash" },
+  gemini: {
+    "gemini-2.5-flash": "gemini-3.5-flash-lite",
+    "gemini-2.0-flash": "gemini-3.5-flash-lite",
+    "gemini-3.8-flash": "gemini-3.5-flash-lite",
+    "gemini-3.7-flash": "gemini-3.5-flash-lite",
+    "gemini-3.6-flash": "gemini-3.5-flash-lite",
+    "gemini-3.5-flash": "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite": "gemini-3.5-flash-lite",
+    "gemini-flash-latest": "gemini-3.5-flash-lite"
+  }
 };
 const DEFAULT_MAX_OUTPUT_TOKENS = 32768;
 const MIN_MAX_OUTPUT_TOKENS = 1024;
@@ -4760,7 +4770,21 @@ function selectAiProvider(settings, statuses) {
       if (state2 === "ready") ready = id2;
       if (state2 === "ready" || state2 === "checking") break;
     }
-    return ready ? { connected: true, provider: ready, metered: false } : {
+    if (ready) {
+      return { connected: true, provider: ready, metered: false };
+    }
+    const fallbackOrder = ["gemini", "openai", "anthropic", "openrouter", "deepseek", "qwen", "custom"];
+    for (const id2 of fallbackOrder) {
+      if (isKeyProviderConfigured(settings, id2)) {
+        return { connected: true, provider: id2, metered: false };
+      }
+    }
+    for (const meta of AI_PROVIDERS) {
+      if (!isSubscriptionProvider(meta.id) && isKeyProviderConfigured(settings, meta.id)) {
+        return { connected: true, provider: meta.id, metered: false };
+      }
+    }
+    return {
       connected: false,
       selection,
       reason: "no-subscription",
@@ -7348,8 +7372,10 @@ const zh$1 = {
   folderNone: "尚未选择文件夹",
   recentLabel: "最近的文件夹",
   providerLabel: "程序",
+  providerAether: "Aether AI（内置）",
   providerClaude: "Claude Code",
   providerCodex: "Codex",
+  providerAetherNote: "直接使用 Aether AI（Gemini / 本地 Mímisbrunnr）运行，无需外部 CLI 即可读取、写入项目文件夹并修改打开的文档。",
   providerClaudeNote: "在 Windows 上，你允许的命令会在没有隔离的情况下运行，可能访问整台电脑和互联网。",
   providerCodexNote: "命令在 Codex 的隔离空间中运行：只能写入项目文件夹，且无法访问互联网。",
   providerBlocked: "暂不可用：目前还无法阻止 Codex 读取它自己的登录文件。",
@@ -7421,8 +7447,10 @@ const en$1 = {
   folderNone: "No folder chosen",
   recentLabel: "Recent folders",
   providerLabel: "Program",
+  providerAether: "Aether AI (Gemini / Local)",
   providerClaude: "Claude Code",
   providerCodex: "Codex",
+  providerAetherNote: "Runs directly with your configured Gemini API key or local Mímisbrunnr model to work on project files and Aether documents.",
   providerClaudeNote: "On Windows, commands you allow run without isolation and can reach your whole PC and the internet.",
   providerCodexNote: "Commands run in Codex’s isolated space: only the project folder can be written, and there is no internet.",
   providerBlocked: "Not available yet: Codex cannot yet be kept from reading its own sign-in file.",
@@ -7567,8 +7595,10 @@ const ko$1 = {
   folderNone: "고른 폴더가 없습니다",
   recentLabel: "최근 폴더",
   providerLabel: "프로그램",
+  providerAether: "Aether AI (Gemini · 로컬 모델)",
   providerClaude: "Claude Code",
   providerCodex: "Codex",
+  providerAetherNote: "설정된 Gemini API 키 또는 로컬 Mímisbrunnr 모델로 프로젝트 폴더의 파일과 Aether 문서를 바로 다룹니다.",
   providerClaudeNote: "Windows에서는 허락한 명령이 격리 없이 실행되어 PC 전체와 인터넷에 닿을 수 있습니다.",
   providerCodexNote: "명령은 Codex의 격리 공간에서 실행됩니다. 프로젝트 폴더에만 쓸 수 있고 인터넷은 막힙니다.",
   providerBlocked: "아직 쓸 수 없습니다. Codex가 자기 로그인 파일을 읽지 못하게 막는 방법을 아직 찾지 못했습니다.",
@@ -7932,8 +7962,10 @@ const id$1 = {
   folderNone: "Belum ada folder yang dipilih",
   recentLabel: "Folder terbaru",
   providerLabel: "Program",
+  providerAether: "Aether AI (Gemini / Local)",
   providerClaude: "Claude Code",
   providerCodex: "Codex",
+  providerAetherNote: "Runs directly with your configured Gemini API key or local Mímisbrunnr model to work on project files and Aether documents.",
   providerClaudeNote: "Di Windows, perintah yang Anda izinkan berjalan tanpa isolasi dan dapat menjangkau seluruh PC Anda serta internet.",
   providerCodexNote: "Perintah berjalan di ruang terisolasi Codex: hanya folder proyek yang dapat ditulisi, dan tidak ada internet.",
   providerBlocked: "Belum tersedia: Codex belum dapat dicegah membaca file masuknya sendiri.",
@@ -8297,8 +8329,10 @@ const pl$1 = {
   folderNone: "Nie wybrano folderu",
   recentLabel: "Ostatnie foldery",
   providerLabel: "Program",
+  providerAether: "Aether AI (Gemini / Local)",
   providerClaude: "Claude Code",
   providerCodex: "Codex",
+  providerAetherNote: "Runs directly with your configured Gemini API key or local Mímisbrunnr model to work on project files and Aether documents.",
   providerClaudeNote: "W systemie Windows polecenia, na które pozwolisz, działają bez izolacji i mają dostęp do całego komputera oraz internetu.",
   providerCodexNote: "Polecenia działają w izolowanej przestrzeni Codex: zapisywać można tylko w folderze projektu i nie ma dostępu do internetu.",
   providerBlocked: "Jeszcze niedostępne: nie da się jeszcze zablokować Codexowi odczytu własnego pliku logowania.",
@@ -8370,8 +8404,10 @@ const cs$1 = {
   folderNone: "Není vybrána žádná složka",
   recentLabel: "Nedávné složky",
   providerLabel: "Program",
+  providerAether: "Aether AI (Gemini / Local)",
   providerClaude: "Claude Code",
   providerCodex: "Codex",
+  providerAetherNote: "Runs directly with your configured Gemini API key or local Mímisbrunnr model to work on project files and Aether documents.",
   providerClaudeNote: "Ve Windows běží příkazy, které povolíte, bez izolace a mají přístup k celému počítači i k internetu.",
   providerCodexNote: "Příkazy běží v izolovaném prostoru programu Codex: zapisovat lze jen do složky projektu a internet není k dispozici.",
   providerBlocked: "Zatím nedostupné: Codexu zatím nelze zabránit ve čtení vlastního přihlašovacího souboru.",
@@ -8516,8 +8552,10 @@ const ms$1 = {
   folderNone: "Tiada folder dipilih",
   recentLabel: "Folder terkini",
   providerLabel: "Program",
+  providerAether: "Aether AI (Gemini / Local)",
   providerClaude: "Claude Code",
   providerCodex: "Codex",
+  providerAetherNote: "Runs directly with your configured Gemini API key or local Mímisbrunnr model to work on project files and Aether documents.",
   providerClaudeNote: "Pada Windows, arahan yang anda benarkan berjalan tanpa pengasingan dan boleh mencapai seluruh PC anda serta internet.",
   providerCodexNote: "Arahan berjalan dalam ruang terasing Codex: hanya folder projek yang boleh ditulis, dan tiada internet.",
   providerBlocked: "Belum tersedia: Codex belum dapat dihalang daripada membaca fail log masuknya sendiri.",
