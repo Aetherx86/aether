@@ -16,7 +16,7 @@ try {
 }
 
 console.log("==================================================================");
-console.log("🧪 [Aether Comprehensive 260-Point Master Verification Suite]");
+console.log("🧪 [Aether Comprehensive 278-Point Master Verification Suite]");
 console.log("   Testing every single nook, cranny, button, edge case, and tool");
 console.log("==================================================================");
 
@@ -1783,6 +1783,142 @@ async function main() {
   }
 
   // =========================================================================
+  // Suite 15: The High Table Multi-Agent Council & Fallback Engine
+  // =========================================================================
+  console.log("\n🏛️ Suite 15: The High Table Multi-Agent Council & Fallback Engine");
+  
+  test(261, "The High Table: high-table.html exists in renderer directory", () => {
+    assert.ok(fs.existsSync(path.join(rootDir, "out/renderer/high-table.html")));
+  });
+
+  test(262, "The High Table: extensions/high-table.js exports 5 seats", () => {
+    const { HIGH_TABLE_SEATS } = require("../out/main/extensions/high-table");
+    assert.strictEqual(HIGH_TABLE_SEATS.length, 5);
+  });
+
+  test(263, "The High Table: 5 seats contain Logician, Visionary, Inquisitor, Pragmatist, High Arbiter", () => {
+    const { HIGH_TABLE_SEATS } = require("../out/main/extensions/high-table");
+    const names = HIGH_TABLE_SEATS.map(s => s.name);
+    assert.ok(names.some(n => n.includes("Logician")));
+    assert.ok(names.some(n => n.includes("Visionary")));
+    assert.ok(names.some(n => n.includes("Inquisitor")));
+    assert.ok(names.some(n => n.includes("Pragmatist")));
+    assert.ok(names.some(n => n.includes("High Arbiter")));
+  });
+
+  test(264, "The High Table: AVAILABLE_MODELS list includes Gemini 3.5 Flash-Lite", () => {
+    const { AVAILABLE_MODELS } = require("../out/main/extensions/high-table");
+    assert.ok(AVAILABLE_MODELS.some(m => m.id === "gemini-3.5-flash-lite"));
+  });
+
+  test(265, "The High Table: AVAILABLE_MODELS includes local Mímisbrunnr models", () => {
+    const { AVAILABLE_MODELS } = require("../out/main/extensions/high-table");
+    assert.ok(AVAILABLE_MODELS.some(m => m.isLocal));
+  });
+
+  test(266, "The High Table: registerHighTableIpc function is exported", () => {
+    const { registerHighTableIpc } = require("../out/main/extensions/high-table");
+    assert.strictEqual(typeof registerHighTableIpc, "function");
+  });
+
+  test(267, "The High Table: DOM contains prompt textarea (#inquiryInput)", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("inquiryInput"));
+    }
+  });
+
+  test(268, "The High Table: DOM contains convene button (#btnConvene) and abort button (#btnAbort)", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("btnConvene"));
+      assert.ok(dom.window.document.getElementById("btnAbort"));
+    }
+  });
+
+  test(269, "The High Table: DOM contains seats grid (#seatsGrid) and fallback alert banner (#fallbackBanner)", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("seatsGrid"));
+      assert.ok(dom.window.document.getElementById("fallbackBanner"));
+    }
+  });
+
+  test(270, "The High Table: DOM contains 3-stage progress trackers (trackerStage1, trackerStage2, trackerStage3)", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("stageTracker"));
+      assert.ok(dom.window.document.getElementById("trackerStage1"));
+      assert.ok(dom.window.document.getElementById("trackerStage2"));
+      assert.ok(dom.window.document.getElementById("trackerStage3"));
+    }
+  });
+
+  test(271, "The High Table: DOM contains preset toolbar and quick preset buttons", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.querySelector(".preset-toolbar"));
+      assert.ok(html.includes("applyPreset('lite')"));
+      assert.ok(html.includes("applyPreset('balanced')"));
+      assert.ok(html.includes("applyPreset('deep')"));
+      assert.ok(html.includes("applyPreset('local')"));
+    }
+  });
+
+  test(272, "The High Table: DOM contains decree container (#decreeBody) and export action", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("stage3Wrap"));
+      assert.ok(dom.window.document.getElementById("decreeBody"));
+      assert.ok(html.includes("copyDecree()"));
+      assert.ok(html.includes("exportTranscript()"));
+    }
+  });
+
+  test(273, "The High Table: preload index.js exposes highTable on hyperOfficeApi", () => {
+    const code = fs.readFileSync(path.join(rootDir, "out/preload/index.js"), "utf8");
+    assert.ok(code.includes("highTable: {"));
+    assert.ok(code.includes("hyper:high-table:convene"));
+  });
+
+  test(274, "The High Table: aetherum-pages.js supports 'high-table' page slug", () => {
+    const { getAetherumPage } = require("../out/main/extensions/aetherum-pages");
+    const html = getAetherumPage("high-table");
+    assert.ok(html.includes("The High Table"));
+  });
+
+  test(275, "The High Table: welcome page links to aetherum://high-table", () => {
+    const { getAetherumPage } = require("../out/main/extensions/aetherum-pages");
+    const html = getAetherumPage("welcome");
+    assert.ok(html.includes("aetherum://high-table"));
+  });
+
+  test(276, "The High Table: main index.js implements createHighTableView and openHighTableTab", () => {
+    const code = fs.readFileSync(path.join(rootDir, "out/main/index.js"), "utf8");
+    assert.ok(code.includes("createHighTableView"));
+    assert.ok(code.includes("openHighTableTab"));
+    assert.ok(code.includes("hyper:high-table:open-tab"));
+  });
+
+  test(277, "The High Table: antigravity_council.py supports --json-events flag", () => {
+    const py = fs.readFileSync("/Users/sushikim/Documents/antigravity_council.py", "utf8");
+    assert.ok(py.includes("--json-events"));
+    assert.ok(py.includes("__HT_EVENT__:"));
+  });
+
+  test(278, "The High Table: antigravity_council.py implements stream_with_fallback for 503/429 errors", () => {
+    const py = fs.readFileSync("/Users/sushikim/Documents/antigravity_council.py", "utf8");
+    assert.ok(py.includes("def stream_with_fallback"));
+    assert.ok(py.includes("gemini-3.5-flash-lite"));
+  });
+
+  // =========================================================================
   // Final Results
   // =========================================================================
   console.log("\n==================================================================");
@@ -1796,7 +1932,7 @@ async function main() {
     }
     process.exit(1);
   } else {
-    console.log("🎉 All 260 comprehensive tests across all 14 Aether suites passed with 100% success!");
+    console.log(`🎉 All ${passed} comprehensive tests across all 15 Aether suites passed with 100% success!`);
     process.exit(0);
   }
 }

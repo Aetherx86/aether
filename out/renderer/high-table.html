@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The High Table — Multi-Agent Epistemic Council</title>
+  <style>
+    :root {
+      --bg: #07090e;
+      --surface: #0f141f;
+      --surface-card: #141c2c;
+      --surface-hover: #1c263c;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-gold: rgba(212, 175, 55, 0.35);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --gold: #d4af37;
+      --gold-bright: #fbbf24;
+      --blue: #60a5fa;
+      --purple: #c084fc;
+      --red: #f87171;
+      --amber: #fbbf24;
+      --emerald: #34d399;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: rgba(15, 20, 31, 0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      font-size: 24px;
+      filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--gold-bright) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      color: var(--emerald);
+      font-weight: 500;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+    }
+    .status-pill.deliberating {
+      background: rgba(251, 191, 36, 0.15);
+      border-color: rgba(251, 191, 36, 0.4);
+      color: var(--amber);
+    }
+    .status-pill.deliberating .status-dot {
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+      animation: pulse 1s infinite alternate;
+    }
+    @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+
+    /* Main Container */
+    .content-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Section Header */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Model Selection Grid: 5 Seats */
+    .seats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 1080px) {
+      .seats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 680px) {
+      .seats-grid { grid-template-columns: 1fr; }
+    }
+
+    .seat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .seat-card:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: var(--surface-card);
+      transform: translateY(-2px);
+    }
+    .seat-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent, var(--gold));
+    }
+    .seat-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .seat-icon {
+      font-size: 18px;
+    }
+    .seat-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .seat-name {
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .seat-role {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.3;
+      margin-top: 2px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 26px;
+    }
+
+    /* Model Select Dropdown */
+    .model-dropdown-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: auto;
+    }
+    .model-dropdown-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .model-select {
+      width: 100%;
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      padding: 7px 8px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+    .model-select:focus {
+      border-color: var(--card-accent, var(--gold));
+    }
+    .model-select option {
+      background: #111827;
+      color: #fff;
+    }
+
+    /* Preset Toolbar */
+    .preset-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .preset-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .preset-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Inquiry Input Section */
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .inquiry-textarea {
+      width: 100%;
+      min-height: 100px;
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 12px;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+    .inquiry-textarea:focus {
+      border-color: var(--gold);
+    }
+    .input-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .prompt-pills {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .prompt-pill {
+      font-size: 11px;
+      padding: 3px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .prompt-pill:hover {
+      border-color: var(--gold);
+      color: var(--gold-bright);
+      background: rgba(212, 175, 55, 0.08);
+    }
+    .btn-convene {
+      background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+      color: #000;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.25);
+    }
+    .btn-convene:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(212, 175, 55, 0.4);
+      filter: brightness(1.08);
+    }
+    .btn-convene:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-abort {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+    }
+
+    /* Fallback Warning Toast */
+    .fallback-banner {
+      display: none;
+      padding: 10px 16px;
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      border-radius: 8px;
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 500;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Stage Progression Indicator */
+    .stage-tracker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 12px;
+    }
+    .stage-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+    .stage-item.active {
+      color: var(--gold-bright);
+      font-weight: 700;
+    }
+    .stage-item.done {
+      color: var(--emerald);
+    }
+    .stage-arrow {
+      color: var(--border);
+      font-size: 14px;
+    }
+
+    /* Stage 1: Council Stream Cards */
+    .stage1-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .stage1-container { grid-template-columns: 1fr; }
+    }
+    .opinion-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .opinion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .opinion-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .opinion-model-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+    .opinion-body {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 60px;
+    }
+
+    /* Stage 2 & 3 Full-Width Cards */
+    .cross-review-card {
+      background: #0d131f;
+      border: 1px solid rgba(192, 132, 252, 0.3);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .decree-card {
+      background: linear-gradient(180deg, #121824 0%, #0c101a 100%);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.05);
+    }
+    .decree-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-gold);
+      padding-bottom: 12px;
+    }
+    .decree-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .decree-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .decree-btn {
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid var(--border-gold);
+      border-radius: 6px;
+      color: var(--gold-bright);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .decree-btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+    }
+    .decree-content {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #f1f5f9;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="header">
+    <div class="brand">
+      <span class="brand-icon">🏛️</span>
+      <div>
+        <div class="brand-title">THE HIGH TABLE</div>
+        <div class="brand-subtitle">Autonomous Multi-Agent Epistemic & Strategic Council</div>
+      </div>
+    </div>
+    <div class="header-status">
+      <div id="statusPill" class="status-pill">
+        <span class="status-dot"></span>
+        <span id="statusText">Council Ready</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content-wrap">
+
+    <!-- Section 1: The Five Seats & Model Dropdowns -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="section-title">🏛️ The Five Council Seats & Neural Engines</div>
+        
+        <!-- Preset Toolbar -->
+        <div class="preset-toolbar">
+          <span class="preset-label">Quick Presets:</span>
+          <button class="preset-btn" onclick="applyPreset('lite')">⚡ All Flash-Lite</button>
+          <button class="preset-btn" onclick="applyPreset('balanced')">⚖️ Balanced</button>
+          <button class="preset-btn" onclick="applyPreset('deep')">🧠 Deep Synthesis</button>
+          <button class="preset-btn" onclick="applyPreset('local')">🛡️ Airgapped Local</button>
+        </div>
+      </div>
+
+      <!-- 5-Seat Grid with Dropdowns -->
+      <div class="seats-grid" id="seatsGrid">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </div>
+
+    <!-- Fallback Alert Toast -->
+    <div id="fallbackBanner" class="fallback-banner">
+      <span>⚠️</span>
+      <span id="fallbackText">Model fallback notice</span>
+    </div>
+
+    <!-- Section 2: Inquiry Input Box -->
+    <section class="input-section">
+      <div class="section-title">📜 Council Inquiry & Deliberation Mandate</div>
+      <textarea
+        id="inquiryInput"
+        class="inquiry-textarea"
+        placeholder="Type or paste the complex problem, strategic paradox, or architectural dilemma you wish to submit to The High Table... (⌘+Enter to convene)"
+      ></textarea>
+
+      <div class="input-footer">
+        <div class="prompt-pills">
+          <span style="font-size:11px;color:var(--text-muted);font-weight:600;">Sample Inquiries:</span>
+          <span class="prompt-pill" onclick="setPrompt('When automated formal proofs exceed human cognitive surveyability, does epistemic justification require an agent-accessible chain of reasoning, or structural-systemic reliability?')">Non-Surveyable Proofs</span>
+          <span class="prompt-pill" onclick="setPrompt('Should an artificial intelligence prioritize immutable truth or psychological/homeostatic comfort under existential stress?')">Truth vs. Comfort</span>
+          <span class="prompt-pill" onclick="setPrompt('In architectural distributed systems, analyze the trade-offs of monotonic state synchronization vs. eventual consistency under severe network partitioning.')">State Sync vs Partition</span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button id="btnAbort" class="btn-abort" onclick="abortCouncil()">⏹ Cancel Deliberation</button>
+          <button id="btnConvene" class="btn-convene" onclick="conveneCouncil()">
+            <span>🏛️</span>
+            <span>Convene Council</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stage Progress Tracker -->
+    <div class="stage-tracker" id="stageTracker" style="display:none;">
+      <div id="trackerStage1" class="stage-item active">
+        <span>1. Deliberations of the Seats</span>
+      </div>
+      <span class="stage-arrow">→</span>
+      <div id="trackerStage2" class="stage-item">
+        <span>2. Forensic Cross-Examination</span>
+      </div>
+      <span class="stage-arrow">→</span>
+      <div id="trackerStage3" class="stage-item">
+        <span>3. Supreme Decree</span>
+      </div>
+    </div>
+
+    <!-- Section 3: Live Deliberation Streams -->
+    <!-- Stage 1 Opinions (Seats 1 to 4) -->
+    <div id="stage1Wrap" style="display:none;flex-direction:column;gap:12px;">
+      <div class="section-title" style="color:var(--blue);">▶ Stage 1: Individual Deliberations</div>
+      <div class="stage1-container" id="opinionsContainer">
+        <!-- Opinion Cards 1–4 generated here -->
+      </div>
+    </div>
+
+    <!-- Stage 2: Forensic Cross-Review -->
+    <div id="stage2Wrap" style="display:none;flex-direction:column;gap:12px;">
+      <div class="section-title" style="color:var(--purple);">▶ Stage 2: Forensic Cross-Examination by Seat 5</div>
+      <div class="cross-review-card">
+        <div class="opinion-header">
+          <div class="opinion-title" style="color:var(--purple);">
+            <span>👑</span>
+            <span>Chief Arbiter Cross-Review & Ranking</span>
+          </div>
+          <span id="crossReviewModelTag" class="opinion-model-tag">gemini-3.5-flash-lite</span>
+        </div>
+        <div id="crossReviewBody" class="opinion-body">Awaiting stage 1 completion...</div>
+      </div>
+    </div>
+
+    <!-- Stage 3: The High Table Final Decree -->
+    <div id="stage3Wrap" style="display:none;flex-direction:column;gap:12px;">
+      <div class="section-title" style="color:var(--gold-bright);">▶ Stage 3: The High Table Final Decree</div>
+      <div class="decree-card">
+        <div class="decree-header">
+          <div class="decree-title">
+            <span>🏛️</span>
+            <span>DEFINITIVE HIGH TABLE DECREE</span>
+          </div>
+          <div class="decree-actions">
+            <button class="decree-btn" onclick="copyDecree()">📋 Copy Decree</button>
+            <button class="decree-btn" onclick="exportTranscript()">💾 Export Transcript</button>
+          </div>
+        </div>
+        <div id="decreeBody" class="decree-content">Deliberating final synthesis...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const SEATS = [
+      {
+        index: 1,
+        id: "seat-1",
+        name: "Seat 1: The Logician",
+        koreanTitle: "논리학자 / 분석가",
+        icon: "📐",
+        role: "Formal deductive rigor, explicit premises, structural validity, analytical precision.",
+        defaultModel: "gemini-3.5-flash-lite",
+        accentColor: "#60a5fa"
+      },
+      {
+        index: 2,
+        id: "seat-2",
+        name: "Seat 2: The Visionary",
+        koreanTitle: "창의적 전략가 / 발상가",
+        icon: "🔮",
+        role: "Lateral thinking, unconventional hypotheses, breakthrough paradigms, novel analogies.",
+        defaultModel: "gemini-3.5-flash-lite",
+        accentColor: "#c084fc"
+      },
+      {
+        index: 3,
+        id: "seat-3",
+        name: "Seat 3: The Inquisitor",
+        koreanTitle: "심문관 / 비판적 회의론자",
+        icon: "⚔️",
+        role: "Devil's advocate, stress-testing assumptions, failure modes, counter-examples, unstated biases.",
+        defaultModel: "gemini-3.5-flash-lite",
+        accentColor: "#f87171"
+      },
+      {
+        index: 4,
+        id: "seat-4",
+        name: "Seat 4: The Pragmatist",
+        koreanTitle: "실용주의자 / 구현가",
+        icon: "🛠️",
+        role: "Empirical constraints, operational feasibility, ground-truth execution, real-world precedent.",
+        defaultModel: "gemini-3.5-flash-lite",
+        accentColor: "#fbbf24"
+      },
+      {
+        index: 5,
+        id: "seat-5",
+        name: "Seat 5: The High Arbiter",
+        koreanTitle: "의장 / 최종 종합 판정관",
+        icon: "👑",
+        role: "Forensic cross-examination, resolution of dialectical tensions, and definitive Supreme Decree.",
+        defaultModel: "gemini-3.5-flash-lite",
+        accentColor: "#34d399"
+      }
+    ];
+
+    const MODELS = [
+      { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite (Fast • High Quota)" },
+      { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Balanced • Deep)" },
+      { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Frontier Reasoning)" },
+      { id: "gemini-3-flash-preview", name: "Gemini 3 Flash Preview" },
+      { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview (Heavy Reasoning)" },
+      { id: "qwen2.5:7b", name: "Qwen 2.5 7B (Ollama Local Metal)" },
+      { id: "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit", name: "Qwen 3.8 9B Abliterated (Apple MLX 4bit)" }
+    ];
+
+    let isDeliberating = false;
+    let fullTranscriptData = { query: "", opinions: {}, crossReview: "", decree: "" };
+
+    // Initialize UI
+    function initSeats() {
+      const grid = document.getElementById("seatsGrid");
+      grid.innerHTML = "";
+
+      SEATS.forEach(seat => {
+        const card = document.createElement("div");
+        card.className = "seat-card";
+        card.style.setProperty("--card-accent", seat.accentColor);
+
+        const optionsHtml = MODELS.map(m => 
+          `<option value="${m.id}" ${m.id === seat.defaultModel ? "selected" : ""}>${m.name}</option>`
+        ).join("");
+
+        card.innerHTML = `
+          <div class="seat-card-header">
+            <span class="seat-icon">${seat.icon}</span>
+            <div class="seat-info">
+              <span class="seat-name" style="color:${seat.accentColor}">${seat.name}</span>
+              <span class="seat-role">${seat.role}</span>
+            </div>
+          </div>
+          <div class="model-dropdown-wrap">
+            <label class="model-dropdown-label">Assigned Model</label>
+            <select id="modelSeat${seat.index}" class="model-select">
+              ${optionsHtml}
+            </select>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function applyPreset(type) {
+      if (type === "lite") {
+        for (let i = 1; i <= 5; i++) {
+          document.getElementById(`modelSeat${i}`).value = "gemini-3.5-flash-lite";
+        }
+      } else if (type === "balanced") {
+        document.getElementById("modelSeat1").value = "gemini-3.5-flash-lite";
+        document.getElementById("modelSeat2").value = "gemini-3.5-flash";
+        document.getElementById("modelSeat3").value = "gemini-3.5-flash";
+        document.getElementById("modelSeat4").value = "gemini-3.5-flash-lite";
+        document.getElementById("modelSeat5").value = "gemini-3.5-flash";
+      } else if (type === "deep") {
+        document.getElementById("modelSeat1").value = "gemini-3.8-flash";
+        document.getElementById("modelSeat2").value = "gemini-3.8-flash";
+        document.getElementById("modelSeat3").value = "gemini-3.8-flash";
+        document.getElementById("modelSeat4").value = "gemini-3.5-flash";
+        document.getElementById("modelSeat5").value = "gemini-3.8-flash";
+      } else if (type === "local") {
+        document.getElementById("modelSeat1").value = "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit";
+        document.getElementById("modelSeat2").value = "qwen2.5:7b";
+        document.getElementById("modelSeat3").value = "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit";
+        document.getElementById("modelSeat4").value = "qwen2.5:7b";
+        document.getElementById("modelSeat5").value = "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit";
+      }
+    }
+
+    function setPrompt(text) {
+      document.getElementById("inquiryInput").value = text;
+      document.getElementById("inquiryInput").focus();
+    }
+
+    function setupStage1Cards() {
+      const container = document.getElementById("opinionsContainer");
+      container.innerHTML = "";
+
+      for (let i = 1; i <= 4; i++) {
+        const seat = SEATS[i - 1];
+        const card = document.createElement("div");
+        card.className = "opinion-card";
+        card.id = `opinionCard${i}`;
+        card.innerHTML = `
+          <div class="opinion-header">
+            <div class="opinion-title" style="color:${seat.accentColor}">
+              <span>${seat.icon}</span>
+              <span>${seat.name}</span>
+            </div>
+            <span id="modelTag${i}" class="opinion-model-tag">Awaiting...</span>
+          </div>
+          <div id="opinionBody${i}" class="opinion-body">Waiting for deliberation to begin...</div>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    async function conveneCouncil() {
+      const query = document.getElementById("inquiryInput").value.trim();
+      if (!query) {
+        alert("Please enter an inquiry prompt for The High Table.");
+        return;
+      }
+
+      const selectedModels = [];
+      for (let i = 1; i <= 5; i++) {
+        selectedModels.push(document.getElementById(`modelSeat${i}`).value);
+      }
+
+      isDeliberating = true;
+      fullTranscriptData = { query, opinions: {}, crossReview: "", decree: "" };
+
+      // Update UI state
+      document.getElementById("btnConvene").disabled = true;
+      document.getElementById("btnAbort").style.display = "inline-block";
+      document.getElementById("statusPill").className = "status-pill deliberating";
+      document.getElementById("statusText").innerText = "Council in Session";
+      document.getElementById("stageTracker").style.display = "flex";
+      document.getElementById("fallbackBanner").style.display = "none";
+
+      setupStage1Cards();
+      document.getElementById("stage1Wrap").style.display = "flex";
+      document.getElementById("stage2Wrap").style.display = "none";
+      document.getElementById("stage3Wrap").style.display = "none";
+
+      document.getElementById("crossReviewBody").innerText = "";
+      document.getElementById("decreeBody").innerText = "";
+
+      // Call IPC
+      try {
+        if (window.electron?.ipcRenderer) {
+          window.electron.ipcRenderer.invoke("hyper:high-table:convene", {
+            query,
+            models: selectedModels
+          }).then(res => {
+            finishCouncil(res);
+          }).catch(err => {
+            console.error("Council invocation error:", err);
+            finishCouncil({ ok: false, error: err.message });
+          });
+        } else {
+          // Mock preview if opened directly in browser without Electron
+          console.warn("Electron IPC not detected. Running simulation.");
+          simulateCouncil(query, selectedModels);
+        }
+      } catch (err) {
+        finishCouncil({ ok: false, error: err.message });
+      }
+    }
+
+    function abortCouncil() {
+      if (window.electron?.ipcRenderer) {
+        window.electron.ipcRenderer.invoke("hyper:high-table:abort");
+      }
+      finishCouncil({ ok: false, error: "Deliberation aborted by user." });
+    }
+
+    function finishCouncil(res) {
+      isDeliberating = false;
+      document.getElementById("btnConvene").disabled = false;
+      document.getElementById("btnAbort").style.display = "none";
+      document.getElementById("statusPill").className = "status-pill";
+      document.getElementById("statusText").innerText = res?.ok ? "Decree Issued" : "Council Adjourned";
+
+      document.getElementById("trackerStage1").className = "stage-item done";
+      document.getElementById("trackerStage2").className = "stage-item done";
+      document.getElementById("trackerStage3").className = "stage-item done";
+    }
+
+    // Listen to IPC stream events from main process
+    if (window.electron?.ipcRenderer) {
+      window.electron.ipcRenderer.on("hyper:high-table:event", (_event, data) => {
+        handleStreamEvent(data);
+      });
+    }
+
+    function handleStreamEvent(ev) {
+      if (!ev) return;
+
+      if (ev.type === "stage") {
+        if (ev.stage === 1) {
+          document.getElementById("trackerStage1").className = "stage-item active";
+        } else if (ev.stage === 2) {
+          document.getElementById("trackerStage1").className = "stage-item done";
+          document.getElementById("trackerStage2").className = "stage-item active";
+          document.getElementById("stage2Wrap").style.display = "flex";
+          if (ev.model) document.getElementById("crossReviewModelTag").innerText = ev.model;
+        } else if (ev.stage === 3) {
+          document.getElementById("trackerStage2").className = "stage-item done";
+          document.getElementById("trackerStage3").className = "stage-item active";
+          document.getElementById("stage3Wrap").style.display = "flex";
+        }
+      } else if (ev.type === "seat_start") {
+        const tag = document.getElementById(`modelTag${ev.seat}`);
+        if (tag) tag.innerText = ev.model;
+        const body = document.getElementById(`opinionBody${ev.seat}`);
+        if (body) body.innerText = "";
+      } else if (ev.type === "chunk") {
+        if (ev.seat >= 1 && ev.seat <= 4) {
+          const body = document.getElementById(`opinionBody${ev.seat}`);
+          if (body) body.innerText += ev.text;
+        } else if (ev.seat === 5) {
+          const s3Visible = document.getElementById("stage3Wrap").style.display === "flex";
+          if (s3Visible) {
+            document.getElementById("decreeBody").innerText += ev.text;
+          } else {
+            document.getElementById("crossReviewBody").innerText += ev.text;
+          }
+        }
+      } else if (ev.type === "fallback") {
+        const banner = document.getElementById("fallbackBanner");
+        banner.style.display = "flex";
+        document.getElementById("fallbackText").innerText = 
+          `[Seat ${ev.seat}] ${ev.from} encountered ${ev.reason}. Auto-switched to lighter model: ${ev.to}`;
+      } else if (ev.type === "done") {
+        if (ev.decree) {
+          document.getElementById("decreeBody").innerText = ev.decree;
+        }
+      }
+    }
+
+    function copyDecree() {
+      const text = document.getElementById("decreeBody").innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("High Table Decree copied to clipboard!");
+      });
+    }
+
+    function exportTranscript() {
+      const q = document.getElementById("inquiryInput").value;
+      const op1 = document.getElementById("opinionBody1")?.innerText || "";
+      const op2 = document.getElementById("opinionBody2")?.innerText || "";
+      const op3 = document.getElementById("opinionBody3")?.innerText || "";
+      const op4 = document.getElementById("opinionBody4")?.innerText || "";
+      const cr = document.getElementById("crossReviewBody")?.innerText || "";
+      const decree = document.getElementById("decreeBody")?.innerText || "";
+
+      const md = `# 🏛️ THE HIGH TABLE COUNCIL TRANSCRIPT\n\n` +
+        `**Inquiry:**\n> ${q}\n\n` +
+        `---\n\n## STAGE 1: DELIBERATIONS OF THE SEATS\n\n` +
+        `### Seat 1: The Logician\n${op1}\n\n` +
+        `### Seat 2: The Visionary\n${op2}\n\n` +
+        `### Seat 3: The Inquisitor\n${op3}\n\n` +
+        `### Seat 4: The Pragmatist\n${op4}\n\n` +
+        `---\n\n## STAGE 2: FORENSIC CROSS-EXAMINATION\n\n${cr}\n\n` +
+        `---\n\n## STAGE 3: THE HIGH TABLE FINAL DECREE\n\n${decree}\n`;
+
+      const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `High_Table_Decree_${Date.now()}.md`;
+      a.click();
+    }
+
+    // Keyboard shortcut: Cmd+Enter to convene
+    document.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (!isDeliberating) conveneCouncil();
+      }
+    });
+
+    // Initialize on load
+    window.addEventListener("DOMContentLoaded", () => {
+      initSeats();
+    });
+  </script>
+</body>
+</html>

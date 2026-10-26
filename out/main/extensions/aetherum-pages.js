@@ -348,6 +348,13 @@ function getWelcomePage() {
             <span>Ad, Tracker, Popup & YT Defuser</span>
           </div>
         </a>
+        <a class="nav-item" onclick="parentNavigate('aetherum://high-table')">
+          <span class="nav-icon">🏛️</span>
+          <div class="nav-text">
+            <strong>The High Table</strong>
+            <span>Multi-Agent Council & Synthesis</span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -441,6 +448,7 @@ function getAboutPage() {
         <tr><td class="label">Anti-DPI Shield</td><td class="value">Sleipnir (SNI Packet Splitter)</td></tr>
         <tr><td class="label">API & DB Inspector</td><td class="value">Ratatoskr</td></tr>
         <tr><td class="label">Local AI Engine</td><td class="value">Mímisbrunnr (Airgapped Neural Assistant)</td></tr>
+        <tr><td class="label">Multi-Agent Council</td><td class="value">The High Table (5-Seat AI Synthesis)</td></tr>
         <tr><td class="label">Platform Version</td><td class="value">0.0.1</td></tr>
         <tr><td class="label">Author</td><td class="value">Jeffrey Kim (jk9576@hanyang.ac.kr)</td></tr>
         <tr><td class="label">GitLab Repository</td><td class="value"><a href="https://gitlab.com/jk9576/aether" target="_blank" style="color:#818cf8;">https://gitlab.com/jk9576/aether</a></td></tr>
@@ -905,6 +913,13 @@ function getAetherumPage(pageName = "welcome") {
         return fs.readFileSync(path.resolve(__dirname, "../../renderer/adblock.html"), "utf8");
       } catch (e) {
         return `<p style="padding:2rem;color:red;">Error loading Adblock Shield: ${e.message}</p>`;
+      }
+    case "high-table":
+    case "hightable":
+      try {
+        return fs.readFileSync(path.resolve(__dirname, "../../renderer/high-table.html"), "utf8");
+      } catch (e) {
+        return `<p style="padding:2rem;color:red;">Error loading The High Table: ${e.message}</p>`;
       }
     default:
       return getAboutPage();

@@ -2236,6 +2236,18 @@ const hyperOfficeApi = {
     summarize: (params) => electron.ipcRenderer.invoke("hyper:heimdall:summarize", params),
     pickAudio: () => electron.ipcRenderer.invoke("hyper:heimdall:pick-audio"),
     saveToNibelungen: (params) => electron.ipcRenderer.invoke("hyper:heimdall:save-nibelungen", params)
+  },
+  highTable: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:high-table:open-tab"),
+    getSeats: () => electron.ipcRenderer.invoke("hyper:high-table:get-seats"),
+    getModels: () => electron.ipcRenderer.invoke("hyper:high-table:get-models"),
+    convene: (params) => electron.ipcRenderer.invoke("hyper:high-table:convene", params),
+    abort: () => electron.ipcRenderer.invoke("hyper:high-table:abort"),
+    onEvent: (cb) => {
+      const h = (_e, d) => cb(d);
+      electron.ipcRenderer.on("hyper:high-table:event", h);
+      return () => electron.ipcRenderer.removeListener("hyper:high-table:event", h);
+    }
   }
 };
 electron.contextBridge.exposeInMainWorld("hyperOffice", hyperOfficeApi);

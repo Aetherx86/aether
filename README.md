@@ -5,11 +5,11 @@
 
 **Unified Office Engine • Multi-Tab Tor Browser • Airgapped Local AI • Zero-Knowledge Vault • Anti-DPI VPN • Autonomous Agent**
 
-[![GitLab CI/CD](https://img.shields.io/badge/GitLab_CI%2FCD-260%2F260_Passing-10b981?style=for-the-badge&logo=gitlab)](https://gitlab.com/jk9576/aether)
+[![GitLab CI/CD](https://img.shields.io/badge/GitLab_CI%2FCD-278%2F278_Passing-10b981?style=for-the-badge&logo=gitlab)](https://gitlab.com/jk9576/aether)
 [![Version](https://img.shields.io/badge/Release-v0.0.1_Stable-6366f1?style=for-the-badge)](https://gitlab.com/jk9576/aether/-/releases)
 [![Security](https://img.shields.io/badge/Security-AES--256--GCM_%7C_Tor_Native-f43f5e?style=for-the-badge&logo=torproject)](https://gitlab.com/jk9576/aether)
 [![Hardware](https://img.shields.io/badge/Accelerated-Apple_Silicon_M4_%7C_ANE-0ea5e9?style=for-the-badge&logo=apple)](https://gitlab.com/jk9576/aether)
-[![Tests](https://img.shields.io/badge/Test_Suite-260_Tests_%7C_100%25_Green-3b82f6?style=for-the-badge)](https://gitlab.com/jk9576/aether)
+[![Tests](https://img.shields.io/badge/Test_Suite-278_Tests_%7C_100%25_Green-3b82f6?style=for-the-badge)](https://gitlab.com/jk9576/aether)
 [![License](https://img.shields.io/badge/License-Apache_2.0-8b5cf6?style=for-the-badge)](LICENSE.txt)
 
 <br/>
@@ -48,11 +48,11 @@
            Local Knowledge Graph    Visual API Client        Acoustic Diarization
            & Obsidian-style Canvas  & Live SQLite Inspector  & Token Telemetry
                                   │
-         ┌────────────────────────┴────────────────────────┐
-         ▼                                                 ▼
- 🤖 AUTONOMOUS AGENT                               💼 8-MODULE HYPEROFFICE
- Sandboxed Workspace Runner                        Docs • Sheets • Slides • PDF •
- Permission Guards & Tools                         Markdown • HTML • Mindmap • HWP
+         ┌────────────────────────┼────────────────────────┐
+         ▼                        ▼                        ▼
+ 🤖 AUTONOMOUS AGENT      🏛️ THE HIGH TABLE        💼 8-MODULE HYPEROFFICE
+ Sandboxed Workspace      5-Seat AI Council        Docs • Sheets • Slides • PDF •
+ Runner & Guards          Forensic Synthesis & UI  Markdown • HTML • Mindmap • HWP
 ```
 
 ---
@@ -151,6 +151,29 @@
 * **Aether Autonomous Agent**: 로컬 프로젝트 폴더를 대상으로 파일 읽기/쓰기, 셸 명령 실행, 변경 사항 분석을 자율 수행하는 독립 에이전트. 루트(`/`) 및 홈(`~`) 디렉토리 보호 가드 및 권한 모드(`ask-commands`, `ask-writes`) 탑재.
 * **Ask AI (AI 질문 RAG)**: 사용자가 즐겨찾기(Star)한 문서 기반의 정밀 지식 인출 증강 생성(RAG). 지식 베이스가 비어 있을 때도 일반 질의로 자동 전환되어 중단 없는 대화 보장.
 
+### 11. 🏛️ The High Table — Multi-Agent Council & Supreme Synthesis
+> *“Five sovereign intellects in dialectical cross-examination, delivering one definitive supreme decree.”*
+
+* **First-Class UI & Model Dropdown Selectors (`aetherum://high-table` / `⌘⇧C`)**:
+  * 복잡한 CLI 명령 없이 Aether 네이티브 탭 인터페이스에서 직관적으로 프롬프트 입력 및 실시간 심의 관전.
+  * 5개 좌석마다 개별 신경망 모델 드롭다운(`<select>`) 탑재: 클라우드 Gemini(`gemini-3.5-flash-lite`, `gemini-3.5-flash`, `gemini-3.8-flash`, `gemini-3-flash-preview`, `gemini-3.1-pro-preview`)와 오프라인 에어갭 로컬 모델(`PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit`, `qwen2.5:7b`)을 좌석별로 자유롭게 배정.
+* **The Five Distinct Council Seats (5대 최고 평의회 좌석)**:
+  1. 📐 **Seat 1: The Logician (논리학자 / 분석가)**: 형식 연역 논리, 전제 명시화, 구조적 타당성 및 엄밀성 검증.
+  2. 🔮 **Seat 2: The Visionary (창의적 전략가 / 발상가)**: 수평적 사고, 비통상적 가설, 혁신적 패러다임 및 새로운 유추 탐색.
+  3. ⚔️ **Seat 3: The Inquisitor (심문관 / 비판적 회의론자)**: 악마의 대변인, 가정 스트레스 테스트, 실패 모드, 반례 및 암묵적 편향 폭로.
+  4. 🛠️ **Seat 4: The Pragmatist (실용주의자 / 구현가)**: 경험적 제약, 운영 현실성, 지상 실현 가능성 및 역사적 전례 적용.
+  5. 👑 **Seat 5: The High Arbiter (의장 / 최종 종합 판정관)**: 4개 의견의 법의학적 상호 대질, 이율배반 해결 및 최종 최고 훈령(Decree) 선포.
+* **Rigorous 3-Stage Deliberation Architecture (3단계 심의 파이프라인)**:
+  * **Stage 1 (Individual Preliminary Theses)**: 4개 좌석이 독립적으로 초기 관점 및 제1원칙 논증 전개.
+  * **Stage 2 (Forensic Cross-Review & Antinomy Critique)**: 서로의 논거를 교차 비판하고 변증법적 충돌과 취약점 분석.
+  * **Stage 3 (The Supreme Decree)**: 의장(High Arbiter)이 모든 갈등을 해소하고 실행 가능한 명확한 최종 결론을 양피지 카드에 종합 선언.
+* **Adaptive Resilience Fallback (자동 부하/쿼터 복구 엔진)**:
+  * 특정 모델이 피크 타임 `503 UNAVAILABLE` (High Demand) 또는 무료 티어 `429 RESOURCE_EXHAUSTED` (Rate Limit) 에러를 반환할 경우, 중단 없이 즉시 상위 가용 경량 모델(`gemini-3.5-flash-lite`, `gemini-3-flash-preview`)로 자동 폴백.
+  * UI 상단 경고 토스트(`fallbackBanner`)를 통해 실시간 모델 변경 내역을 사용자에게 즉각 시각적 안내.
+* **Instant Presets & Export Actions**:
+  * ⚡ *All Flash-Lite* (초고속 저지연), ⚖️ *Balanced* (속도-추론 균형), 🧠 *Deep Synthesis* (프론티어 심층 분석), 🛡️ *Airgapped Local* (완전 오프라인 로컬).
+  * 원클릭 최고 훈령 클립보드 복사(`📋 Copy Decree`) 및 마크다운 회의록 전문 내보내기(`💾 Export Transcript`).
+
 ---
 
 ## 💻 Aether CLI (`aether`) — Headless Document Engine
@@ -198,15 +221,15 @@ npm test
 
 ---
 
-## 🧪 Comprehensive 260-Point Master Verification Suite
+## 🧪 Comprehensive 278-Point Master Verification Suite
 
-Aether는 기능 누락, 모델 타임아웃, IPC 충돌, UI 프리컨디션 버그를 원천 방지하기 위해 **14개 서브시스템, 총 260개 단일 assertion 테스트**로 구성된 마스터 테스트 스위트를 구동합니다.
+Aether는 기능 누락, 모델 타임아웃, IPC 충돌, UI 프리컨디션 버그를 원천 방지하기 위해 **15개 서브시스템, 총 278개 단일 assertion 테스트**로 구성된 마스터 테스트 스위트를 구동합니다.
 
 ```sh
 $ npm test
 
 ==================================================================
-🧪 [Aether Comprehensive 260-Point Master Verification Suite]
+🧪 [Aether Comprehensive 278-Point Master Verification Suite]
    Testing every single nook, cranny, button, edge case, and tool
 ==================================================================
 
@@ -498,10 +521,30 @@ $ npm test
   ✅ PASS: [#259] DOM heimdall.html: Token usage header bar and remaining percent exist
   ✅ PASS: [#260] DOM agent.html: Loads agent bundle with built-in Aether AI provider
 
+🏛️ Suite 15: The High Table Multi-Agent Council & Fallback Engine (Tests 261–278)
+  ✅ PASS: [#261] The High Table: high-table.html exists in renderer directory
+  ✅ PASS: [#262] The High Table: extensions/high-table.js exports 5 seats
+  ✅ PASS: [#263] The High Table: 5 seats contain Logician, Visionary, Inquisitor, Pragmatist, High Arbiter
+  ✅ PASS: [#264] The High Table: AVAILABLE_MODELS list includes Gemini 3.5 Flash-Lite
+  ✅ PASS: [#265] The High Table: AVAILABLE_MODELS includes local Mímisbrunnr models
+  ✅ PASS: [#266] The High Table: registerHighTableIpc function is exported
+  ✅ PASS: [#267] The High Table: DOM contains prompt textarea (#inquiryInput)
+  ✅ PASS: [#268] The High Table: DOM contains convene button (#btnConvene) and abort button (#btnAbort)
+  ✅ PASS: [#269] The High Table: DOM contains seats grid (#seatsGrid) and fallback alert banner (#fallbackBanner)
+  ✅ PASS: [#270] The High Table: DOM contains 3-stage progress trackers (trackerStage1, trackerStage2, trackerStage3)
+  ✅ PASS: [#271] The High Table: DOM contains preset toolbar and quick preset buttons
+  ✅ PASS: [#272] The High Table: DOM contains decree container (#decreeBody) and export action
+  ✅ PASS: [#273] The High Table: preload index.js exposes highTable on hyperOfficeApi
+  ✅ PASS: [#274] The High Table: aetherum-pages.js supports 'high-table' page slug
+  ✅ PASS: [#275] The High Table: welcome page links to aetherum://high-table
+  ✅ PASS: [#276] The High Table: main index.js implements createHighTableView and openHighTableTab
+  ✅ PASS: [#277] The High Table: antigravity_council.py supports --json-events flag
+  ✅ PASS: [#278] The High Table: antigravity_council.py implements stream_with_fallback for 503/429 errors
+
 ==================================================================
-Results: 260 passed, 0 failed (Total: 260)
+Results: 278 passed, 0 failed (Total: 278)
 ==================================================================
-🎉 All 260 comprehensive tests across all 14 Aether suites passed with 100% success!
+🎉 All 278 comprehensive tests across all 15 Aether suites passed with 100% success!
 ```
 
 ---

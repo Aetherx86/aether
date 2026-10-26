@@ -321119,6 +321119,19 @@ function createHeimdallView() {
   void view.webContents.loadFile(heimPath);
   return view;
 }
+function createHighTableView() {
+  const view = new require$$1$3.WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  const htPath = path.resolve(__dirname, "../renderer/high-table.html");
+  void view.webContents.loadFile(htPath);
+  return view;
+}
 const MINDMAP_CHANNELS = {
   // ---- open and save (implemented) ----
   /** invoke → `string | null`: the path queued for this view, null for a new map */
@@ -325406,6 +325419,23 @@ class TabManager {
       kind: "browser",
       view,
       title: "Heimdall",
+      filePath: void 0
+    });
+    this.activateTab(id2);
+    return id2;
+  }
+  openHighTableTab() {
+    const view = createHighTableView();
+    const id2 = `t${this.nextId++}`;
+    this.shellWindow.contentView.addChildView(view);
+    view.setVisible(false);
+    this.trackHtmlFullScreen(view);
+    this.trackPaneFocus(view);
+    this.tabs.push({
+      id: id2,
+      kind: "browser",
+      view,
+      title: "The High Table",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -346141,6 +346171,11 @@ function registerTabsIpc() {
         click: () => tabManager?.openHeimdallTab?.()
       },
       {
+        label: "Open The High Table Council",
+        icon: menuIcons().mindmap,
+        click: () => tabManager?.openHighTableTab?.()
+      },
+      {
         label: "New Aetherum Browser Tab (Tor / Web / Proton)",
         icon: menuIcons().html,
         click: () => newBrowserTab()
@@ -346216,6 +346251,11 @@ function buildHomeMenu() {
           label: "Open Heimdall Audio Studio",
           accelerator: "CmdOrCtrl+Shift+H",
           click: () => tabManager?.openHeimdallTab?.()
+        },
+        {
+          label: "Open The High Table Council",
+          accelerator: "CmdOrCtrl+Shift+C",
+          click: () => tabManager?.openHighTableTab?.()
         },
         { type: "separator" },
         {
@@ -347319,6 +347359,8 @@ require$$1$3.app.whenReady().then(async () => {
         tabManager?.openMimisbrunnrTab?.();
       } else if (url === "aetherum://heimdall") {
         tabManager?.openHeimdallTab?.();
+      } else if (url === "aetherum://high-table" || url === "aetherum://hightable") {
+        tabManager?.openHighTableTab?.();
       } else {
         tabManager?.openBrowserTab(url || "aetherum://welcome");
       }
@@ -347340,6 +347382,9 @@ require$$1$3.app.whenReady().then(async () => {
     });
     require$$1$3.ipcMain.handle("hyper:heimdall:open-tab", () => {
       tabManager?.openHeimdallTab?.();
+    });
+    require$$1$3.ipcMain.handle("hyper:high-table:open-tab", () => {
+      tabManager?.openHighTableTab?.();
     });
   } catch (extErr) {
     console.error("[HyperOffice Extension Error]", extErr);
