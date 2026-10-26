@@ -137,6 +137,9 @@ async function main() {
   // 4. Mímisbrunnr: Intelligence Engine & Rule Diagnostic Edge Cases
   await runAsyncTest("Mímisbrunnr: Semantic Rules, Local LLM & Markdown Parser", async () => {
     const {
+      MODEL_MLX_27B,
+      MODEL_QWEN_7B,
+      ALLOWED_MODEL_IDS,
       executeMimisbrunnrChat,
       getHardwareInfo,
       checkLocalLlm,
@@ -148,9 +151,16 @@ async function main() {
     const hw = getHardwareInfo();
     assert.ok(hw && typeof hw.chip === "string", "Must return Apple Silicon hardware specs");
 
+    assert.strictEqual(ALLOWED_MODEL_IDS.length, 2, "Mímisbrunnr must allow strictly two models");
+    assert.deepStrictEqual(ALLOWED_MODEL_IDS, [
+      "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit",
+      "qwen2.5:7b"
+    ]);
+
     const llmStatus = await checkLocalLlm();
     assert.ok(typeof llmStatus.active === "boolean", "Local LLM status must report boolean active state");
     assert.strictEqual(llmStatus.privacyMode, "airgapped", "Privacy mode must be airgapped");
+    assert.deepStrictEqual(llmStatus.models, [MODEL_MLX_27B, MODEL_QWEN_7B], "Status models must contain strictly the two sovereign models");
 
     // Edge Case: Email summarizer with missing headers
     const emailNormal = offlineEmailSummarizer("From: boss@corp.com\nSubject: Project Deadline\nPlease finalize the quarterly audit report by Friday.");
@@ -400,9 +410,18 @@ async function main() {
       const mimHtml = fs.readFileSync(path.join(__dirname, "../out/renderer/mimisbrunnr.html"), "utf8");
       let sentChatPayload = null;
 
+      let activeTestModel = "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit";
       const mockHyperOffice = {
         mimisbrunnr: {
-          status: async () => ({ active: true, model: "qwen2.5-jailbroken:7b", endpoint: "http://127.0.0.1:11434" }),
+          status: async () => ({
+            active: true,
+            model: activeTestModel,
+            models: ["PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit", "qwen2.5:7b"],
+            mlxProgress: { installed: true, downloading: false, percent: 100 },
+            ollamaReady: true,
+            endpoint: "http://127.0.0.1:8088"
+          }),
+          selectModel: async (m) => { activeTestModel = m; return { active: true, model: activeTestModel }; },
           hardware: async () => ({ chip: "Apple M4", memory: "16 GB Unified Memory", neuralEngine: "16-Core ANE" }),
           chat: async (payload) => {
             sentChatPayload = payload;
@@ -436,14 +455,21 @@ async function main() {
       assert.ok(emailModeBtn.classList.contains("active"), "Email mode must become active");
       assert.ok(dom.window.document.getElementById("promptInput").placeholder.toLowerCase().includes("mail"), "Placeholder must update for email mode");
 
-      // 3. Check Engine button click test
+      // 3. Check Engine button click & strict 2-model dropdown check
       const checkEngineBtn = dom.window.document.getElementById("btnCheckEngine");
       assert.ok(checkEngineBtn, "Check Engine button must exist");
       checkEngineBtn.click();
       await new Promise(r => setTimeout(r, 50));
       assert.strictEqual(checkEngineBtn.textContent.trim(), "🔄 Check Engine", "Button text must restore after check");
-      assert.strictEqual(dom.window.document.getElementById("labelModel").textContent, "Live: qwen2.5-jailbroken:7b");
+      assert.strictEqual(dom.window.document.getElementById("labelModel").textContent, "Live: Qwen3.8-27B-Abliterated-MLX (2bit AWQ)");
       assert.ok(dom.window.document.getElementById("pillModel").classList.contains("active"));
+
+      const selectModelEl = dom.window.document.getElementById("selectModel");
+      const optionValues = Array.from(selectModelEl.options).map(o => o.value);
+      assert.deepStrictEqual(optionValues, [
+        "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit",
+        "qwen2.5:7b"
+      ], "Model dropdown must contain strictly the two requested models");
 
       // 4. Send button & message execution
       const promptInput = dom.window.document.getElementById("promptInput");

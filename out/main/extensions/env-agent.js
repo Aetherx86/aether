@@ -205,7 +205,7 @@ async function executeAiChat({ provider, model, system, user, messages, apiKey, 
     const root = baseUrl || config.ollamaBase;
     endpoint = `${root.replace(/\/+$/, "")}/api/chat`;
     authKey = "";
-    targetModel = model || "qwen2.5-jailbroken:7b";
+    targetModel = model || "qwen2.5:7b";
   }
 
   const headers = { "Content-Type": "application/json" };

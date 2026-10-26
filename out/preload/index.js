@@ -2211,6 +2211,8 @@ const hyperOfficeApi = {
     openTab: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:open-tab"),
     status: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:status"),
     hardware: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:hardware"),
+    selectModel: (modelId) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:select-model", modelId),
+    prepareMlx: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:prepare-mlx"),
     chat: (payload) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:chat", payload)
   },
   ratatoskr: {

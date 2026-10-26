@@ -358,9 +358,10 @@
         </strong>
 
         <div style="margin-top:8px;">
-          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:3px;">Active Model:</label>
-          <select id="selectModel" style="width:100%; background:#090d16; border:1px solid var(--border-light); color:#f1f5f9; padding:5px 8px; border-radius:6px; font-size:11.5px; outline:none;">
-            <option value="">Auto Detect (Default)</option>
+          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:3px;">Active Model (2 Sovereign Engines):</label>
+          <select id="selectModel" onchange="handleModelChange(this.value)" style="width:100%; background:#090d16; border:1px solid var(--border-light); color:#f1f5f9; padding:6px 8px; border-radius:6px; font-size:11.5px; outline:none; cursor:pointer;">
+            <option value="PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit">Qwen 3.8 27B Abliterated MLX (2-bit AWQ • PocketAiHub)</option>
+            <option value="qwen2.5:7b">Qwen 2.5 7B</option>
           </select>
         </div>
 
@@ -392,10 +393,11 @@
       </div>
 
       <div class="info-card" id="localModelCard">
-        <strong>Apple Silicon Local LLM:</strong>
+        <strong>Apple Silicon Dual LLM Suite:</strong>
         <div id="modelCardContent">
-          <p style="margin-top:4px; font-size:11.5px; color:#38bdf8;">Qwen 2.5 (7B) Jailbroken installed & active on Apple Metal GPU.</p>
-          <div class="code-snippet">ollama run qwen2.5-jailbroken:7b</div>
+          <p style="margin-top:4px; font-size:11.5px; color:#38bdf8;">1. <strong>Qwen 3.8 27B Abliterated MLX</strong> (2-bit AWQ • PocketAiHub)</p>
+          <p style="margin-top:2px; font-size:11.5px; color:#10b981;">2. <strong>Qwen 2.5 7B</strong> (<code>qwen2.5:7b</code> • Apple Metal)</p>
+          <div class="code-snippet">PocketAiHub/Qwen3.8-27B-Abliterated-MLX/tree/main/2bit</div>
         </div>
       </div>
     </div>
@@ -478,10 +480,60 @@
       promptInput.focus();
     }
 
+    const MODEL_MLX_27B = "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit";
+    const MODEL_QWEN_7B = "qwen2.5:7b";
+    const STRICT_MODEL_OPTIONS = [
+      { id: MODEL_MLX_27B, label: "Qwen 3.8 27B Abliterated MLX (2-bit AWQ • PocketAiHub)" },
+      { id: MODEL_QWEN_7B, label: "Qwen 2.5 7B" }
+    ];
+    let mlxPollTimer = null;
+
+    function getMimisApi() {
+      return window.hyperOffice?.mimisbrunnr || (typeof window !== "undefined" && window.parent?.hyperOffice?.mimisbrunnr) || null;
+    }
+
+    async function handleModelChange(modelId) {
+      const api = getMimisApi();
+      if (api && typeof api.selectModel === "function") {
+        try {
+          await api.selectModel(modelId);
+        } catch (e) {}
+      }
+      await refreshStatus();
+    }
+
+    async function triggerPrepareMlx() {
+      const api = getMimisApi();
+      if (!api || typeof api.prepareMlx !== "function") return;
+      const btn = document.getElementById("btnPrepareMlx");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ Starting 2-bit AWQ MLX...";
+      }
+      try {
+        await api.prepareMlx();
+      } catch (e) {}
+      await refreshStatus();
+    }
+
+    function renderDualModelSelect(selectedModel) {
+      const selectModel = document.getElementById("selectModel");
+      if (!selectModel) return;
+      const currentVal = selectedModel || selectModel.value || MODEL_QWEN_7B;
+      selectModel.innerHTML = "";
+      STRICT_MODEL_OPTIONS.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.label;
+        if (item.id === currentVal) opt.selected = true;
+        selectModel.appendChild(opt);
+      });
+    }
+
     async function refreshStatus() {
       const btn = document.getElementById("btnCheckEngine");
       if (btn) btn.textContent = "⏳ Checking...";
-      const api = window.hyperOffice?.mimisbrunnr || (typeof window !== "undefined" && window.parent?.hyperOffice?.mimisbrunnr);
+      const api = getMimisApi();
       if (!api) {
         if (btn) btn.textContent = "🔄 Check Engine";
         return;
@@ -495,37 +547,64 @@
           hwDetails.innerHTML = `<strong>Chip:</strong> ${hw.chip}<br><strong>Memory:</strong> ${hw.memory}<br><strong>Neural Engine:</strong> ${hw.neuralEngine}`;
         }
 
+        const activeId = (status && status.model) ? status.model : MODEL_QWEN_7B;
+        renderDualModelSelect(activeId);
+
+        const mlxProg = status?.mlxProgress || {};
+        const mlxInstalled = Boolean(mlxProg.installed);
+        const mlxDownloading = Boolean(mlxProg.downloading);
+        const mlxPct = typeof mlxProg.percent === "number" ? mlxProg.percent : 0;
+
         if (status && status.active) {
           pillModel.classList.add("active");
-          labelModel.textContent = `Live: ${status.model}`;
+          const displayModel = activeId === MODEL_MLX_27B
+            ? "Qwen3.8-27B-Abliterated-MLX (2bit AWQ)"
+            : activeId;
+          labelModel.textContent = `Live: ${displayModel}`;
+
           const modelCardContent = document.getElementById("modelCardContent");
           if (modelCardContent) {
-            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#10b981;">⚡ <strong>${status.model}</strong> active on Apple Metal GPU.</p><div class="code-snippet">Endpoint: ${status.endpoint} • Airgapped</div>`;
-          }
-
-          // Populate model selector
-          const selectModel = document.getElementById("selectModel");
-          if (selectModel && status.models && Array.isArray(status.models) && status.models.length > 0) {
-            const currentSelection = selectModel.value;
-            selectModel.innerHTML = "";
-            status.models.forEach(m => {
-              const opt = document.createElement("option");
-              opt.value = m;
-              opt.textContent = m;
-              if (m === status.model) opt.selected = true;
-              selectModel.appendChild(opt);
-            });
-            if (currentSelection && status.models.includes(currentSelection)) {
-              selectModel.value = currentSelection;
+            let mlxLine = "";
+            if (mlxInstalled) {
+              mlxLine = `<div style="margin-top:6px; font-size:11px; color:#a7f3d0;">🟢 <strong>Qwen3.8-27B 2-bit AWQ (MLX):</strong> Installed (10.28 GiB)</div>`;
+            } else if (mlxDownloading) {
+              const gbDone = ((mlxProg.downloadedBytes || 0) / (1024 ** 3)).toFixed(2);
+              mlxLine = `
+                <div style="margin-top:6px; font-size:11px; color:#38bdf8;">⬇️ <strong>Qwen3.8-27B 2-bit AWQ:</strong> Downloading ${mlxPct.toFixed(1)}% (${gbDone} / 10.28 GiB)</div>
+                <div style="width:100%; height:6px; background:#050811; border-radius:4px; overflow:hidden; margin-top:4px; border:1px solid var(--border);">
+                  <div style="height:100%; width:${Math.min(100, Math.max(2, mlxPct))}%; background:linear-gradient(90deg, #8b5cf6, #38bdf8);"></div>
+                </div>`;
+            } else {
+              mlxLine = `
+                <div style="margin-top:6px; font-size:11px; color:#cbd5e1;">⚪ <strong>Qwen3.8-27B 2-bit AWQ (MLX):</strong> Not cached yet</div>
+                <button type="button" id="btnPrepareMlx" onclick="triggerPrepareMlx()" style="margin-top:5px; width:100%; padding:5px 8px; border-radius:6px; border:1px solid #8b5cf6; background:rgba(139,92,246,0.18); color:#e9d5ff; font-size:11px; font-weight:600; cursor:pointer;">⬇️ Download 2-bit AWQ MLX (10.28 GiB)</button>`;
             }
+
+            const qwenLine = `<div style="margin-top:5px; font-size:11px; color:${status.ollamaReady !== false ? "#a7f3d0" : "#94a3b8"};">${status.ollamaReady !== false ? "🟢" : "⚪"} <strong>Qwen 2.5 7B (Ollama):</strong> ${status.ollamaReady !== false ? "Ready (4.7 GB)" : "Standby"}</div>`;
+
+            modelCardContent.innerHTML = `
+              <p style="margin-top:4px; font-size:11.5px; color:#10b981;">⚡ Active: <strong>${displayModel}</strong></p>
+              ${mlxLine}
+              ${qwenLine}
+              <div class="code-snippet">PocketAiHub/Qwen3.8-27B-Abliterated-MLX/tree/main/2bit</div>
+            `;
           }
         } else {
           pillModel.classList.remove("active");
           labelModel.textContent = "Embedded Offline Engine";
           const modelCardContent = document.getElementById("modelCardContent");
           if (modelCardContent) {
-            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#94a3b8;">Embedded engine active. Run Ollama for full local LLM:</p><div class="code-snippet">ollama run qwen2.5-jailbroken:7b</div>`;
+            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#94a3b8;">Configured models: <strong>Qwen3.8-27B-Abliterated-MLX (2bit AWQ)</strong> & <strong>qwen2.5:7b</strong></p><div class="code-snippet">ollama run qwen2.5:7b</div>`;
           }
+        }
+
+        if (mlxDownloading && !mlxPollTimer) {
+          mlxPollTimer = setInterval(() => {
+            refreshStatus();
+          }, 3000);
+        } else if (!mlxDownloading && mlxPollTimer) {
+          clearInterval(mlxPollTimer);
+          mlxPollTimer = null;
         }
       } catch (e) {
         console.error("Status error:", e);
