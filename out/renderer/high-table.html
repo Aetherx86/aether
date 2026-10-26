@@ -1029,7 +1029,9 @@
             </div>
             <span id="modelTag${i}" class="opinion-model-tag">Awaiting...</span>
           </div>
-          <div id="opinionBody${i}" class="opinion-body">Waiting for deliberation to begin...</div>
+          <div id="opinionBody${i}" class="opinion-body">
+            <span style="color:var(--text-muted);font-style:italic;">⚡ Connecting to neural model & formulating thesis...</span>
+          </div>
         `;
         container.appendChild(card);
       }
@@ -1113,6 +1115,12 @@
       document.getElementById("btnAbort").style.display = "none";
       document.getElementById("statusPill").className = "status-pill";
       document.getElementById("statusText").innerText = res?.ok ? "Decree Issued" : "Council Adjourned";
+
+      if (!res?.ok && res?.error) {
+        const banner = document.getElementById("fallbackBanner");
+        banner.style.display = "flex";
+        document.getElementById("fallbackText").innerText = `⚠️ Council halted: ${res.error}`;
+      }
 
       document.getElementById("trackerStage1").className = "stage-item done";
       document.getElementById("trackerStage2").className = "stage-item done";
