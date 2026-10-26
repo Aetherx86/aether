@@ -830,7 +830,18 @@
 
       // Call IPC
       try {
-        if (window.electron?.ipcRenderer) {
+        const htApi = window.hyperOffice?.highTable;
+        if (htApi) {
+          htApi.convene({
+            query,
+            models: selectedModels
+          }).then(res => {
+            finishCouncil(res);
+          }).catch(err => {
+            console.error("Council invocation error:", err);
+            finishCouncil({ ok: false, error: err.message });
+          });
+        } else if (window.electron?.ipcRenderer) {
           window.electron.ipcRenderer.invoke("hyper:high-table:convene", {
             query,
             models: selectedModels
@@ -840,10 +851,6 @@
             console.error("Council invocation error:", err);
             finishCouncil({ ok: false, error: err.message });
           });
-        } else {
-          // Mock preview if opened directly in browser without Electron
-          console.warn("Electron IPC not detected. Running simulation.");
-          simulateCouncil(query, selectedModels);
         }
       } catch (err) {
         finishCouncil({ ok: false, error: err.message });
@@ -851,7 +858,9 @@
     }
 
     function abortCouncil() {
-      if (window.electron?.ipcRenderer) {
+      if (window.hyperOffice?.highTable?.abort) {
+        window.hyperOffice.highTable.abort();
+      } else if (window.electron?.ipcRenderer) {
         window.electron.ipcRenderer.invoke("hyper:high-table:abort");
       }
       finishCouncil({ ok: false, error: "Deliberation aborted by user." });
@@ -870,7 +879,11 @@
     }
 
     // Listen to IPC stream events from main process
-    if (window.electron?.ipcRenderer) {
+    if (window.hyperOffice?.highTable?.onEvent) {
+      window.hyperOffice.highTable.onEvent((data) => {
+        handleStreamEvent(data);
+      });
+    } else if (window.electron?.ipcRenderer) {
       window.electron.ipcRenderer.on("hyper:high-table:event", (_event, data) => {
         handleStreamEvent(data);
       });
