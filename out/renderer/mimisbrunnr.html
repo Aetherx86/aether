@@ -358,8 +358,9 @@
         </strong>
 
         <div style="margin-top:8px;">
-          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:3px;">Active Model (2 Sovereign Engines):</label>
+          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:3px;">Active Model (3 Sovereign Engines):</label>
           <select id="selectModel" onchange="handleModelChange(this.value)" style="width:100%; background:#090d16; border:1px solid var(--border-light); color:#f1f5f9; padding:6px 8px; border-radius:6px; font-size:11.5px; outline:none; cursor:pointer;">
+            <option value="PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit">Qwen 3.8 9B Abliterated MLX (4-bit • PocketAiHub)</option>
             <option value="PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit">Qwen 3.8 27B Abliterated MLX (2-bit AWQ • PocketAiHub)</option>
             <option value="qwen2.5:7b">Qwen 2.5 7B</option>
           </select>
@@ -393,11 +394,12 @@
       </div>
 
       <div class="info-card" id="localModelCard">
-        <strong>Apple Silicon Dual LLM Suite:</strong>
+        <strong>Apple Silicon Sovereign LLM Suite:</strong>
         <div id="modelCardContent">
-          <p style="margin-top:4px; font-size:11.5px; color:#38bdf8;">1. <strong>Qwen 3.8 27B Abliterated MLX</strong> (2-bit AWQ • PocketAiHub)</p>
-          <p style="margin-top:2px; font-size:11.5px; color:#10b981;">2. <strong>Qwen 2.5 7B</strong> (<code>qwen2.5:7b</code> • Apple Metal)</p>
-          <div class="code-snippet">PocketAiHub/Qwen3.8-27B-Abliterated-MLX/tree/main/2bit</div>
+          <p style="margin-top:4px; font-size:11.5px; color:#c4b5fd;">1. <strong>Qwen 3.8 9B Abliterated MLX</strong> (4-bit • PocketAiHub)</p>
+          <p style="margin-top:2px; font-size:11.5px; color:#38bdf8;">2. <strong>Qwen 3.8 27B Abliterated MLX</strong> (2-bit AWQ • PocketAiHub)</p>
+          <p style="margin-top:2px; font-size:11.5px; color:#10b981;">3. <strong>Qwen 2.5 7B</strong> (<code>qwen2.5:7b</code> • Apple Metal)</p>
+          <div class="code-snippet">PocketAiHub/Qwen3.8-9B-Abliterated-MLX/tree/main/4bit</div>
         </div>
       </div>
     </div>
@@ -480,9 +482,11 @@
       promptInput.focus();
     }
 
+    const MODEL_MLX_9B = "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit";
     const MODEL_MLX_27B = "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit";
     const MODEL_QWEN_7B = "qwen2.5:7b";
     const STRICT_MODEL_OPTIONS = [
+      { id: MODEL_MLX_9B, label: "Qwen 3.8 9B Abliterated MLX (4-bit • PocketAiHub)" },
       { id: MODEL_MLX_27B, label: "Qwen 3.8 27B Abliterated MLX (2-bit AWQ • PocketAiHub)" },
       { id: MODEL_QWEN_7B, label: "Qwen 2.5 7B" }
     ];
@@ -502,21 +506,23 @@
       await refreshStatus();
     }
 
-    async function triggerPrepareMlx() {
+    async function triggerPrepareMlx(modelId) {
       const api = getMimisApi();
       if (!api || typeof api.prepareMlx !== "function") return;
-      const btn = document.getElementById("btnPrepareMlx");
+      const target = modelId || MODEL_MLX_9B;
+      const btnId = target === MODEL_MLX_27B ? "btnPrepareMlx27b" : "btnPrepareMlx9b";
+      const btn = document.getElementById(btnId);
       if (btn) {
         btn.disabled = true;
-        btn.textContent = "⏳ Starting 2-bit AWQ MLX...";
+        btn.textContent = "⏳ Starting MLX Download...";
       }
       try {
-        await api.prepareMlx();
+        await api.prepareMlx(target);
       } catch (e) {}
       await refreshStatus();
     }
 
-    function renderDualModelSelect(selectedModel) {
+    function renderModelSelect(selectedModel) {
       const selectModel = document.getElementById("selectModel");
       if (!selectModel) return;
       const currentVal = selectedModel || selectModel.value || MODEL_QWEN_7B;
@@ -528,6 +534,33 @@
         if (item.id === currentVal) opt.selected = true;
         selectModel.appendChild(opt);
       });
+    }
+
+    function formatDisplayModel(modelId) {
+      if (modelId === MODEL_MLX_9B) return "Qwen3.8-9B-Abliterated-MLX (4bit)";
+      if (modelId === MODEL_MLX_27B) return "Qwen3.8-27B-Abliterated-MLX (2bit AWQ)";
+      return modelId;
+    }
+
+    function renderMlxRowHtml(title, sizeGiB, prog, btnId, modelId) {
+      const installed = Boolean(prog && prog.installed);
+      const downloading = Boolean(prog && prog.downloading);
+      const pct = typeof prog?.percent === "number" ? prog.percent : 0;
+
+      if (installed) {
+        return `<div style="margin-top:6px; font-size:11px; color:#a7f3d0;">🟢 <strong>${title}:</strong> Installed (${sizeGiB} GiB)</div>`;
+      }
+      if (downloading) {
+        const gbDone = ((prog.downloadedBytes || 0) / (1024 ** 3)).toFixed(2);
+        return `
+          <div style="margin-top:6px; font-size:11px; color:#38bdf8;">⬇️ <strong>${title}:</strong> Downloading ${pct.toFixed(1)}% (${gbDone} / ${sizeGiB} GiB)</div>
+          <div style="width:100%; height:6px; background:#050811; border-radius:4px; overflow:hidden; margin-top:4px; border:1px solid var(--border);">
+            <div style="height:100%; width:${Math.min(100, Math.max(2, pct))}%; background:linear-gradient(90deg, #8b5cf6, #38bdf8);"></div>
+          </div>`;
+      }
+      return `
+        <div style="margin-top:6px; font-size:11px; color:#cbd5e1;">⚪ <strong>${title}:</strong> Not cached yet</div>
+        <button type="button" id="${btnId}" onclick="triggerPrepareMlx('${modelId}')" style="margin-top:4px; width:100%; padding:5px 8px; border-radius:6px; border:1px solid #8b5cf6; background:rgba(139,92,246,0.18); color:#e9d5ff; font-size:11px; font-weight:600; cursor:pointer;">⬇️ Download ${title} (${sizeGiB} GiB)</button>`;
     }
 
     async function refreshStatus() {
@@ -548,45 +581,33 @@
         }
 
         const activeId = (status && status.model) ? status.model : MODEL_QWEN_7B;
-        renderDualModelSelect(activeId);
+        renderModelSelect(activeId);
 
-        const mlxProg = status?.mlxProgress || {};
-        const mlxInstalled = Boolean(mlxProg.installed);
-        const mlxDownloading = Boolean(mlxProg.downloading);
-        const mlxPct = typeof mlxProg.percent === "number" ? mlxProg.percent : 0;
+        const mlxMap = status?.mlxModels || {};
+        const prog9b = mlxMap[MODEL_MLX_9B] || (activeId === MODEL_MLX_9B ? status?.mlxProgress : null) || {};
+        const prog27b = mlxMap[MODEL_MLX_27B] || (activeId === MODEL_MLX_27B ? status?.mlxProgress : null) || {};
+        const anyDownloading = Boolean(prog9b.downloading || prog27b.downloading);
 
         if (status && status.active) {
           pillModel.classList.add("active");
-          const displayModel = activeId === MODEL_MLX_27B
-            ? "Qwen3.8-27B-Abliterated-MLX (2bit AWQ)"
-            : activeId;
+          const displayModel = formatDisplayModel(activeId);
           labelModel.textContent = `Live: ${displayModel}`;
 
           const modelCardContent = document.getElementById("modelCardContent");
           if (modelCardContent) {
-            let mlxLine = "";
-            if (mlxInstalled) {
-              mlxLine = `<div style="margin-top:6px; font-size:11px; color:#a7f3d0;">🟢 <strong>Qwen3.8-27B 2-bit AWQ (MLX):</strong> Installed (10.28 GiB)</div>`;
-            } else if (mlxDownloading) {
-              const gbDone = ((mlxProg.downloadedBytes || 0) / (1024 ** 3)).toFixed(2);
-              mlxLine = `
-                <div style="margin-top:6px; font-size:11px; color:#38bdf8;">⬇️ <strong>Qwen3.8-27B 2-bit AWQ:</strong> Downloading ${mlxPct.toFixed(1)}% (${gbDone} / 10.28 GiB)</div>
-                <div style="width:100%; height:6px; background:#050811; border-radius:4px; overflow:hidden; margin-top:4px; border:1px solid var(--border);">
-                  <div style="height:100%; width:${Math.min(100, Math.max(2, mlxPct))}%; background:linear-gradient(90deg, #8b5cf6, #38bdf8);"></div>
-                </div>`;
-            } else {
-              mlxLine = `
-                <div style="margin-top:6px; font-size:11px; color:#cbd5e1;">⚪ <strong>Qwen3.8-27B 2-bit AWQ (MLX):</strong> Not cached yet</div>
-                <button type="button" id="btnPrepareMlx" onclick="triggerPrepareMlx()" style="margin-top:5px; width:100%; padding:5px 8px; border-radius:6px; border:1px solid #8b5cf6; background:rgba(139,92,246,0.18); color:#e9d5ff; font-size:11px; font-weight:600; cursor:pointer;">⬇️ Download 2-bit AWQ MLX (10.28 GiB)</button>`;
-            }
-
-            const qwenLine = `<div style="margin-top:5px; font-size:11px; color:${status.ollamaReady !== false ? "#a7f3d0" : "#94a3b8"};">${status.ollamaReady !== false ? "🟢" : "⚪"} <strong>Qwen 2.5 7B (Ollama):</strong> ${status.ollamaReady !== false ? "Ready (4.7 GB)" : "Standby"}</div>`;
+            const mlx9bLine = renderMlxRowHtml("Qwen3.8-9B 4-bit (MLX)", "5.57", prog9b, "btnPrepareMlx9b", MODEL_MLX_9B);
+            const mlx27bLine = renderMlxRowHtml("Qwen3.8-27B 2-bit AWQ (MLX)", "10.28", prog27b, "btnPrepareMlx27b", MODEL_MLX_27B);
+            const qwenLine = `<div style="margin-top:6px; font-size:11px; color:${status.ollamaReady !== false ? "#a7f3d0" : "#94a3b8"};">${status.ollamaReady !== false ? "🟢" : "⚪"} <strong>Qwen 2.5 7B (Ollama):</strong> ${status.ollamaReady !== false ? "Ready (4.7 GB)" : "Standby"}</div>`;
+            const activeRepo = activeId === MODEL_MLX_27B
+              ? "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/tree/main/2bit"
+              : "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/tree/main/4bit";
 
             modelCardContent.innerHTML = `
               <p style="margin-top:4px; font-size:11.5px; color:#10b981;">⚡ Active: <strong>${displayModel}</strong></p>
-              ${mlxLine}
+              ${mlx9bLine}
+              ${mlx27bLine}
               ${qwenLine}
-              <div class="code-snippet">PocketAiHub/Qwen3.8-27B-Abliterated-MLX/tree/main/2bit</div>
+              <div class="code-snippet">${activeRepo}</div>
             `;
           }
         } else {
@@ -594,15 +615,15 @@
           labelModel.textContent = "Embedded Offline Engine";
           const modelCardContent = document.getElementById("modelCardContent");
           if (modelCardContent) {
-            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#94a3b8;">Configured models: <strong>Qwen3.8-27B-Abliterated-MLX (2bit AWQ)</strong> & <strong>qwen2.5:7b</strong></p><div class="code-snippet">ollama run qwen2.5:7b</div>`;
+            modelCardContent.innerHTML = `<p style="margin-top:4px; font-size:11.5px; color:#94a3b8;">Configured models: <strong>Qwen3.8-9B (4bit)</strong>, <strong>Qwen3.8-27B (2bit AWQ)</strong> & <strong>qwen2.5:7b</strong></p><div class="code-snippet">ollama run qwen2.5:7b</div>`;
           }
         }
 
-        if (mlxDownloading && !mlxPollTimer) {
+        if (anyDownloading && !mlxPollTimer) {
           mlxPollTimer = setInterval(() => {
             refreshStatus();
           }, 3000);
-        } else if (!mlxDownloading && mlxPollTimer) {
+        } else if (!anyDownloading && mlxPollTimer) {
           clearInterval(mlxPollTimer);
           mlxPollTimer = null;
         }

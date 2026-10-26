@@ -2212,7 +2212,7 @@ const hyperOfficeApi = {
     status: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:status"),
     hardware: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:hardware"),
     selectModel: (modelId) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:select-model", modelId),
-    prepareMlx: () => electron.ipcRenderer.invoke("hyper:mimisbrunnr:prepare-mlx"),
+    prepareMlx: (modelId) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:prepare-mlx", modelId),
     chat: (payload) => electron.ipcRenderer.invoke("hyper:mimisbrunnr:chat", payload)
   },
   ratatoskr: {
