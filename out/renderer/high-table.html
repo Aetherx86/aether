@@ -112,10 +112,18 @@
     .content-wrap {
       max-width: 1280px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 20px 24px 60px 24px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
+    }
+
+    /* Collapsible Setup Container */
+    .setup-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.3s ease;
     }
 
     /* Section Header */
@@ -275,7 +283,7 @@
     }
     .inquiry-textarea {
       width: 100%;
-      min-height: 100px;
+      min-height: 96px;
       background: #090d16;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 8px;
@@ -370,26 +378,102 @@
       gap: 10px;
     }
 
-    /* Stage Progression Indicator */
-    .stage-tracker {
+    /* Collapsible Compact Control Bar */
+    .compact-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 20, 31, 0.95);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius);
+      padding: 8px 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .compact-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .compact-prompt {
+      font-size: 13px;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 650px;
+      font-weight: 500;
+    }
+    .compact-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      background: rgba(212, 175, 55, 0.15);
+      color: var(--gold-bright);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 4px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .compact-actions {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 12px 18px;
-      background: var(--surface);
+    }
+    .compact-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .compact-btn:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.06);
+    }
+
+    /* Stage Tracker with View Modes */
+    .stage-tracker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: rgba(15, 20, 31, 0.95);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       font-size: 12px;
+      position: sticky;
+      top: 56px;
+      z-index: 80;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
-    .stage-item {
+    .stage-steps {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+    }
+    .stage-item {
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
       color: var(--text-muted);
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .stage-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
     }
     .stage-item.active {
       color: var(--gold-bright);
       font-weight: 700;
+      background: rgba(212, 175, 55, 0.1);
     }
     .stage-item.done {
       color: var(--emerald);
@@ -397,6 +481,95 @@
     .stage-arrow {
       color: var(--border);
       font-size: 14px;
+    }
+    .view-mode-selector {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .view-mode-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-right: 4px;
+      margin-left: 4px;
+      font-weight: 600;
+    }
+    .view-mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .view-mode-btn:hover {
+      color: #fff;
+    }
+    .view-mode-btn.active {
+      background: var(--surface-hover);
+      color: var(--gold-bright);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    /* Tabs Bar for Tabs View Mode */
+    .seat-tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0 6px 0;
+    }
+    .seat-tab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .seat-tab:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .seat-tab.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: #818cf8;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+    }
+
+    /* View Mode Overrides */
+    .view-tabs-active .opinion-card,
+    .view-tabs-active .cross-review-card,
+    .view-tabs-active .decree-card {
+      grid-column: 1 / -1;
+    }
+    .view-tabs-active .opinion-body {
+      height: calc(100vh - 280px);
+      max-height: calc(100vh - 260px);
+    }
+    .view-tabs-active #crossReviewBody {
+      height: calc(100vh - 280px);
+      max-height: calc(100vh - 260px);
+    }
+    .view-tabs-active #decreeBody {
+      height: calc(100vh - 280px);
+      max-height: calc(100vh - 260px);
+    }
+
+    .view-stack-active .stage1-container {
+      grid-template-columns: 1fr;
     }
 
     /* Stage 1: Council Stream Cards */
@@ -439,18 +612,92 @@
       background: rgba(255, 255, 255, 0.06);
       color: var(--text-muted);
     }
-    .opinion-body, .decree-content, #crossReviewBody {
+    .opinion-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-action-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .card-action-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Scrollable Card Bodies (Fixes screen overflow) */
+    .opinion-body {
+      height: 380px;
+      max-height: 480px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;
+      scroll-behavior: smooth;
       font-size: 13.5px;
       line-height: 1.65;
       color: #e2e8f0;
       word-break: break-word;
-      min-height: 60px;
     }
-    .opinion-body p, .decree-content p, #crossReviewBody p {
+    #crossReviewBody {
+      height: 380px;
+      max-height: 480px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;
+      scroll-behavior: smooth;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #e2e8f0;
+      word-break: break-word;
+    }
+    #decreeBody {
+      height: 420px;
+      max-height: 560px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;
+      scroll-behavior: smooth;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #f1f5f9;
+      word-break: break-word;
+    }
+
+    /* Custom Sleek Scrollbars */
+    .opinion-body::-webkit-scrollbar,
+    #crossReviewBody::-webkit-scrollbar,
+    #decreeBody::-webkit-scrollbar,
+    .focus-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .opinion-body::-webkit-scrollbar-thumb,
+    #crossReviewBody::-webkit-scrollbar-thumb,
+    #decreeBody::-webkit-scrollbar-thumb,
+    .focus-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    .opinion-body::-webkit-scrollbar-thumb:hover,
+    #crossReviewBody::-webkit-scrollbar-thumb:hover,
+    #decreeBody::-webkit-scrollbar-thumb:hover,
+    .focus-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(212, 175, 55, 0.4);
+    }
+
+    /* Typography: Typst, Markdown, LaTeX Content */
+    .opinion-body p, .decree-content p, #crossReviewBody p, .focus-body p {
       margin-bottom: 8px;
       line-height: 1.65;
     }
-    .opinion-body h3, .decree-content h3, #crossReviewBody h3 {
+    .opinion-body h3, .decree-content h3, #crossReviewBody h3, .focus-body h3 {
       font-size: 15px;
       font-weight: 700;
       color: #f8fafc;
@@ -458,36 +705,89 @@
       border-bottom: 1px solid rgba(255,255,255,0.08);
       padding-bottom: 4px;
     }
-    .opinion-body h4, .decree-content h4, #crossReviewBody h4 {
+    .opinion-body h4, .decree-content h4, #crossReviewBody h4, .focus-body h4 {
       font-size: 14px;
       font-weight: 600;
       color: #93c5fd;
       margin: 10px 0 4px 0;
     }
-    .opinion-body h5, .decree-content h5, #crossReviewBody h5 {
+    .opinion-body h5, .decree-content h5, #crossReviewBody h5, .focus-body h5 {
       font-size: 13px;
       font-weight: 600;
       color: #cbd5e1;
       margin: 8px 0 4px 0;
     }
-    .opinion-body strong, .decree-content strong, #crossReviewBody strong {
+    .opinion-body h6, .decree-content h6, #crossReviewBody h6, .focus-body h6 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin: 6px 0 4px 0;
+      text-transform: uppercase;
+    }
+    .opinion-body strong, .decree-content strong, #crossReviewBody strong, .focus-body strong {
       color: #ffffff;
       font-weight: 700;
     }
-    .opinion-body em, .decree-content em, #crossReviewBody em {
+    .opinion-body em, .decree-content em, #crossReviewBody em, .focus-body em {
       color: #cbd5e1;
       font-style: italic;
     }
-    .opinion-body ul, .decree-content ul, #crossReviewBody ul,
-    .opinion-body ol, .decree-content ol, #crossReviewBody ol {
+    .opinion-body ul, .decree-content ul, #crossReviewBody ul, .focus-body ul,
+    .opinion-body ol, .decree-content ol, #crossReviewBody ol, .focus-body ol {
       margin: 6px 0 10px 20px;
       padding-left: 4px;
     }
-    .opinion-body li, .decree-content li, #crossReviewBody li {
+    .opinion-body li, .decree-content li, #crossReviewBody li, .focus-body li {
       margin-bottom: 4px;
       line-height: 1.55;
     }
-    .opinion-body code, .decree-content code, #crossReviewBody code {
+
+    /* Typst Definitions & Terms */
+    .typst-term {
+      background: rgba(96, 165, 250, 0.08);
+      border-left: 3px solid #60a5fa;
+      padding: 6px 12px;
+      margin: 8px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 13px;
+    }
+    .typst-term strong {
+      color: #93c5fd;
+    }
+
+    /* Markdown Tables */
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      text-align: left;
+    }
+    .data-table th {
+      background: rgba(255, 255, 255, 0.06);
+      color: #f1f5f9;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .data-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+    }
+    .data-table tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Code Blocks & Inline Code */
+    .opinion-body code, .decree-content code, #crossReviewBody code, .focus-body code {
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.1);
       padding: 1px 5px;
@@ -496,18 +796,37 @@
       font-size: 12px;
       color: #93c5fd;
     }
-    .opinion-body pre.code-block, .decree-content pre.code-block, #crossReviewBody pre.code-block {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin: 8px 0;
+    .code-wrap {
+      position: relative;
+      margin: 10px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #090d16;
+    }
+    .code-lang {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    pre.code-block {
+      padding: 12px 14px;
+      margin: 0;
       overflow-x: auto;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 12px;
       color: #f1f5f9;
+      background: transparent;
+      border: none;
     }
-    .opinion-body blockquote, .decree-content blockquote, #crossReviewBody blockquote {
+
+    /* Quotes and Dividers */
+    .opinion-body blockquote, .decree-content blockquote, #crossReviewBody blockquote, .focus-body blockquote {
       border-left: 3px solid var(--gold);
       padding: 4px 12px;
       margin: 8px 0;
@@ -515,41 +834,57 @@
       color: #e2e8f0;
       font-style: italic;
     }
-    .opinion-body hr.section-hr, .decree-content hr.section-hr, #crossReviewBody hr.section-hr {
+    .opinion-body hr.section-hr, .decree-content hr.section-hr, #crossReviewBody hr.section-hr, .focus-body hr.section-hr {
       border: 0;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       margin: 12px 0;
     }
+
+    /* Typst & LaTeX Math Typography */
     .math-inline {
       display: inline-block;
       font-family: "KaTeX_Math", "Cambria Math", "Latin Modern Math", "STIX Two Math", "Times New Roman", serif;
       font-style: italic;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.14);
+      border: 1px solid rgba(99, 102, 241, 0.28);
       padding: 0 5px;
       border-radius: 4px;
       color: #e0e7ff;
       margin: 0 2px;
-      line-height: 1.3;
+      line-height: 1.35;
     }
     .math-display {
       display: block;
       text-align: center;
-      margin: 10px 0;
-      padding: 10px;
+      margin: 12px 0;
+      padding: 12px 16px;
       font-family: "KaTeX_Math", "Cambria Math", "Latin Modern Math", "STIX Two Math", "Times New Roman", serif;
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(15, 23, 42, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 8px;
-      color: #f1f5f9;
-      font-size: 1.05em;
+      color: #f8fafc;
+      font-size: 1.1em;
+      overflow-x: auto;
     }
     .math-frac {
       display: inline-block;
       vertical-align: middle;
       text-align: center;
       font-size: 0.9em;
+      padding: 0 3px;
+    }
+    .math-frac .math-num {
+      display: block;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.4);
       padding: 0 2px;
+    }
+    .math-frac .math-den {
+      display: block;
+      padding: 0 2px;
+    }
+    .math-cal {
+      font-family: "KaTeX_Caligraphic", "Brush Script MT", cursive, serif;
+      font-weight: bold;
     }
 
     /* Stage 2 & 3 Full-Width Cards */
@@ -610,8 +945,73 @@
       font-size: 14px;
       line-height: 1.7;
       color: #f1f5f9;
-      white-space: pre-wrap;
       word-break: break-word;
+    }
+
+    /* Fullscreen Focus Modal */
+    .focus-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(5, 7, 12, 0.85);
+      backdrop-filter: blur(14px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .focus-modal {
+      width: 100%;
+      max-width: 1050px;
+      height: 90vh;
+      background: #0d131f;
+      border: 1px solid var(--border-gold);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
+      overflow: hidden;
+    }
+    .focus-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(20, 28, 44, 0.9);
+      border-bottom: 1px solid var(--border);
+    }
+    .focus-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .focus-close-btn {
+      background: rgba(248, 113, 113, 0.15);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: #f87171;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .focus-close-btn:hover {
+      background: rgba(248, 113, 113, 0.3);
+    }
+    .focus-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: #f1f5f9;
     }
   </style>
 </head>
@@ -636,73 +1036,107 @@
 
   <main class="content-wrap">
 
-    <!-- Section 1: The Five Seats & Model Dropdowns -->
-    <div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div class="section-title">🏛️ The Five Council Seats & Neural Engines</div>
-        
-        <!-- Preset Toolbar -->
-        <div class="preset-toolbar">
-          <span class="preset-label">Quick Presets:</span>
-          <button class="preset-btn" onclick="applyPreset('lite')">⚡ All Flash-Lite</button>
-          <button class="preset-btn" onclick="applyPreset('balanced')">⚖️ Balanced</button>
-          <button class="preset-btn" onclick="applyPreset('deep')">🧠 Deep Synthesis</button>
-          <button class="preset-btn" onclick="applyPreset('local')">🛡️ Airgapped Local</button>
+    <!-- Collapsible Setup Container: Models & Inquiry Input -->
+    <div id="setupContainer" class="setup-container">
+      <!-- Section 1: The Five Seats & Model Dropdowns -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div class="section-title">🏛️ The Five Council Seats & Neural Engines</div>
+          
+          <!-- Preset Toolbar -->
+          <div class="preset-toolbar">
+            <span class="preset-label">Quick Presets:</span>
+            <button class="preset-btn" onclick="applyPreset('lite')">⚡ All Flash-Lite</button>
+            <button class="preset-btn" onclick="applyPreset('balanced')">⚖️ Balanced</button>
+            <button class="preset-btn" onclick="applyPreset('deep')">🧠 Deep Synthesis</button>
+            <button class="preset-btn" onclick="applyPreset('local')">🛡️ Airgapped Local</button>
+          </div>
+        </div>
+
+        <!-- 5-Seat Grid with Dropdowns -->
+        <div class="seats-grid" id="seatsGrid">
+          <!-- Rendered dynamically via JavaScript -->
         </div>
       </div>
 
-      <!-- 5-Seat Grid with Dropdowns -->
-      <div class="seats-grid" id="seatsGrid">
-        <!-- Rendered dynamically via JavaScript -->
+      <!-- Fallback Alert Toast -->
+      <div id="fallbackBanner" class="fallback-banner">
+        <span>⚠️</span>
+        <span id="fallbackText">Model fallback notice</span>
+      </div>
+
+      <!-- Section 2: Inquiry Input Box -->
+      <section class="input-section">
+        <div class="section-title">📜 Council Inquiry & Deliberation Mandate</div>
+        <textarea
+          id="inquiryInput"
+          class="inquiry-textarea"
+          placeholder="Type or paste the complex problem, strategic paradox, or architectural dilemma you wish to submit to The High Table... (⌘+Enter to convene)"
+        ></textarea>
+
+        <div class="input-footer">
+          <div class="prompt-pills">
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600;">Sample Inquiries:</span>
+            <span class="prompt-pill" onclick="setPrompt('When automated formal proofs exceed human cognitive surveyability, does epistemic justification require an agent-accessible chain of reasoning, or structural-systemic reliability?')">Non-Surveyable Proofs</span>
+            <span class="prompt-pill" onclick="setPrompt('Should an artificial intelligence prioritize immutable truth or psychological/homeostatic comfort under existential stress?')">Truth vs. Comfort</span>
+            <span class="prompt-pill" onclick="setPrompt('In architectural distributed systems, analyze the trade-offs of monotonic state synchronization vs. eventual consistency under severe network partitioning.')">State Sync vs Partition</span>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button id="btnAbort" class="btn-abort" onclick="abortCouncil()">⏹ Cancel Deliberation</button>
+            <button id="btnConvene" class="btn-convene" onclick="conveneCouncil()">
+              <span>🏛️</span>
+              <span>Convene Council</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Collapsible Compact Control Bar (Active when deliberation is running) -->
+    <div id="compactBar" class="compact-bar" style="display:none;">
+      <div class="compact-left">
+        <span style="font-size:16px;">🏛️</span>
+        <span class="compact-badge" id="compactModelSummary">Council Active</span>
+        <span id="compactPromptPreview" class="compact-prompt"></span>
+      </div>
+      <div class="compact-actions">
+        <button class="compact-btn" onclick="toggleSetupContainer()">✏️ Edit Inquiry & Models</button>
+        <button id="compactBtnAbort" class="compact-btn" style="color:#f87171;border-color:rgba(248,113,113,0.3);display:none;" onclick="abortCouncil()">⏹ Cancel</button>
       </div>
     </div>
 
-    <!-- Fallback Alert Toast -->
-    <div id="fallbackBanner" class="fallback-banner">
-      <span>⚠️</span>
-      <span id="fallbackText">Model fallback notice</span>
-    </div>
-
-    <!-- Section 2: Inquiry Input Box -->
-    <section class="input-section">
-      <div class="section-title">📜 Council Inquiry & Deliberation Mandate</div>
-      <textarea
-        id="inquiryInput"
-        class="inquiry-textarea"
-        placeholder="Type or paste the complex problem, strategic paradox, or architectural dilemma you wish to submit to The High Table... (⌘+Enter to convene)"
-      ></textarea>
-
-      <div class="input-footer">
-        <div class="prompt-pills">
-          <span style="font-size:11px;color:var(--text-muted);font-weight:600;">Sample Inquiries:</span>
-          <span class="prompt-pill" onclick="setPrompt('When automated formal proofs exceed human cognitive surveyability, does epistemic justification require an agent-accessible chain of reasoning, or structural-systemic reliability?')">Non-Surveyable Proofs</span>
-          <span class="prompt-pill" onclick="setPrompt('Should an artificial intelligence prioritize immutable truth or psychological/homeostatic comfort under existential stress?')">Truth vs. Comfort</span>
-          <span class="prompt-pill" onclick="setPrompt('In architectural distributed systems, analyze the trade-offs of monotonic state synchronization vs. eventual consistency under severe network partitioning.')">State Sync vs Partition</span>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:10px;">
-          <button id="btnAbort" class="btn-abort" onclick="abortCouncil()">⏹ Cancel Deliberation</button>
-          <button id="btnConvene" class="btn-convene" onclick="conveneCouncil()">
-            <span>🏛️</span>
-            <span>Convene Council</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Stage Progress Tracker -->
+    <!-- Stage Progress Tracker with View Modes -->
     <div class="stage-tracker" id="stageTracker" style="display:none;">
-      <div id="trackerStage1" class="stage-item active">
-        <span>1. Deliberations of the Seats</span>
+      <div class="stage-steps">
+        <div id="trackerStage1" class="stage-item active" onclick="scrollToSection('stage1Wrap')">
+          <span>1. Deliberations of the Seats</span>
+        </div>
+        <span class="stage-arrow">→</span>
+        <div id="trackerStage2" class="stage-item" onclick="scrollToSection('stage2Wrap')">
+          <span>2. Forensic Cross-Examination</span>
+        </div>
+        <span class="stage-arrow">→</span>
+        <div id="trackerStage3" class="stage-item" onclick="scrollToSection('stage3Wrap')">
+          <span>3. Supreme Decree</span>
+        </div>
       </div>
-      <span class="stage-arrow">→</span>
-      <div id="trackerStage2" class="stage-item">
-        <span>2. Forensic Cross-Examination</span>
+      <div class="view-mode-selector" id="viewModeSelector">
+        <span class="view-mode-label">Layout:</span>
+        <button id="btnViewGrid" class="view-mode-btn active" onclick="setViewMode('grid')">⊞ Grid</button>
+        <button id="btnViewTabs" class="view-mode-btn" onclick="setViewMode('tabs')">📑 Tabs</button>
+        <button id="btnViewStack" class="view-mode-btn" onclick="setViewMode('stack')">☰ Stack</button>
       </div>
-      <span class="stage-arrow">→</span>
-      <div id="trackerStage3" class="stage-item">
-        <span>3. Supreme Decree</span>
-      </div>
+    </div>
+
+    <!-- Tabs Bar for Tabs View Mode -->
+    <div class="seat-tabs-bar" id="seatTabsBar" style="display:none;">
+      <button class="seat-tab active" id="tabSeat1" onclick="switchSeatTab(1)">📐 Seat 1: Logician</button>
+      <button class="seat-tab" id="tabSeat2" onclick="switchSeatTab(2)">🔮 Seat 2: Visionary</button>
+      <button class="seat-tab" id="tabSeat3" onclick="switchSeatTab(3)">⚔️ Seat 3: Inquisitor</button>
+      <button class="seat-tab" id="tabSeat4" onclick="switchSeatTab(4)">🛠️ Seat 4: Pragmatist</button>
+      <button class="seat-tab" id="tabSeat5" onclick="switchSeatTab('crossReview')">👑 Forensic Cross-Review</button>
+      <button class="seat-tab" id="tabDecree" onclick="switchSeatTab('decree')">🏛️ Supreme Decree</button>
     </div>
 
     <!-- Section 3: Live Deliberation Streams -->
@@ -710,7 +1144,7 @@
     <div id="stage1Wrap" style="display:none;flex-direction:column;gap:12px;">
       <div class="section-title" style="color:var(--blue);">▶ Stage 1: Individual Deliberations</div>
       <div class="stage1-container" id="opinionsContainer">
-        <!-- Opinion Cards 1–4 generated here -->
+        <!-- Opinion Cards 1–4 generated dynamically -->
       </div>
     </div>
 
@@ -723,7 +1157,10 @@
             <span>👑</span>
             <span>Chief Arbiter Cross-Review & Ranking</span>
           </div>
-          <span id="crossReviewModelTag" class="opinion-model-tag">gemini-3.5-flash-lite</span>
+          <div class="opinion-card-actions">
+            <span id="crossReviewModelTag" class="opinion-model-tag">gemini-3.5-flash-lite</span>
+            <button class="card-action-btn" title="Focus view" onclick="openFocusModal('crossReview')">⛶ Focus</button>
+          </div>
         </div>
         <div id="crossReviewBody" class="opinion-body">Awaiting stage 1 completion...</div>
       </div>
@@ -739,6 +1176,7 @@
             <span>DEFINITIVE HIGH TABLE DECREE</span>
           </div>
           <div class="decree-actions">
+            <button class="card-action-btn" title="Focus view" onclick="openFocusModal('decree')">⛶ Focus</button>
             <button class="decree-btn" onclick="copyDecree()">📋 Copy Decree</button>
             <button class="decree-btn" onclick="exportTranscript()">💾 Export Transcript</button>
           </div>
@@ -748,6 +1186,20 @@
     </div>
 
   </main>
+
+  <!-- Fullscreen Focus Reader Modal -->
+  <div id="focusOverlay" class="focus-overlay" style="display:none;" onclick="handleFocusOverlayClick(event)">
+    <div class="focus-modal" onclick="event.stopPropagation()">
+      <div class="focus-header">
+        <div id="focusTitle" class="focus-title">⛶ Focus View</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span id="focusSubtitle" style="font-size:12px;color:var(--text-muted);"></span>
+          <button class="focus-close-btn" onclick="closeFocusModal()">✕ Close (Esc)</button>
+        </div>
+      </div>
+      <div id="focusBody" class="focus-body"></div>
+    </div>
+  </div>
 
   <script>
     const SEATS = [
@@ -814,9 +1266,12 @@
     ];
 
     let isDeliberating = false;
-    let fullTranscriptData = { query: "", opinions: {}, crossReview: "", decree: "" };
+    let isSetupCollapsed = false;
+    let currentViewMode = "grid"; // "grid" | "tabs" | "stack"
+    let activeSeatTab = 1;
+    let currentFocusTarget = null;
 
-    // Raw streaming buffers for markdown & math rendering
+    // Raw streaming buffers for markdown, Typst & math rendering
     let seatRawBuffers = { 1: "", 2: "", 3: "", 4: "" };
     let crossReviewRaw = "";
     let decreeRaw = "";
@@ -826,126 +1281,275 @@
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    function formatMath(tex) {
+    // Unified Typst, LaTeX and Mathematics Formatter
+    function formatMath(tex, isDisplay = false) {
       if (!tex) return "";
-      let s = tex.trim().replace(/^\{+|\}+$/g, "");
+      let s = tex.trim();
+      // Strip outer delimiter anomalies: ${...}$, ${..., etc.
+      s = s.replace(/^\$\{?/, "").replace(/\}?\$?$/, "").trim();
+      s = s.replace(/^\{+|\}+$/g, "").trim();
 
-      // If KaTeX CDN is loaded, use it
+      // Attempt KaTeX rendering if available
       if (window.katex && typeof window.katex.renderToString === "function") {
         try {
-          return window.katex.renderToString(s, { throwOnError: false, displayMode: false });
+          const kTex = s
+            .replace(/->/g, " \\to ")
+            .replace(/=>/g, " \\implies ")
+            .replace(/!=/g, " \\neq ")
+            .replace(/<=/g, " \\le ")
+            .replace(/>=/g, " \\ge ")
+            .replace(/cal\(([^)]+)\)/g, "\\mathcal{$1}")
+            .replace(/bb\(([^)]+)\)/g, "\\mathbb{$1}")
+            .replace(/frac\(([^,]+),([^)]+)\)/g, "\\frac{$1}{$2}")
+            .replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
+          return window.katex.renderToString(kTex, { throwOnError: false, displayMode: isDisplay });
         } catch (_) {}
       }
 
-      // Built-in offline fallback: strip math macro wrappers
-      s = s.replace(/\\(mathbb|mathcal|mathbf|mathit|mathrm|text)\{([^{}]+)\}/g, "$2");
-      s = s.replace(/\\(mathbb|mathcal|mathbf|mathit|mathrm|text)\b/g, "");
+      // Built-in resilient fallback
+      s = s.replace(/\\frac\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}/g, "<span class=\"math-frac\"><span class=\"math-num\">$1</span><span class=\"math-den\">$2</span></span>");
+      s = s.replace(/frac\(([^,]+),([^)]+)\)/g, "<span class=\"math-frac\"><span class=\"math-num\">$1</span><span class=\"math-den\">$2</span></span>");
 
-      // Greek & special symbols
-      const syms = {
-        "\\\\rightarrow": "→", "\\\\to": "→", "\\\\leftarrow": "←",
-        "\\\\implies": "⇒", "\\\\iff": "⇔",
-        "\\\\forall": "∀", "\\\\exists": "∃",
-        "\\\\in": "∈", "\\\\notin": "∉",
-        "\\\\subset": "⊂", "\\\\subseteq": "⊆",
-        "\\\\cap": "∩", "\\\\cup": "∪",
-        "\\\\land": "∧", "\\\\lor": "∨", "\\\\neg": "¬",
-        "\\\\vdash": "⊢", "\\\\models": "⊨",
-        "\\\\leq": "≤", "\\\\le": "≤", "\\\\geq": "≥", "\\\\ge": "≥",
-        "\\\\neq": "≠", "\\\\ne": "≠", "\\\\approx": "≈",
-        "\\\\times": "×", "\\\\cdot": "·", "\\\\pm": "±",
-        "\\\\alpha": "α", "\\\\beta": "β", "\\\\gamma": "γ", "\\\\delta": "δ",
-        "\\\\epsilon": "ε", "\\\\theta": "θ", "\\\\lambda": "λ", "\\\\mu": "μ",
-        "\\\\pi": "π", "\\\\sigma": "σ", "\\\\tau": "τ", "\\\\phi": "φ", "\\\\omega": "ω",
-        "\\\\Delta": "Δ", "\\\\Sigma": "Σ", "\\\\Omega": "Ω"
-      };
-      for (const [k, v] of Object.entries(syms)) {
-        s = s.replace(new RegExp(k, "g"), v);
+      s = s.replace(/\\sqrt\{((?:[^{}]|\{[^{}]*\})*)\}/g, "√($1)");
+      s = s.replace(/sqrt\(([^)]+)\)/g, "√($1)");
+
+      s = s.replace(/\\mathbb\{([A-Za-z0-9]+)\}/g, "$1");
+      s = s.replace(/bb\(([A-Za-z0-9]+)\)/g, "$1");
+      s = s.replace(/\\mathcal\{([A-Za-z0-9]+)\}/g, "<span class=\"math-cal\">$1</span>");
+      s = s.replace(/cal\(([A-Za-z0-9]+)\)/g, "<span class=\"math-cal\">$1</span>");
+
+      const syms = [
+        [/(?:\\to|\\rightarrow|->|arrow\.r)/g, "→"],
+        [/(?:\\implies|=>|arrow\.r\.double)/g, "⇒"],
+        [/(?:\\iff|<=>)/g, "⇔"],
+        [/(?:\\leftarrow|<-)/g, "←"],
+        [/(?:\\neq|\\ne|!=)/g, "≠"],
+        [/(?:\\leq|\\le|<=)/g, "≤"],
+        [/(?:\\geq|\\ge|>=)/g, "≥"],
+        [/(?:\\approx|approx)/g, "≈"],
+        [/(?:\\in|\\isin|\bin\b)/g, "∈"],
+        [/(?:\\notin|\bnotin\b)/g, "∉"],
+        [/(?:\\subset|\bsubset\b)/g, "⊂"],
+        [/(?:\\subseteq|\bsubseteq\b)/g, "⊆"],
+        [/(?:\\forall|\bforall\b)/g, "∀"],
+        [/(?:\\exists|\bexists\b)/g, "∃"],
+        [/(?:\\land|\\wedge)/g, "∧"],
+        [/(?:\\lor|\\vee)/g, "∨"],
+        [/(?:\\neg|\\lnot)/g, "¬"],
+        [/(?:\\vdash)/g, "⊢"],
+        [/(?:\\models)/g, "⊨"],
+        [/(?:\\times)/g, "×"],
+        [/(?:\\cdot)/g, "·"],
+        [/(?:\\pm)/g, "±"],
+        [/(?:\\infty|infinity)/g, "∞"],
+        [/(?:\\sum)/g, "∑"],
+        [/(?:\\int)/g, "∫"],
+        [/(?:\\prod)/g, "∏"],
+        [/(?:\\partial)/g, "∂"],
+        [/(?:\\nabla)/g, "∇"],
+        [/\\alpha|\balpha\b/g, "α"],
+        [/\\beta|\bbeta\b/g, "β"],
+        [/\\gamma|\bgamma\b/g, "γ"],
+        [/\\delta|\bdelta\b/g, "δ"],
+        [/\\epsilon|\bepsilon\b/g, "ε"],
+        [/\\theta|\btheta\b/g, "θ"],
+        [/\\lambda|\blambda\b/g, "λ"],
+        [/\\mu|\bmu\b/g, "μ"],
+        [/\\pi|\bpi\b/g, "π"],
+        [/\\sigma|\bsigma\b/g, "σ"],
+        [/\\tau|\btau\b/g, "τ"],
+        [/\\phi|\bphi\b/g, "φ"],
+        [/\\omega|\bomega\b/g, "ω"],
+        [/\\Gamma|\bGamma\b/g, "Γ"],
+        [/\\Delta|\bDelta\b/g, "Δ"],
+        [/\\Sigma|\bSigma\b/g, "Σ"],
+        [/\\Omega|\bOmega\b/g, "Ω"]
+      ];
+
+      for (const [re, rep] of syms) {
+        s = s.replace(re, rep);
       }
 
-      // Subscripts & superscripts (handles nested like S_{t_2} and unclosed like S_{t_2)
-      for (let i = 0; i < 3; i++) {
+      s = s.replace(/\\(mathbf|mathit|mathrm|text)\{([^{}]+)\}/g, "$2");
+      s = s.replace(/\\(mathbf|mathit|mathrm|text)\b/g, "");
+
+      for (let pass = 0; pass < 3; pass++) {
         s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])_\{([^{}]+)\}/g, "$1<sub>$2</sub>");
         s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])_\{([^{}]+)$/g, "$1<sub>$2</sub>");
-        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])_([A-Za-z0-9α-ωΑ-Ω])/g, "$1<sub>$2</sub>");
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])_([A-Za-z0-9α-ωΑ-Ω]+)/g, "$1<sub>$2</sub>");
         s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])\^\{([^{}]+)\}/g, "$1<sup>$2</sup>");
         s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])\^\{([^{}]+)$/g, "$1<sup>$2</sup>");
-        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])\^([A-Za-z0-9α-ωΑ-Ω])/g, "$1<sup>$2</sup>");
+        s = s.replace(/([A-Za-z0-9α-ωΑ-Ω])\^([A-Za-z0-9α-ωΑ-Ω]+)/g, "$1<sup>$2</sup>");
       }
 
-      // Fractions
-      s = s.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "<span class=\"math-frac\">($1/$2)</span>");
-
-      // Strip leftover unescaped backslashes
+      s = s.replace(/[{}]/g, "");
       s = s.replace(/\\/g, "");
 
-      return s;
+      if (isDisplay) {
+        return `<div class="math-display">${s}</div>`;
+      }
+      return `<span class="math-inline">${s}</span>`;
     }
 
-    function renderMarkdown(md) {
-      if (!md) return "";
+    function renderTable(rows) {
+      if (rows.length < 2) return rows.join("\n");
+      const parseRow = r => r.split("|").slice(1, -1).map(c => c.trim());
+      const header = parseRow(rows[0]);
+      const isDivider = r => /^\|(?:\s*:?-+:?\s*\|)+$/.test(r);
 
-      let text = md.replace(/\r\n/g, "\n");
+      let dataRows = [];
+      let startIndex = 1;
+      if (isDivider(rows[1])) {
+        startIndex = 2;
+      }
+      for (let i = startIndex; i < rows.length; i++) {
+        if (!isDivider(rows[i])) {
+          dataRows.push(parseRow(rows[i]));
+        }
+      }
 
-      // Display math $$...$$
-      text = text.replace(/\$\$([^\$]+)\$\$/g, (m, g) => {
-        return `<div class="math-display">${formatMath(g)}</div>`;
+      let html = `<div class="table-wrap"><table class="data-table"><thead><tr>`;
+      header.forEach(h => { html += `<th>${h}</th>`; });
+      html += `</tr></thead><tbody>`;
+      dataRows.forEach(row => {
+        html += `<tr>`;
+        row.forEach(cell => { html += `<td>${cell}</td>`; });
+        html += `</tr>`;
+      });
+      html += `</tbody></table></div>`;
+      return html;
+    }
+
+    // Comprehensive Parser for Typst, Markdown and LaTeX
+    function parseContent(raw) {
+      if (!raw) return "";
+
+      let text = raw.replace(/\r\n/g, "\n");
+
+      // 1. Protect code blocks
+      const codeBlocks = [];
+      text = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (m, lang, code) => {
+        const idx = codeBlocks.length;
+        codeBlocks.push({ lang, code: code.trim() });
+        return `%%%CODE_BLOCK_${idx}%%%`;
       });
 
-      // Inline math: handles standard $x$, and broken syntax like ${S_{t_2}$ or ${S_{t_2}}
-      text = text.replace(/\$\{([^$]+)\}\$|\$\{([^$]+)\$|\$([^\$\n]+)\$/g, (m, g1, g2, g3) => {
-        const raw = g1 || g2 || g3;
-        return `<span class="math-inline">${formatMath(raw)}</span>`;
+      // Protect inline code
+      const inlineCodes = [];
+      text = text.replace(/`([^`]+)`/g, (m, c) => {
+        const idx = inlineCodes.length;
+        inlineCodes.push(c);
+        return `%%%INLINE_CODE_${idx}%%%`;
       });
 
-      // Code blocks ```...```
-      text = text.replace(/```([\s\S]*?)```/g, (m, code) => {
-        return `<pre class="code-block"><code>${escapeHtml(code.trim())}</code></pre>`;
+      // 2. LaTeX Display Math Environments & $$...$$
+      text = text.replace(/\\begin\{(?:equation|align|gather)\*?\}([\s\S]*?)\\end\{(?:equation|align|gather)\*?\}/g, (m, eq) => {
+        return formatMath(eq, true);
+      });
+      text = text.replace(/\$\$([\s\S]*?)\$\$/g, (m, eq) => {
+        return formatMath(eq, true);
       });
 
-      // Inline code `...`
-      text = text.replace(/`([^`]+)`/g, (m, c) => `<code>${escapeHtml(c)}</code>`);
+      // 3. Inline Math: $...$ or broken ${...}$ or ${...
+      text = text.replace(/\$\{([^$\n]+)\}\$|\$\{([^$\n]+)\$|\$([^\$\n]+)\$/g, (m, g1, g2, g3) => {
+        return formatMath(g1 || g2 || g3, false);
+      });
 
-      // Headers
+      // 4. LaTeX command macros
+      text = text.replace(/\\subsubsection\{([^}]+)\}/g, "<h5>$1</h5>");
+      text = text.replace(/\\subsection\{([^}]+)\}/g, "<h4>$1</h4>");
+      text = text.replace(/\\section\{([^}]+)\}/g, "<h3>$1</h3>");
+      text = text.replace(/\\textbf\{([^}]+)\}/g, "<strong>$1</strong>");
+      text = text.replace(/\\(?:textit|emph)\{([^}]+)\}/g, "<em>$1</em>");
+      text = text.replace(/\\texttt\{([^}]+)\}/g, "<code>$1</code>");
+
+      // 5. Typst Headings (=, ==, ===, ====)
+      text = text.replace(/^====\s+(.*$)/gim, "<h6>$1</h6>");
+      text = text.replace(/^===\s+(.*$)/gim, "<h5>$1</h5>");
+      text = text.replace(/^==\s+(.*$)/gim, "<h4>$1</h4>");
+      text = text.replace(/^=\s+(.*$)/gim, "<h3>$1</h3>");
+
+      // 6. Typst Definitions & Terms: / Term: Description
+      text = text.replace(/^\/\s+([^:]+):\s+(.*$)/gim, `<div class="typst-term"><strong>$1:</strong> $2</div>`);
+
+      // 7. Markdown Tables
+      const lines = text.split("\n");
+      const processedLines = [];
+      let inTable = false;
+      let tableRows = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("|") && line.endsWith("|")) {
+          inTable = true;
+          tableRows.push(line);
+        } else {
+          if (inTable) {
+            processedLines.push(renderTable(tableRows));
+            inTable = false;
+            tableRows = [];
+          }
+          processedLines.push(lines[i]);
+        }
+      }
+      if (inTable) {
+        processedLines.push(renderTable(tableRows));
+      }
+      text = processedLines.join("\n");
+
+      // 8. Standard Markdown Headings
       text = text.replace(/^#### (.*$)/gim, "<h5>$1</h5>");
       text = text.replace(/^### (.*$)/gim, "<h4>$1</h4>");
       text = text.replace(/^## (.*$)/gim, "<h3>$1</h3>");
       text = text.replace(/^# (.*$)/gim, "<h3>$1</h3>");
 
-      // Bold & Italic
+      // 9. Bold and Italic
       text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
       text = text.replace(/__([^_]+)__/g, "<strong>$1</strong>");
-      text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-      text = text.replace(/_([^_]+)_/g, "<em>$1</em>");
+      text = text.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+      text = text.replace(/_([^_\n]+)_/g, "<em>$1</em>");
 
-      // Horizontal rules
-      text = text.replace(/^---$/gim, "<hr class=\"section-hr\"/>");
+      // 10. Horizontal Rules
+      text = text.replace(/^(?:---|___|\*\*\*)$/gim, `<hr class="section-hr"/>`);
 
-      // Blockquotes
-      text = text.replace(/^> (.*$)/gim, "<blockquote>$1</blockquote>");
+      // 11. Blockquotes
+      text = text.replace(/^>\s?(.*$)/gim, "<blockquote>$1</blockquote>");
 
-      // Bullet lists
+      // 12. Lists
       text = text.replace(/^[-*•]\s+(.*$)/gim, "<li>$1</li>");
       text = text.replace(/(<li>.*<\/li>)/gim, "<ul>$1</ul>");
       text = text.replace(/<\/ul>\s*<ul>/g, "");
 
-      // Numbered lists
-      text = text.replace(/^\d+\.\s+(.*$)/gim, "<li class=\"num-li\">$1</li>");
+      // Typst & MD Numbered Lists (+ item or 1. item)
+      text = text.replace(/^(?:\d+\.|\+)\s+(.*$)/gim, `<li class="num-li">$1</li>`);
       text = text.replace(/(<li class="num-li">.*<\/li>)/gim, "<ol>$1</ol>");
       text = text.replace(/<\/ol>\s*<ol>/g, "");
 
-      // Paragraphs
+      // 13. Paragraphs
       const paragraphs = text.split("\n\n");
       const processed = paragraphs.map(p => {
         p = p.trim();
         if (!p) return "";
-        if (p.startsWith("<h") || p.startsWith("<pre") || p.startsWith("<ul") || p.startsWith("<ol") || p.startsWith("<blockquote") || p.startsWith("<div") || p.startsWith("<hr")) {
+        if (p.startsWith("<h") || p.startsWith("<pre") || p.startsWith("<ul") || p.startsWith("<ol") ||
+            p.startsWith("<blockquote") || p.startsWith("<div") || p.startsWith("<table") || p.startsWith("<hr")) {
           return p;
         }
         return `<p>${p.replace(/\n/g, "<br/>")}</p>`;
       });
+      text = processed.join("");
 
-      return processed.join("");
+      // 14. Restore protected code blocks & inlines
+      text = text.replace(/%%%CODE_BLOCK_(\d+)%%%/g, (m, idx) => {
+        const item = codeBlocks[idx];
+        const langBadge = item.lang ? `<span class="code-lang">${item.lang}</span>` : "";
+        return `<div class="code-wrap">${langBadge}<pre class="code-block"><code>${escapeHtml(item.code)}</code></pre></div>`;
+      });
+
+      text = text.replace(/%%%INLINE_CODE_(\d+)%%%/g, (m, idx) => {
+        return `<code>${escapeHtml(inlineCodes[idx])}</code>`;
+      });
+
+      return text;
     }
 
     // Initialize UI
@@ -1008,8 +1612,148 @@
     }
 
     function setPrompt(text) {
-      document.getElementById("inquiryInput").value = text;
-      document.getElementById("inquiryInput").focus();
+      const input = document.getElementById("inquiryInput");
+      input.value = text;
+      input.focus();
+    }
+
+    // Toggle Collapsible Setup Area
+    function toggleSetupContainer(forceState) {
+      const container = document.getElementById("setupContainer");
+      const compactBar = document.getElementById("compactBar");
+      
+      if (typeof forceState === "boolean") {
+        isSetupCollapsed = forceState;
+      } else {
+        isSetupCollapsed = !isSetupCollapsed;
+      }
+
+      if (isSetupCollapsed) {
+        container.style.display = "none";
+        compactBar.style.display = "flex";
+      } else {
+        container.style.display = "flex";
+        compactBar.style.display = "none";
+      }
+    }
+
+    // View Modes: Grid 2x2, Tabs Mode, Single Stack
+    function setViewMode(mode) {
+      currentViewMode = mode;
+      document.getElementById("btnViewGrid").classList.toggle("active", mode === "grid");
+      document.getElementById("btnViewTabs").classList.toggle("active", mode === "tabs");
+      document.getElementById("btnViewStack").classList.toggle("active", mode === "stack");
+
+      const tabsBar = document.getElementById("seatTabsBar");
+      const mainContent = document.querySelector(".content-wrap");
+
+      if (mode === "tabs") {
+        tabsBar.style.display = "flex";
+        mainContent.classList.add("view-tabs-active");
+        mainContent.classList.remove("view-stack-active");
+        switchSeatTab(activeSeatTab || 1);
+      } else if (mode === "stack") {
+        tabsBar.style.display = "none";
+        mainContent.classList.remove("view-tabs-active");
+        mainContent.classList.add("view-stack-active");
+        for (let i = 1; i <= 4; i++) {
+          const card = document.getElementById(`opinionCard${i}`);
+          if (card) card.style.display = "flex";
+        }
+        document.getElementById("stage1Wrap").style.display = "flex";
+        if (crossReviewRaw) document.getElementById("stage2Wrap").style.display = "flex";
+        if (decreeRaw) document.getElementById("stage3Wrap").style.display = "flex";
+      } else { // "grid"
+        tabsBar.style.display = "none";
+        mainContent.classList.remove("view-tabs-active");
+        mainContent.classList.remove("view-stack-active");
+        for (let i = 1; i <= 4; i++) {
+          const card = document.getElementById(`opinionCard${i}`);
+          if (card) card.style.display = "flex";
+        }
+        document.getElementById("stage1Wrap").style.display = "flex";
+        if (crossReviewRaw) document.getElementById("stage2Wrap").style.display = "flex";
+        if (decreeRaw) document.getElementById("stage3Wrap").style.display = "flex";
+      }
+    }
+
+    function switchSeatTab(target) {
+      activeSeatTab = target;
+      
+      for (let i = 1; i <= 4; i++) {
+        const tab = document.getElementById(`tabSeat${i}`);
+        if (tab) tab.classList.toggle("active", target === i);
+      }
+      const tabCr = document.getElementById("tabSeat5");
+      if (tabCr) tabCr.classList.toggle("active", target === "crossReview");
+      const tabDec = document.getElementById("tabDecree");
+      if (tabDec) tabDec.classList.toggle("active", target === "decree");
+
+      if (currentViewMode !== "tabs") return;
+
+      if (typeof target === "number" && target >= 1 && target <= 4) {
+        document.getElementById("stage1Wrap").style.display = "flex";
+        document.getElementById("stage2Wrap").style.display = "none";
+        document.getElementById("stage3Wrap").style.display = "none";
+        for (let i = 1; i <= 4; i++) {
+          const card = document.getElementById(`opinionCard${i}`);
+          if (card) card.style.display = (i === target) ? "flex" : "none";
+        }
+      } else if (target === "crossReview") {
+        document.getElementById("stage1Wrap").style.display = "none";
+        document.getElementById("stage2Wrap").style.display = "flex";
+        document.getElementById("stage3Wrap").style.display = "none";
+      } else if (target === "decree") {
+        document.getElementById("stage1Wrap").style.display = "none";
+        document.getElementById("stage2Wrap").style.display = "none";
+        document.getElementById("stage3Wrap").style.display = "flex";
+      }
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    // Fullscreen Focus Modal Controls
+    function openFocusModal(target) {
+      currentFocusTarget = target;
+      const overlay = document.getElementById("focusOverlay");
+      const title = document.getElementById("focusTitle");
+      const subtitle = document.getElementById("focusSubtitle");
+      const body = document.getElementById("focusBody");
+
+      let raw = "";
+      if (typeof target === "number") {
+        const seatInfo = SEATS[target - 1];
+        title.innerHTML = `<span>${seatInfo.icon}</span> <span>${seatInfo.name}</span>`;
+        subtitle.innerText = seatInfo.koreanTitle;
+        raw = seatRawBuffers[target] || "";
+      } else if (target === "crossReview") {
+        title.innerHTML = `<span>👑</span> <span>Seat 5: Chief Arbiter Cross-Examination</span>`;
+        subtitle.innerText = "Forensic Comparison & Ranking";
+        raw = crossReviewRaw || "";
+      } else if (target === "decree") {
+        title.innerHTML = `<span>🏛️</span> <span>The High Table Supreme Decree</span>`;
+        subtitle.innerText = "Definitive Epistemic Verdict";
+        raw = decreeRaw || "";
+      }
+
+      body.innerHTML = parseContent(raw) || "<span style='color:var(--text-muted);font-style:italic;'>Awaiting deliberation content...</span>";
+      overlay.style.display = "flex";
+    }
+
+    function closeFocusModal() {
+      currentFocusTarget = null;
+      document.getElementById("focusOverlay").style.display = "none";
+    }
+
+    function handleFocusOverlayClick(e) {
+      if (e.target.id === "focusOverlay") {
+        closeFocusModal();
+      }
     }
 
     function setupStage1Cards() {
@@ -1027,7 +1771,10 @@
               <span>${seat.icon}</span>
               <span>${seat.name}</span>
             </div>
-            <span id="modelTag${i}" class="opinion-model-tag">Awaiting...</span>
+            <div class="opinion-card-actions">
+              <span id="modelTag${i}" class="opinion-model-tag">Awaiting...</span>
+              <button class="card-action-btn" title="Focus reader" onclick="openFocusModal(${i})">⛶ Focus</button>
+            </div>
           </div>
           <div id="opinionBody${i}" class="opinion-body">
             <span style="color:var(--text-muted);font-style:italic;">⚡ Connecting to neural model & formulating thesis...</span>
@@ -1038,10 +1785,11 @@
     }
 
     async function conveneCouncil() {
-      const query = document.getElementById("inquiryInput").value.trim();
+      let query = document.getElementById("inquiryInput").value.trim();
       if (!query) {
-        alert("Please enter an inquiry prompt for The High Table.");
-        return;
+        // Auto-fill profound default inquiry if empty
+        query = "When automated formal proofs exceed human cognitive surveyability, does epistemic justification require an agent-accessible chain of reasoning, or structural-systemic reliability?";
+        document.getElementById("inquiryInput").value = query;
       }
 
       const selectedModels = [];
@@ -1050,10 +1798,14 @@
       }
 
       isDeliberating = true;
-      fullTranscriptData = { query, opinions: {}, crossReview: "", decree: "" };
       seatRawBuffers = { 1: "", 2: "", 3: "", 4: "" };
       crossReviewRaw = "";
       decreeRaw = "";
+
+      // Auto-collapse setup container to save viewport height
+      toggleSetupContainer(true);
+      document.getElementById("compactPromptPreview").innerText = query;
+      document.getElementById("compactBtnAbort").style.display = "inline-block";
 
       // Update UI state
       document.getElementById("btnConvene").disabled = true;
@@ -1068,10 +1820,15 @@
       document.getElementById("stage2Wrap").style.display = "none";
       document.getElementById("stage3Wrap").style.display = "none";
 
-      document.getElementById("crossReviewBody").innerHTML = "";
-      document.getElementById("decreeBody").innerHTML = "";
+      document.getElementById("crossReviewBody").innerHTML = "<span style='color:var(--text-muted);font-style:italic;'>Awaiting completion of individual deliberations...</span>";
+      document.getElementById("decreeBody").innerHTML = "<span style='color:var(--text-muted);font-style:italic;'>Awaiting forensic cross-review...</span>";
 
-      // Call IPC
+      // If currently in Tabs mode, make sure tab 1 is visible
+      if (currentViewMode === "tabs") {
+        switchSeatTab(1);
+      }
+
+      // Call IPC via HyperOffice High Table Bridge
       try {
         const htApi = window.hyperOffice?.highTable;
         if (htApi) {
@@ -1106,13 +1863,14 @@
       } else if (window.electron?.ipcRenderer) {
         window.electron.ipcRenderer.invoke("hyper:high-table:abort");
       }
-      finishCouncil({ ok: false, error: "Deliberation aborted by user." });
+      finishCouncil({ ok: false, error: "Deliberation cancelled by user." });
     }
 
     function finishCouncil(res) {
       isDeliberating = false;
       document.getElementById("btnConvene").disabled = false;
       document.getElementById("btnAbort").style.display = "none";
+      document.getElementById("compactBtnAbort").style.display = "none";
       document.getElementById("statusPill").className = "status-pill";
       document.getElementById("statusText").innerText = res?.ok ? "Decree Issued" : "Council Adjourned";
 
@@ -1120,6 +1878,8 @@
         const banner = document.getElementById("fallbackBanner");
         banner.style.display = "flex";
         document.getElementById("fallbackText").innerText = `⚠️ Council halted: ${res.error}`;
+        // Re-open setup container on error so user can adjust
+        toggleSetupContainer(false);
       }
 
       document.getElementById("trackerStage1").className = "stage-item done";
@@ -1149,10 +1909,16 @@
           document.getElementById("trackerStage2").className = "stage-item active";
           document.getElementById("stage2Wrap").style.display = "flex";
           if (ev.model) document.getElementById("crossReviewModelTag").innerText = ev.model;
+          if (currentViewMode !== "tabs") {
+            scrollToSection("stage2Wrap");
+          }
         } else if (ev.stage === 3) {
           document.getElementById("trackerStage2").className = "stage-item done";
           document.getElementById("trackerStage3").className = "stage-item active";
           document.getElementById("stage3Wrap").style.display = "flex";
+          if (currentViewMode !== "tabs") {
+            scrollToSection("stage3Wrap");
+          }
         }
       } else if (ev.type === "seat_start") {
         const tag = document.getElementById(`modelTag${ev.seat}`);
@@ -1164,15 +1930,47 @@
         if (ev.seat >= 1 && ev.seat <= 4) {
           seatRawBuffers[ev.seat] = (seatRawBuffers[ev.seat] || "") + ev.text;
           const body = document.getElementById(`opinionBody${ev.seat}`);
-          if (body) body.innerHTML = renderMarkdown(seatRawBuffers[ev.seat]);
+          if (body) {
+            body.innerHTML = parseContent(seatRawBuffers[ev.seat]);
+            body.scrollTop = body.scrollHeight; // Auto-scroll streaming output
+          }
+          if (currentFocusTarget === ev.seat) {
+            const fBody = document.getElementById("focusBody");
+            if (fBody) {
+              fBody.innerHTML = parseContent(seatRawBuffers[ev.seat]);
+              fBody.scrollTop = fBody.scrollHeight;
+            }
+          }
         } else if (ev.seat === 5) {
           const s3Visible = document.getElementById("stage3Wrap").style.display === "flex";
           if (s3Visible) {
             decreeRaw += ev.text;
-            document.getElementById("decreeBody").innerHTML = renderMarkdown(decreeRaw);
+            const dBody = document.getElementById("decreeBody");
+            if (dBody) {
+              dBody.innerHTML = parseContent(decreeRaw);
+              dBody.scrollTop = dBody.scrollHeight;
+            }
+            if (currentFocusTarget === "decree") {
+              const fBody = document.getElementById("focusBody");
+              if (fBody) {
+                fBody.innerHTML = parseContent(decreeRaw);
+                fBody.scrollTop = fBody.scrollHeight;
+              }
+            }
           } else {
             crossReviewRaw += ev.text;
-            document.getElementById("crossReviewBody").innerHTML = renderMarkdown(crossReviewRaw);
+            const crBody = document.getElementById("crossReviewBody");
+            if (crBody) {
+              crBody.innerHTML = parseContent(crossReviewRaw);
+              crBody.scrollTop = crBody.scrollHeight;
+            }
+            if (currentFocusTarget === "crossReview") {
+              const fBody = document.getElementById("focusBody");
+              if (fBody) {
+                fBody.innerHTML = parseContent(crossReviewRaw);
+                fBody.scrollTop = fBody.scrollHeight;
+              }
+            }
           }
         }
       } else if (ev.type === "fallback") {
@@ -1183,7 +1981,8 @@
       } else if (ev.type === "done") {
         if (ev.decree) {
           decreeRaw = ev.decree;
-          document.getElementById("decreeBody").innerHTML = renderMarkdown(decreeRaw);
+          const dBody = document.getElementById("decreeBody");
+          if (dBody) dBody.innerHTML = parseContent(decreeRaw);
         }
       }
     }
@@ -1221,8 +2020,11 @@
       a.click();
     }
 
-    // Keyboard shortcut: Cmd+Enter to convene
+    // Keyboard shortcut: Cmd+Enter or Ctrl+Enter to convene; Escape to close Focus modal
     document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeFocusModal();
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         e.preventDefault();
         if (!isDeliberating) conveneCouncil();

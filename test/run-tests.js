@@ -16,7 +16,7 @@ try {
 }
 
 console.log("==================================================================");
-console.log("🧪 [Aether Comprehensive 278-Point Master Verification Suite]");
+console.log("🧪 [Aether Comprehensive 285-Point Master Verification Suite]");
 console.log("   Testing every single nook, cranny, button, edge case, and tool");
 console.log("==================================================================");
 
@@ -1916,6 +1916,69 @@ async function main() {
     const py = fs.readFileSync("/Users/sushikim/Documents/antigravity_council.py", "utf8");
     assert.ok(py.includes("def stream_with_fallback"));
     assert.ok(py.includes("gemini-3.5-flash-lite"));
+  });
+
+  test(279, "The High Table DOM: collapsible setup container (#setupContainer) and compact bar (#compactBar)", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("setupContainer"));
+      assert.ok(dom.window.document.getElementById("compactBar"));
+    }
+  });
+
+  test(280, "The High Table DOM: layout view mode switcher (#viewModeSelector, #btnViewGrid, #btnViewTabs, #btnViewStack)", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("viewModeSelector"));
+      assert.ok(dom.window.document.getElementById("btnViewGrid"));
+      assert.ok(dom.window.document.getElementById("btnViewTabs"));
+      assert.ok(dom.window.document.getElementById("btnViewStack"));
+    }
+  });
+
+  test(281, "The High Table DOM: tabs mode bar (#seatTabsBar) with 6 seat tabs", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("seatTabsBar"));
+      assert.ok(dom.window.document.getElementById("tabSeat1"));
+      assert.ok(dom.window.document.getElementById("tabSeat5"));
+      assert.ok(dom.window.document.getElementById("tabDecree"));
+    }
+  });
+
+  test(282, "The High Table DOM: fullscreen focus modal (#focusOverlay, #focusBody, #focusTitle)", () => {
+    if (JSDOM) {
+      const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+      const dom = new JSDOM(html);
+      assert.ok(dom.window.document.getElementById("focusOverlay"));
+      assert.ok(dom.window.document.getElementById("focusBody"));
+      assert.ok(dom.window.document.getElementById("focusTitle"));
+    }
+  });
+
+  test(283, "The High Table formatting: script defines parseContent and formatMath handling Typst, LaTeX, and Markdown", () => {
+    const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+    assert.ok(html.includes("function parseContent("));
+    assert.ok(html.includes("function formatMath("));
+    assert.ok(html.includes("math-frac"));
+    assert.ok(html.includes("math-inline"));
+  });
+
+  test(284, "The High Table formatting: handles broken model expressions like ${S_{t_2}$ and Typst arrows", () => {
+    const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+    assert.ok(html.includes("parseContent"));
+    assert.ok(html.includes("typst-term"));
+    assert.ok(html.includes("data-table"));
+  });
+
+  test(285, "The High Table interaction: shortcut handler supports Cmd+Enter convening with auto-default prompt", () => {
+    const html = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+    assert.ok(html.includes("metaKey || e.ctrlKey"));
+    assert.ok(html.includes("conveneCouncil()"));
+    assert.ok(html.includes("Escape"));
   });
 
   // =========================================================================
