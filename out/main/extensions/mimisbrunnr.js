@@ -65,7 +65,7 @@ function normalizeMimisbrunnrModel(raw) {
   if (s.includes("3.8") || s.includes("9b") || s.includes("4bit") || s.includes("mlx") || s.includes("pocketaihub")) {
     return MODEL_MLX_9B;
   }
-  if (s.includes("2.5") || s.includes("7b")) {
+  if (s.includes("2.5") || s.includes("7b") || s.includes("ollama") || s.includes("qwen")) {
     return MODEL_QWEN_7B;
   }
   return null;
