@@ -66,13 +66,15 @@ async function main() {
       "out/renderer/ratatoskr.html",
       "out/renderer/fafnir.html",
       "out/renderer/mimisbrunnr.html",
+      "out/renderer/heimdall.html",
       "out/main/extensions/aetherum-browser.js",
       "out/main/extensions/aetherum-pages.js",
       "out/main/extensions/sleipnir.js",
       "out/main/extensions/nibelungen.js",
       "out/main/extensions/fafnir.js",
       "out/main/extensions/mimisbrunnr.js",
-      "out/main/extensions/ratatoskr.js"
+      "out/main/extensions/ratatoskr.js",
+      "out/main/extensions/heimdall.js"
     ];
 
     for (const relPath of filesToCheck) {
@@ -844,12 +846,205 @@ async function main() {
       cmdInput.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "c", ctrlKey: true }));
       assert.ok(writtenData.includes("\x03"), "Ctrl+C must send SIGINT escape sequence");
     });
+
+    // 13b. DOM & Button Click Tests: Heimdall Audio Diarization & Summarizer (heimdall.html)
+    await runAsyncTest("DOM & Buttons: Heimdall Audio (Diarization, Summary, Token Usage & Remaining %)", async () => {
+      const heimHtml = fs.readFileSync(path.join(__dirname, "../out/renderer/heimdall.html"), "utf8");
+      let savedNotePayload = null;
+      let savedKeyPayload = null;
+
+      const mockHyperOffice = {
+        heimdall: {
+          status: async () => ({
+            ok: true,
+            hasApiKey: true,
+            isKeyFromEnv: true,
+            maskedKey: "AIzaSyBZ...DlR8",
+            quota: {
+              tokenBudget: 1000000,
+              tokensUsedToday: 25000,
+              sessionTokensUsed: 5000,
+              tokensRemaining: 975000,
+              usedPercentage: 2.5,
+              remainingPercentage: 97.5,
+              audioTokensToday: 15000,
+              textTokensToday: 6000,
+              candidatesTokensToday: 4000,
+              requestsToday: 4,
+              lastCall: null
+            }
+          }),
+          pickAudio: async () => ({
+            ok: true,
+            filePath: "/tmp/meeting_sample.wav",
+            fileName: "meeting_sample.wav",
+            sizeBytes: 128000
+          }),
+          transcribe: async () => ({
+            ok: true,
+            isNoiseOnly: false,
+            segments: [
+              { speakerId: 1, speakerName: "화자 1", detectedLanguage: "🇰🇷 한국어", speakerPitchHz: 124, text: "이번 분기 프로젝트 일정을 점검하겠습니다." },
+              { speakerId: 2, speakerName: "화자 2", detectedLanguage: "🇰🇷 한/영 혼용 (Bilingual)", speakerPitchHz: 214, text: "API 배포와 QA 테스트가 금요일까지 완료됩니다." }
+            ],
+            quota: {
+              tokenBudget: 1000000,
+              tokensUsedToday: 30000,
+              sessionTokensUsed: 10000,
+              tokensRemaining: 970000,
+              usedPercentage: 3.0,
+              remainingPercentage: 97.0,
+              audioTokensToday: 19000,
+              textTokensToday: 6500,
+              candidatesTokensToday: 4500,
+              requestsToday: 5,
+              lastCall: {
+                operation: "diarize",
+                model: "gemini-flash-lite-latest",
+                promptTokens: 4500,
+                audioTokens: 4000,
+                textTokens: 500,
+                candidatesTokens: 500,
+                totalTokens: 5000
+              }
+            }
+          }),
+          summarize: async () => ({
+            ok: true,
+            engine: "gemini-flash-lite-latest",
+            markdown: "### 📌 3줄 핵심 요약\n- 분기 일정 점검\n- 금요일 QA 완료\n\n### 👥 화자별 발언 및 의견 요약\n- **화자 1**: 일정 점검 제안\n- **화자 2**: API 및 QA 일정 공유",
+            quota: {
+              tokenBudget: 1000000,
+              tokensUsedToday: 32500,
+              sessionTokensUsed: 12500,
+              tokensRemaining: 967500,
+              usedPercentage: 3.25,
+              remainingPercentage: 96.75,
+              audioTokensToday: 19000,
+              textTokensToday: 8000,
+              candidatesTokensToday: 5500,
+              requestsToday: 6,
+              lastCall: {
+                operation: "summarize",
+                model: "gemini-flash-lite-latest",
+                promptTokens: 1500,
+                audioTokens: 0,
+                textTokens: 1500,
+                candidatesTokens: 1000,
+                totalTokens: 2500
+              }
+            }
+          }),
+          saveToNibelungen: async (payload) => {
+            savedNotePayload = payload;
+            return { ok: true };
+          },
+          setApiKey: async (payload) => {
+            savedKeyPayload = payload;
+            return { ok: true };
+          }
+        }
+      };
+
+      const dom = new JSDOM(heimHtml, { runScripts: "outside-only" });
+      dom.window.hyperOffice = mockHyperOffice;
+      dom.window.requestAnimationFrame = () => 0;
+      const visCanvas = dom.window.document.getElementById("visualizerCanvas");
+      visCanvas.getContext = () => null;
+
+      dom.window.eval(heimHtml.match(/<script>([\s\S]*?)<\/script>/)[1]);
+      await new Promise(r => setTimeout(r, 60));
+
+      // 1. Initial Token Usage & Remaining % Telemetry Check
+      assert.strictEqual(dom.window.document.getElementById("hdrTokensUsed").textContent, "25,000");
+      assert.strictEqual(dom.window.document.getElementById("hdrPercentLeft").textContent, "97.50%");
+      assert.strictEqual(dom.window.document.getElementById("cardRemainingPct").textContent, "97.50");
+      assert.strictEqual(dom.window.document.getElementById("cardTokensRemaining").textContent, "975,000");
+
+      // 2. Visualizer Style Switcher
+      const btnVisSiri = dom.window.document.getElementById("btnVisSiri");
+      btnVisSiri.click();
+      assert.ok(btnVisSiri.classList.contains("active"), "Siri Hologram button must become active");
+
+      // 3. Import & Diarize Audio -> Verify Speaker Cards + Updated Token Quota
+      const btnUploadAudio = dom.window.document.getElementById("btnUploadAudio");
+      btnUploadAudio.click();
+      await new Promise(r => setTimeout(r, 60));
+
+      const segCards = dom.window.document.querySelectorAll(".segment-card");
+      assert.strictEqual(segCards.length, 2, "Must render 2 speaker-diarized segment cards");
+      assert.ok(segCards[0].textContent.includes("화자 1"), "First segment must be Speaker 1");
+      assert.ok(segCards[1].textContent.includes("화자 2"), "Second segment must be Speaker 2");
+      assert.strictEqual(dom.window.document.getElementById("hdrTokensUsed").textContent, "30,000");
+      assert.strictEqual(dom.window.document.getElementById("cardRemainingPct").textContent, "97.00");
+
+      // 4. Summarize Diarized Transcript -> Verify Markdown Render & Token Deduction
+      const btnSummarize = dom.window.document.getElementById("btnSummarize");
+      btnSummarize.click();
+      await new Promise(r => setTimeout(r, 60));
+
+      const summaryContent = dom.window.document.getElementById("summaryMarkdownContent");
+      assert.ok(summaryContent.querySelector("h3"), "Summary must render formatted h3 headings");
+      assert.ok(summaryContent.textContent.includes("3줄 핵심 요약"));
+      assert.strictEqual(dom.window.document.getElementById("hdrTokensUsed").textContent, "32,500");
+      assert.strictEqual(dom.window.document.getElementById("hdrPercentLeft").textContent, "96.75%");
+
+      // 5. Save to Nibelungen Wiki
+      const btnSaveNib = dom.window.document.getElementById("btnSaveNibelungen");
+      btnSaveNib.click();
+      await new Promise(r => setTimeout(r, 40));
+      assert.ok(savedNotePayload && savedNotePayload.transcript.includes("화자 1"), "Must save diarized transcript to Nibelungen");
+
+      // 6. Settings Tab & API Key Unlock Flow
+      dom.window.document.getElementById("btnNavSettings").click();
+      await new Promise(r => setTimeout(r, 40));
+      assert.strictEqual(dom.window.document.getElementById("viewSettings").style.display, "flex");
+
+      dom.window.document.getElementById("btnToggleKeyLock").click();
+      assert.ok(dom.window.document.getElementById("unlockModal").classList.contains("open"));
+      dom.window.document.getElementById("btnConfirmUnlock").click();
+      const keyInput = dom.window.document.getElementById("apiKeyInput");
+      keyInput.value = "AIzaSyTestKey123456789";
+      dom.window.document.getElementById("btnSaveApiKey").click();
+      await new Promise(r => setTimeout(r, 40));
+      assert.strictEqual(savedKeyPayload.apiKey, "AIzaSyTestKey123456789");
+    });
   }
 
-  // 14. Internal Aetherum Pages Generator (All 10 pages)
-  runTest("Aetherum Pages: Full 10-Page Generation Suite", () => {
+  // 14a. Heimdall Backend Unit Tests (Quota Math, Language Classification, Local Summarizer)
+  await runAsyncTest("Heimdall: Token Quota Math, Language Detection & Smart Local Summary", async () => {
+    const {
+      calculateTokenQuota,
+      classifySegmentLanguage,
+      generateSmartLocalSummary,
+      summarizeTranscript
+    } = require("../out/main/extensions/heimdall");
+
+    const q = calculateTokenQuota({
+      tokensUsedToday: 104858,
+      tokenBudget: 1048576
+    });
+    assert.strictEqual(q.tokensUsedToday, 104858);
+    assert.strictEqual(q.tokensRemaining, 1048576 - 104858);
+    assert.ok(Math.abs(q.usedPercentage - 10.0) < 0.01, "Used % must be ~10%");
+    assert.ok(Math.abs(q.remainingPercentage - 90.0) < 0.01, "Remaining % must be ~90%");
+
+    assert.strictEqual(classifySegmentLanguage("안녕하세요 오늘 회의를 시작합니다").displayName, "🇰🇷 한국어");
+    assert.strictEqual(classifySegmentLanguage("이번 Sprint에서 API latency를 개선했습니다").displayName, "🇰🇷 한/영 혼용 (Bilingual)");
+    assert.strictEqual(classifySegmentLanguage("Good morning everyone let us begin").displayName, "🇺🇸 English");
+
+    const localSum = await summarizeTranscript({
+      transcript: "[화자 1 • 🇰🇷 한국어] 10:00:\n보안 아키텍처 점검이 필요합니다.\n\n[화자 2 • 🇰🇷 한국어] 10:01:\n금요일까지 패치를 배포하겠습니다.",
+      engine: "local-nl"
+    });
+    assert.ok(localSum.ok, "Local NL summary must succeed with 0 tokens");
+    assert.ok(localSum.markdown.includes("화자별 발언 분석"), "Local summary must include speaker diarization breakdown");
+  });
+
+  // 14. Internal Aetherum Pages Generator (All 11 pages)
+  runTest("Aetherum Pages: Full 11-Page Generation Suite", () => {
     const { getAetherumPage } = require("../out/main/extensions/aetherum-pages");
-    const pages = ["welcome", "about", "bookmarks", "history", "settings", "version", "nibelungen", "ratatoskr", "fafnir", "mimisbrunnr"];
+    const pages = ["welcome", "about", "bookmarks", "history", "settings", "version", "nibelungen", "ratatoskr", "fafnir", "mimisbrunnr", "heimdall"];
 
     for (const p of pages) {
       const html = getAetherumPage(p);
@@ -886,7 +1081,7 @@ async function main() {
   });
 
   // 17. Complete Nordic Suite Naming Audit
-  runTest("Nordic Suite Naming Integrity: App, Browser, Terminal, VPN, Wiki, Vault, AI, DB", () => {
+  runTest("Nordic Suite Naming Integrity: App, Browser, Terminal, VPN, Wiki, Vault, AI, DB, Audio", () => {
     const suites = {
       App: "Aether",
       Browser: "Aetherum",
@@ -895,7 +1090,8 @@ async function main() {
       Knowledge: "Nibelungen",
       Vault: "Fafnir",
       AI: "Mímisbrunnr",
-      DB_API: "Ratatoskr"
+      DB_API: "Ratatoskr",
+      Audio: "Heimdall"
     };
 
     assert.strictEqual(suites.App, "Aether");
@@ -906,6 +1102,7 @@ async function main() {
     assert.strictEqual(suites.Vault, "Fafnir");
     assert.strictEqual(suites.AI, "Mímisbrunnr");
     assert.strictEqual(suites.DB_API, "Ratatoskr");
+    assert.strictEqual(suites.Audio, "Heimdall");
   });
 
   // 18. Aether CLI Command and Usage Purity Check

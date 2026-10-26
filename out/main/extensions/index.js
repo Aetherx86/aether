@@ -18,6 +18,7 @@ const { registerNibelungenIpc } = require("./nibelungen");
 const { registerFafnirIpc } = require("./fafnir");
 const { registerMimisbrunnrIpc } = require("./mimisbrunnr");
 const { registerRatatoskrIpc } = require("./ratatoskr");
+const { registerHeimdallIpc } = require("./heimdall");
 
 let installed = false;
 
@@ -52,6 +53,21 @@ function installHyperOfficeExtensions(electronModule = null) {
   registerFafnirIpc(ipcMain);
   registerMimisbrunnrIpc(ipcMain);
   registerRatatoskrIpc(ipcMain);
+  registerHeimdallIpc(ipcMain, el.dialog);
+
+  ipcMain.handle("hyper:heimdall:request-mic", async () => {
+    try {
+      if (process.platform === "darwin" && el.systemPreferences?.askForMediaAccess) {
+        const status = el.systemPreferences.getMediaAccessStatus("microphone");
+        if (status === "granted") return { granted: true, status };
+        const granted = await el.systemPreferences.askForMediaAccess("microphone");
+        return { granted, status: granted ? "granted" : status };
+      }
+      return { granted: true, status: "granted" };
+    } catch (err) {
+      return { granted: true, status: "unknown", error: err.message };
+    }
+  });
 
   // 2. Gemini Quota & Token Tracking
   ipcMain.handle("hyper:gemini:quota", () => geminiTracker.getQuotaStats());

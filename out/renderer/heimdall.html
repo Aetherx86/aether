@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Heimdall — Acoustic Biometric Diarization & AI Audio Summarizer</title>
+  <style>
+    :root {
+      --bg-deep: #050811;
+      --bg-sidebar: #0b0f1c;
+      --surface: #0f1628;
+      --surface-2: #162038;
+      --surface-hover: #1e2b4a;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.25);
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.25);
+      --green: #10b981;
+      --orange: #f97316;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Telemetry Header */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #0b1020;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 14px;
+    }
+    .top-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .top-brand img {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      box-shadow: 0 0 12px var(--cyan-glow);
+    }
+    .top-brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e0f2fe;
+      letter-spacing: -0.01em;
+    }
+    .top-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(6, 182, 212, 0.14);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: #67e8f9;
+    }
+
+    .header-token-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 5px 14px;
+      background: rgba(16, 185, 129, 0.09);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .header-token-pill .used-tag {
+      color: #cbd5e1;
+    }
+    .header-token-pill .used-tag strong {
+      color: #38bdf8;
+    }
+    .header-token-pill .rem-tag {
+      color: #6ee7b7;
+      font-weight: 700;
+    }
+    .mini-gauge {
+      width: 72px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+    .mini-gauge-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+      transition: width 0.25s ease;
+    }
+
+    /* App Split Shell */
+    .app-shell {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 224px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+    .nav-btn.active {
+      background: rgba(6, 182, 212, 0.12);
+      border-color: rgba(6, 182, 212, 0.35);
+      color: #e0f2fe;
+      font-weight: 600;
+    }
+    .rec-dot {
+      margin-left: auto;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+      display: none;
+    }
+    .rec-dot.live { display: inline-block; }
+
+    .sidebar-spacer { flex: 1; }
+
+    .sidebar-status-box {
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+    .status-dot.active {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    .mono-stat {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+    }
+
+    /* Main Scroll Detail */
+    .detail-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 22px 32px 22px;
+    }
+    .view-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* Visualizer Hero Card */
+    .visualizer-card {
+      position: relative;
+      height: 215px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #090e1d 0%, #040711 100%);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      box-shadow: 0 10px 28px rgba(6, 182, 212, 0.09);
+      overflow: hidden;
+    }
+    #visualizerCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .vis-hud-top {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .vis-status-pill {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-strong);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .vis-status-pill.listening {
+      color: #4ade80;
+      border-color: rgba(74, 222, 128, 0.45);
+    }
+    .vis-mode-group {
+      pointer-events: auto;
+      display: inline-flex;
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .vis-mode-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .vis-mode-btn.active {
+      background: rgba(6, 182, 212, 0.22);
+      color: #67e8f9;
+    }
+    .vis-hud-bottom {
+      position: absolute;
+      bottom: 12px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      pointer-events: none;
+    }
+    .rms-bar-bg {
+      flex: 1;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .rms-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #06b6d4, #3b82f6, #a855f7);
+      transition: width 0.08s ease-out;
+    }
+
+    /* Noise Suppression Banner */
+    .noise-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 10px;
+      background: rgba(249, 115, 22, 0.14);
+      border: 1px solid rgba(249, 115, 22, 0.45);
+      font-size: 12px;
+    }
+    .noise-banner.visible { display: flex; }
+
+    /* Controls Action Bar */
+    .controls-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 9px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--surface-hover);
+    }
+    .btn:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+    .btn-cyan {
+      background: linear-gradient(135deg, #0891b2, #0284c7);
+      border-color: #38bdf8;
+      color: #fff;
+    }
+    .btn-cyan:hover:not(:disabled) {
+      background: linear-gradient(135deg, #06b6d4, #0369a1);
+    }
+    .btn-red {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      border-color: #f87171;
+      color: #fff;
+    }
+    .btn-purple {
+      background: linear-gradient(135deg, #9333ea, #7e22ce);
+      border-color: #c084fc;
+      color: #fff;
+    }
+    .btn-purple:hover:not(:disabled) {
+      background: linear-gradient(135deg, #a855f7, #6b21a8);
+    }
+
+    .select-input, .text-input {
+      background: #090e1a;
+      border: 1px solid var(--border-strong);
+      color: var(--text);
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      outline: none;
+    }
+    .select-input:focus, .text-input:focus {
+      border-color: var(--cyan);
+    }
+
+    .lang-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Speaker Biometric Diarization Bar */
+    .biometric-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .bio-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #67e8f9;
+      margin-right: 4px;
+    }
+    .spk-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 11px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .spk-btn.active {
+      background: rgba(255, 255, 255, 0.13);
+    }
+    .spk-btn[data-spk="1"].active { border-color: #06b6d4; box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+    .spk-btn[data-spk="2"].active { border-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.2); }
+    .spk-btn[data-spk="3"].active { border-color: #f97316; box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); }
+    .spk-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+    .spk-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .spk-name { font-size: 11.5px; font-weight: 700; }
+    .spk-pitch { font-size: 9.5px; color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, monospace; }
+
+    .pitch-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .alert-box {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 9px;
+      background: rgba(234, 179, 8, 0.13);
+      border: 1px solid rgba(234, 179, 8, 0.45);
+      color: #fef08a;
+      font-size: 12px;
+    }
+    .alert-box.visible { display: flex; }
+
+    /* Workspace 2-Column Grid */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 980px) {
+      .workspace-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 430px;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .panel-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* Transcript Cards & Editor */
+    .transcript-box {
+      flex: 1;
+      min-height: 320px;
+      max-height: 520px;
+      overflow-y: auto;
+      background: #080c17;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .empty-hint {
+      margin: auto;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 12.5px;
+      line-height: 1.6;
+      padding: 36px 20px;
+    }
+    .segment-card {
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .segment-card[data-spk="1"] { border-left: 3px solid #06b6d4; }
+    .segment-card[data-spk="2"] { border-left: 3px solid #a855f7; }
+    .segment-card[data-spk="3"] { border-left: 3px solid #f97316; }
+    .segment-top {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+    }
+    .segment-spk { font-weight: 700; font-size: 12px; }
+    .segment-tag {
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #cbd5e1;
+      font-size: 10px;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+    .segment-time {
+      margin-left: auto;
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 10.5px;
+    }
+    .segment-text {
+      font-size: 13px;
+      line-height: 1.55;
+      color: #f1f5f9;
+      white-space: pre-wrap;
+      user-select: text;
+    }
+
+    .live-preview-card {
+      display: none;
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: rgba(6, 182, 212, 0.09);
+      border: 1px dashed rgba(6, 182, 212, 0.5);
+      color: #67e8f9;
+      font-size: 12.5px;
+    }
+    .live-preview-card.visible { display: block; }
+
+    .raw-editor {
+      display: none;
+      width: 100%;
+      min-height: 320px;
+      flex: 1;
+      resize: vertical;
+      background: #080c17;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 12px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.6;
+      font-family: inherit;
+      outline: none;
+    }
+    .raw-editor:focus { border-color: var(--cyan); }
+
+    /* Token Usage & Remaining Percentage Card */
+    .token-card {
+      padding: 12px 14px;
+      border-radius: 11px;
+      background: rgba(16, 185, 129, 0.06);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .token-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .token-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+    .token-pct-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .token-bar-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .token-bar-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #10b981, #34d399, #06b6d4);
+      transition: width 0.3s ease;
+    }
+    .token-metrics-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .token-last-call {
+      font-size: 10.5px;
+      color: #94a3b8;
+      padding-top: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    /* Summary Markdown Box */
+    .summary-box {
+      flex: 1;
+      min-height: 230px;
+      max-height: 420px;
+      overflow-y: auto;
+      background: #080b16;
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      border-radius: 11px;
+      padding: 15px 16px;
+      font-size: 13px;
+      line-height: 1.65;
+      user-select: text;
+    }
+    .summary-box h3 {
+      font-size: 14px;
+      color: #e9d5ff;
+      margin: 12px 0 6px 0;
+    }
+    .summary-box h3:first-child { margin-top: 0; }
+    .summary-box ul { padding-left: 18px; margin: 4px 0 10px 0; }
+    .summary-box li { margin-bottom: 4px; color: #e2e8f0; }
+    .summary-box code {
+      background: rgba(168, 85, 247, 0.18);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #d8b4fe;
+      padding: 1px 6px;
+      border-radius: 5px;
+      font-size: 11.5px;
+    }
+    .summary-box blockquote {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-left: 3px solid var(--purple);
+      background: rgba(168, 85, 247, 0.08);
+      color: #cbd5e1;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+
+    /* Settings Cards */
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .settings-card h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .env-loaded-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      font-size: 12px;
+      color: #6ee7b7;
+    }
+    .locked-key-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 9px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      user-select: none;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 10px;
+    }
+    .stat-tile {
+      padding: 11px 13px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+    }
+    .stat-tile-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .stat-tile-val { font-size: 15px; font-weight: 700; font-family: ui-monospace, SFMono-Regular, monospace; color: #f8fafc; }
+
+    /* Toast & Modal */
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 9px 18px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      color: #6ee7b7;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: none;
+      z-index: 99;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+    .toast.show { display: block; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      width: 400px;
+      background: #111827;
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar with Live Gemini Token Usage & Remaining % -->
+  <div class="top-bar">
+    <div class="top-brand">
+      <img src="./assets/heimdall-logo.png" alt="Heimdall">
+      <span class="top-brand-title">Heimdall</span>
+      <span class="top-badge">Acoustic Biometric Diarization & AI Summary</span>
+    </div>
+
+    <div class="header-token-pill" id="headerTokenBar" title="Gemini Token Usage & Remaining Quota">
+      <span class="used-tag">소모 토큰: <strong id="hdrTokensUsed">0</strong></span>
+      <span>|</span>
+      <span class="rem-tag">잔여: <span id="hdrPercentLeft">100.00%</span> (<span id="hdrTokensLeft">1,048,576</span>)</span>
+      <div class="mini-gauge">
+        <div class="mini-gauge-fill" id="hdrGaugeFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <button class="nav-btn active" id="btnNavStudio">
+        <span>🎙️</span>
+        <span>Sound Studio</span>
+        <span class="rec-dot" id="sidebarRecDot"></span>
+      </button>
+      <button class="nav-btn" id="btnNavSettings">
+        <span>⚙️</span>
+        <span>Settings & API Key</span>
+      </button>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="sidebar-status-box">
+        <div class="status-row">
+          <span class="status-dot" id="sideStatusDot"></span>
+          <span id="sideStatusText">준비됨 (대기 중)</span>
+        </div>
+        <div class="mono-stat" id="sidePitchText" style="color:#67e8f9;">🎙️ 피치: 대기 중</div>
+        <div class="mono-stat" id="sideLangText" style="color:#4ade80;">🌐 다국어 스마트 자동 감지</div>
+        <div class="mono-stat" id="sideNoiseText" style="color:#fb923c;display:none;">🔇 소음 차단 활성</div>
+        <div class="mono-stat" style="color:#cbd5e1;padding-top:4px;border-top:1px solid rgba(255,255,255,0.07);">
+          사용: <strong id="sideUsedTokens">0</strong> tok
+        </div>
+        <div class="mono-stat" style="color:#34d399;font-weight:700;">
+          잔여 토큰: <span id="sideRemPct">100.00%</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Detail -->
+    <main class="detail-pane">
+      <!-- STUDIO VIEW -->
+      <section class="view-panel" id="viewStudio">
+        <!-- 1. Hero Visualizer -->
+        <div class="visualizer-card">
+          <canvas id="visualizerCanvas"></canvas>
+          <div class="vis-hud-top">
+            <div class="vis-status-pill" id="hudStatusPill">
+              <span class="status-dot" id="hudDot"></span>
+              <span id="hudStatusLabel">STANDBY</span>
+            </div>
+            <div class="vis-mode-group">
+              <button class="vis-mode-btn active" data-style="jarvisWave" id="btnVisJarvis">Jarvis Wave</button>
+              <button class="vis-mode-btn" data-style="siriOrb" id="btnVisSiri">Siri Hologram</button>
+              <button class="vis-mode-btn" data-style="cyberSpectrum" id="btnVisSpectrum">Cyber Spectrum</button>
+            </div>
+          </div>
+          <div class="vis-hud-bottom">
+            <span style="color:#67e8f9;" id="hudRmsText">RMS: 0.00</span>
+            <div class="rms-bar-bg">
+              <div class="rms-bar-fill" id="hudRmsFill"></div>
+            </div>
+            <span id="hudTimerText">00:00.0</span>
+          </div>
+        </div>
+
+        <!-- 2. Real-time Cough & Noise Suppression Banner -->
+        <div class="noise-banner" id="noiseBanner">
+          <span>🔇</span>
+          <strong style="color:#fb923c;">소음/기침 차단 필터 활성:</strong>
+          <span id="noiseBannerLabel">기침/타이핑 충격음 감지 (차단됨)</span>
+          <span style="margin-left:auto;color:var(--text-muted);font-family:monospace;font-size:11px;">전사 왜곡 방지됨</span>
+        </div>
+
+        <!-- 3. Recording, File Import & Language Bar -->
+        <div class="controls-bar">
+          <button class="btn btn-cyan" id="btnRecord">
+            <span id="btnRecordIcon">🎙️</span>
+            <span id="btnRecordLabel">마이크 녹음 및 화자 분리 시작</span>
+          </button>
+
+          <button class="btn" id="btnUploadAudio" title="오디오 파일(.wav, .mp3, .m4a, .ogg, .flac, .webm) 화자 분리 및 전사">
+            📂 오디오 파일 불러오기
+          </button>
+          <input type="file" id="audioFileInput" accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.webm" style="display:none;">
+
+          <div class="lang-pill" id="langBadge">
+            <span>🌐</span>
+            <span id="langBadgeText">다국어 스마트 감지</span>
+          </div>
+
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+            <select class="select-input" id="localeSelect" aria-label="Recognition Language">
+              <option value="auto" selected>🌐 다국어 스마트 자동 감지</option>
+              <option value="ko-KR">🇰🇷 한국어 (Korean)</option>
+              <option value="en-US">🇺🇸 English (US)</option>
+              <option value="ja-JP">🇯🇵 日本語 (Japanese)</option>
+              <option value="zh-CN">🇨🇳 中文 (Chinese)</option>
+              <option value="es-ES">🇪🇸 Español (Spanish)</option>
+              <option value="fr-FR">🇫🇷 Français (French)</option>
+              <option value="de-DE">🇩🇪 Deutsch (German)</option>
+            </select>
+
+            <button class="btn" id="btnClear">🗑️ 지우기</button>
+          </div>
+        </div>
+
+        <!-- 4. Biometric Speaker Diarization Bar -->
+        <div class="biometric-bar">
+          <span class="bio-title">👥 스마트 화자 분리 (Biometrics):</span>
+
+          <button class="spk-btn active" data-spk="1" id="spkBtn1" title="클릭하여 화자 전환 / 더블클릭하여 이름 변경">
+            <span class="spk-dot" style="background:#06b6d4;"></span>
+            <div class="spk-meta">
+              <span class="spk-name" id="spkName1">화자 1</span>
+              <span class="spk-pitch" id="spkPitch1">125 Hz • 굵은 저음</span>
+            </div>
+          </button>
+
+          <button class="spk-btn" data-spk="2" id="spkBtn2" title="클릭하여 화자 전환 / 더블클릭하여 이름 변경">
+            <span class="spk-dot" style="background:#a855f7;"></span>
+            <div class="spk-meta">
+              <span class="spk-name" id="spkName2">화자 2</span>
+              <span class="spk-pitch" id="spkPitch2">215 Hz • 밝은 고음</span>
+            </div>
+          </button>
+
+          <button class="spk-btn" data-spk="3" id="spkBtn3" title="클릭하여 화자 전환 / 더블클릭하여 이름 변경">
+            <span class="spk-dot" style="background:#f97316;"></span>
+            <div class="spk-meta">
+              <span class="spk-name" id="spkName3">화자 3</span>
+              <span class="spk-pitch" id="spkPitch3">170 Hz • 표준 중음</span>
+            </div>
+          </button>
+
+          <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+            <span class="pitch-pill" id="livePitchBadge">피치: 대기 중</span>
+            <label class="toggle-label">
+              <input type="checkbox" id="chkSmartDiarization" checked>
+              <span>음향 피치 자동 분리</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Error / Warning Banner -->
+        <div class="alert-box" id="errorBanner">
+          <span id="errorBannerText"></span>
+          <button class="btn" style="padding:3px 8px;font-size:11px;" id="btnDismissError">닫기</button>
+        </div>
+
+        <!-- 5. Main Workspace: Transcript (Left) + AI Summary & Token Gauge (Right) -->
+        <div class="workspace-grid">
+          <!-- Left: Diarized Transcript -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title" style="color:#67e8f9;">
+                <span>💬</span>
+                <span>화자별 실시간 전사 (Speaker Diarization)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="vis-mode-group">
+                  <button class="vis-mode-btn active" id="btnModeCards" title="화자별 카드 보기">💬 카드</button>
+                  <button class="vis-mode-btn" id="btnModeRaw" title="원문 텍스트 편집">✏️ 편집</button>
+                </div>
+                <span id="wordCharCount" style="font-size:11px;color:var(--text-muted);font-family:monospace;">0단어 / 0자</span>
+                <button class="btn" style="padding:5px 9px;font-size:11px;" id="btnCopyTranscript" title="전사 내용 복사">📋 복사</button>
+              </div>
+            </div>
+
+            <div class="transcript-box" id="transcriptCardsContainer">
+              <div class="empty-hint" id="transcriptEmptyState">
+                🎙️ <strong>마이크 녹음 시작</strong> 또는 <strong>오디오 파일 불러오기</strong>를 누르면<br>
+                화자(Biometrics)와 언어가 자동 분리되어 실시간 기록됩니다.<br>
+                <span style="font-size:11px;opacity:0.75;">(✏️ 편집 모드로 전환하여 직접 회의록 텍스트를 붙여넣고 요약할 수도 있습니다)</span>
+              </div>
+              <div id="segmentsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+              <div class="live-preview-card" id="liveSegmentPreview"></div>
+            </div>
+
+            <textarea class="raw-editor" id="rawTranscriptEditor" placeholder="[화자 1]: 회의 내용을 직접 입력하거나 붙여넣어 AI 요약을 실행할 수도 있습니다..."></textarea>
+          </div>
+
+          <!-- Right: AI Summarizer & Token Usage Telemetry -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title" style="color:#d8b4fe;">
+                <span>✨</span>
+                <span>AI 핵심 요약 & 토큰 사용량</span>
+              </div>
+              <select class="select-input" id="engineSelect" aria-label="Summarizer Engine">
+                <option value="gemini-flash-lite-latest" selected>Gemini Flash-Lite (Cheapest ⚡)</option>
+                <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (Balanced)</option>
+                <option value="local-nl">On-Device Local NL (0 Tokens)</option>
+              </select>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-purple" id="btnSummarize">
+                <span>🪄</span>
+                <span id="btnSummarizeLabel">요약하기 (Summarize)</span>
+              </button>
+              <button class="btn" id="btnCopySummary" style="display:none;font-size:11.5px;">📋 마크다운 복사</button>
+              <button class="btn" id="btnSaveNibelungen" style="display:none;font-size:11.5px;">🗝️ Nibelungen 저장</button>
+            </div>
+
+            <!-- Always-Visible Token Usage & Remaining Percentage Telemetry Card -->
+            <div class="token-card" id="tokenTelemetryCard">
+              <div class="token-card-top">
+                <span class="token-card-title">📊 Gemini 토큰 사용 현황 (Token Telemetry)</span>
+                <span class="token-pct-badge">잔여 <span id="cardRemainingPct">100.00</span>% 남음</span>
+              </div>
+              <div class="token-bar-track">
+                <div class="token-bar-fill" id="cardQuotaBarFill"></div>
+              </div>
+              <div class="token-metrics-row">
+                <span>사용 토큰: <strong style="color:#38bdf8;" id="cardTokensUsedToday">0</strong> (사용률 <span id="cardUsedPct">0.00</span>% • 세션 <span id="cardSessionTokens">0</span>)</span>
+                <span>잔여: <strong style="color:#6ee7b7;" id="cardTokensRemaining">1,048,576</strong> / <span id="cardTokenBudget">1,048,576</span></span>
+              </div>
+              <div class="token-last-call" id="cardLastCallDetail">
+                최근 요청: 대기 중 — 음성 화자 분리 또는 요약 시 입력/오디오/출력 토큰이 즉시 집계됩니다.
+              </div>
+            </div>
+
+            <!-- Summary Output Area -->
+            <div class="summary-box" id="summaryOutputBox">
+              <div class="empty-hint" id="summaryEmptyState">
+                🧠 음성 녹음/파일 분석 또는 텍스트 입력 후 <strong>요약하기</strong>를 누르면<br>
+                3줄 핵심 요약, 화자별 발언 분석, 액션 아이템 및 토큰 잔여율이 표시됩니다.
+              </div>
+              <div id="summaryMarkdownContent" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS VIEW -->
+      <section class="view-panel" id="viewSettings" style="display:none;">
+        <div class="settings-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h3>🔑 Google Gemini API 키 설정 (.env 연동)</h3>
+            <span class="top-badge" style="color:#4ade80;border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.12);">최저가 Flash-Lite 최적화 ⚡</span>
+          </div>
+
+          <div class="env-loaded-banner" id="envKeyBanner">
+            <span>🛡️ <strong id="envKeySourceLabel">.env 파일에서 보안 로드됨:</strong> <code id="maskedKeyText">확인 중...</code></span>
+            <span style="color:#94a3b8;font-family:monospace;">.gitignore 보호됨 🔒</span>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:9px;">
+            <span id="keyLockStatusLabel" style="font-size:12px;font-weight:700;color:#4ade80;">🔒 보안 잠금 활성화됨 (복사 및 변조 차단)</span>
+            <button class="btn" id="btnToggleKeyLock" style="font-size:11.5px;padding:6px 12px;">🔓 잠금 해제 (Unlock)</button>
+          </div>
+
+          <div class="locked-key-box" id="lockedKeyContainer">
+            <span>••••••••••••••••••••••••••••••••••••••••</span>
+            <span>🔒 복사/붙여넣기 불가</span>
+          </div>
+
+          <div id="unlockedKeyContainer" style="display:none;gap:8px;align-items:center;">
+            <input type="password" class="text-input" id="apiKeyInput" style="flex:1;" placeholder="새 Gemini API Key 입력 (AIzaSy...)">
+            <button class="btn btn-cyan" id="btnSaveApiKey">API 키 저장</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <h3>📊 토큰 한도(Quota) 및 세부 소모량 모니터링</h3>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label style="font-size:12px;color:var(--text-muted);">일일 토큰 한도:</label>
+              <input type="number" class="text-input" id="budgetInput" value="1048576" min="10000" step="10000" style="width:130px;">
+              <button class="btn" id="btnSaveBudget" style="font-size:11.5px;padding:6px 11px;">한도 적용</button>
+              <button class="btn" id="btnResetSession" style="font-size:11.5px;padding:6px 11px;">세션 누적 초기화</button>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-tile">
+              <div class="stat-tile-label">오늘 총 사용 토큰</div>
+              <div class="stat-tile-val" id="statUsedToday" style="color:#38bdf8;">0</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile-label">잔여 토큰 비율</div>
+              <div class="stat-tile-val" id="statRemainingPct" style="color:#34d399;">100.00%</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile-label">잔여 토큰 수</div>
+              <div class="stat-tile-val" id="statRemainingCount">1,048,576</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile-label">오디오 입력 토큰 (오늘)</div>
+              <div class="stat-tile-val" id="statAudioTokens">0</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile-label">프롬프트/출력 토큰 (오늘)</div>
+              <div class="stat-tile-val" id="statTextOutTokens">0 / 0</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile-label">오늘 API 호출 횟수</div>
+              <div class="stat-tile-val" id="statRequestsToday">0회</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h3>🎛️ 음향 바이오메트릭스 & 기침/소음 자동 배제 설정</h3>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.55;">
+            실시간 자기상관(Autocorrelation) 알고리즘으로 발화자의 기본 주파수(F0 피치, 75~350Hz)를 추적해 화자 성문 프로필을 학습하며,
+            비조화 충격음(기침, 목 가다듬기, 키보드 타이핑, 마우스 클릭)을 감지하여 오인식을 차단합니다.
+          </p>
+
+          <label class="toggle-label" style="color:var(--text);">
+            <input type="checkbox" id="chkSettingsDiarization" checked>
+            <span>스마트 음향 피치 화자 자동 분리 활성화</span>
+          </label>
+
+          <label class="toggle-label" style="color:var(--text);">
+            <input type="checkbox" id="chkNoiseSuppression" checked>
+            <span>기침 및 배경 충격 소음 자동 배제 필터 활성화</span>
+          </label>
+
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:12px;color:var(--text-muted);">소음 차단 민감도:</span>
+            <input type="range" id="noiseSensitivitySlider" min="0.20" max="0.85" step="0.05" value="0.50" style="width:200px;">
+            <span id="noiseSensitivityVal" style="font-family:monospace;font-size:12px;color:#67e8f9;">0.50</span>
+          </div>
+
+          <div id="filteredEventsList" style="font-size:11.5px;color:var(--text-muted);font-family:monospace;">
+            최근 차단된 소음 이벤트 없음
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Unlock API Key Confirmation Modal -->
+  <div class="modal-backdrop" id="unlockModal">
+    <div class="modal-card">
+      <h3 style="font-size:15px;">🔓 API 키 잠금 해제 확인</h3>
+      <p style="font-size:12.5px;color:var(--text-muted);line-height:1.55;">
+        Gemini API 키를 수정하려면 잠금을 해제해야 합니다. 수정 완료 후 보안을 위해 다시 잠금 상태로 전환해주세요.
+      </p>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+        <button class="btn" id="btnCancelUnlock">취소</button>
+        <button class="btn btn-red" id="btnConfirmUnlock">잠금 해제</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastEl">클립보드에 복사되었습니다!</div>
+
+  <script>
+    (function() {
+      function getHeimdallApi() {
+        return window.hyperOffice && window.hyperOffice.heimdall ? window.hyperOffice.heimdall : null;
+      }
+
+      // --- State ---
+      let activeNav = "studio"; // "studio" | "settings"
+      let visualizerStyle = "jarvisWave";
+      let transcriptViewMode = 0; // 0: cards, 1: raw editor
+      let isRecording = false;
+      let isSummarizing = false;
+      let pendingTranscriptions = 0;
+      let isApiKeyLocked = true;
+
+      let audioLevel = 0.0;
+      let rawLevel = 0.0;
+      let currentPitchHz = 0.0;
+      let isVoiceActive = false;
+      let frequencyBands = new Array(16).fill(0.05);
+      let recordingStartMs = 0;
+      let recordingDurationSec = 0;
+
+      let enableNoiseSuppression = true;
+      let suppressionSensitivity = 0.50;
+      let isNoiseDetected = false;
+      let noiseTimeoutId = null;
+      let filteredEvents = [];
+
+      let currentSpeakerId = 1;
+      let speakerProfiles = {
+        1: { id: 1, name: "화자 1", averagePitchHz: 125, sampleCount: 0 },
+        2: { id: 2, name: "화자 2", averagePitchHz: 215, sampleCount: 0 },
+        3: { id: 3, name: "화자 3", averagePitchHz: 170, sampleCount: 0 }
+      };
+
+      let segments = [];
+      let manualRawTranscript = "";
+      let lastSummaryMarkdown = "";
+
+      // Web Audio Capture State
+      let mediaStream = null;
+      let audioCtx = null;
+      let sourceNode = null;
+      let processorNode = null;
+      let speechChunks16k = [];
+      let speechFrameSamples = 0;
+      let lastVoiceTimestamp = 0;
+      let utterancePitchSum = 0;
+      let utterancePitchCount = 0;
+      let timerInterval = null;
+
+      // --- DOM Elements ---
+      const btnNavStudio = document.getElementById("btnNavStudio");
+      const btnNavSettings = document.getElementById("btnNavSettings");
+      const viewStudio = document.getElementById("viewStudio");
+      const viewSettings = document.getElementById("viewSettings");
+
+      const canvas = document.getElementById("visualizerCanvas");
+      const hudStatusPill = document.getElementById("hudStatusPill");
+      const hudDot = document.getElementById("hudDot");
+      const hudStatusLabel = document.getElementById("hudStatusLabel");
+      const hudRmsText = document.getElementById("hudRmsText");
+      const hudRmsFill = document.getElementById("hudRmsFill");
+      const hudTimerText = document.getElementById("hudTimerText");
+
+      const btnRecord = document.getElementById("btnRecord");
+      const btnRecordIcon = document.getElementById("btnRecordIcon");
+      const btnRecordLabel = document.getElementById("btnRecordLabel");
+      const btnUploadAudio = document.getElementById("btnUploadAudio");
+      const audioFileInput = document.getElementById("audioFileInput");
+      const localeSelect = document.getElementById("localeSelect");
+      const langBadgeText = document.getElementById("langBadgeText");
+      const btnClear = document.getElementById("btnClear");
+
+      const chkSmartDiarization = document.getElementById("chkSmartDiarization");
+      const chkSettingsDiarization = document.getElementById("chkSettingsDiarization");
+      const chkNoiseSuppression = document.getElementById("chkNoiseSuppression");
+      const noiseSensitivitySlider = document.getElementById("noiseSensitivitySlider");
+      const noiseSensitivityVal = document.getElementById("noiseSensitivityVal");
+
+      const segmentsList = document.getElementById("segmentsList");
+      const transcriptEmptyState = document.getElementById("transcriptEmptyState");
+      const transcriptCardsContainer = document.getElementById("transcriptCardsContainer");
+      const rawTranscriptEditor = document.getElementById("rawTranscriptEditor");
+      const liveSegmentPreview = document.getElementById("liveSegmentPreview");
+      const wordCharCount = document.getElementById("wordCharCount");
+
+      const engineSelect = document.getElementById("engineSelect");
+      const btnSummarize = document.getElementById("btnSummarize");
+      const btnSummarizeLabel = document.getElementById("btnSummarizeLabel");
+      const btnCopySummary = document.getElementById("btnCopySummary");
+      const btnSaveNibelungen = document.getElementById("btnSaveNibelungen");
+      const summaryEmptyState = document.getElementById("summaryEmptyState");
+      const summaryMarkdownContent = document.getElementById("summaryMarkdownContent");
+
+      // --- Helpers ---
+      function showToast(msg) {
+        const el = document.getElementById("toastEl");
+        el.textContent = msg;
+        el.classList.add("show");
+        setTimeout(() => el.classList.remove("show"), 2200);
+      }
+
+      function showError(msg) {
+        const banner = document.getElementById("errorBanner");
+        const txt = document.getElementById("errorBannerText");
+        if (!msg) {
+          banner.classList.remove("visible");
+          return;
+        }
+        txt.textContent = "⚠️ " + msg;
+        banner.classList.add("visible");
+      }
+
+      function formatPercent(val) {
+        const n = Number(val);
+        if (!Number.isFinite(n)) return "100.00";
+        if (n > 0 && n < 100 && (n < 0.01 || (100 - n) < 0.01)) {
+          return n.toFixed(3);
+        }
+        return n.toFixed(2);
+      }
+
+      function formatNumber(n) {
+        return Number(n || 0).toLocaleString("en-US");
+      }
+
+      function pitchDescription(hz) {
+        if (!hz || hz <= 0) return "음성 프로필 대기 중";
+        const r = Math.round(hz);
+        if (hz < 145) return r + " Hz • 굵은 저음";
+        if (hz < 195) return r + " Hz • 표준 중음";
+        return r + " Hz • 밝은 고음";
+      }
+
+      function speakerColorHex(id) {
+        if (id === 1) return "#06b6d4";
+        if (id === 2) return "#a855f7";
+        if (id === 3) return "#f97316";
+        return "#10b981";
+      }
+
+      function formatClock(dateObj) {
+        const d = dateObj instanceof Date ? dateObj : new Date(dateObj);
+        const mm = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return mm + ":" + ss;
+      }
+
+      function formatTimer(sec) {
+        const mins = Math.floor(sec / 60);
+        const secs = Math.floor(sec % 60);
+        const tenths = Math.floor((sec % 1) * 10);
+        return String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0") + "." + tenths;
+      }
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderMarkdownHtml(md) {
+        const lines = String(md || "").split(/\r?\n/);
+        let html = "";
+        let inList = false;
+
+        function formatInline(s) {
+          return escapeHtml(s)
+            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+            .replace(/`([^`]+)`/g, "<code>$1</code>");
+        }
+
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (!line) {
+            if (inList) { html += "</ul>"; inList = false; }
+            continue;
+          }
+          if (line.startsWith("### ") || line.startsWith("## ") || line.startsWith("# ")) {
+            if (inList) { html += "</ul>"; inList = false; }
+            const heading = line.replace(/^#{1,3}\s+/, "");
+            html += "<h3>" + formatInline(heading) + "</h3>";
+          } else if (line.startsWith("> ")) {
+            if (inList) { html += "</ul>"; inList = false; }
+            html += "<blockquote>" + formatInline(line.slice(2)) + "</blockquote>";
+          } else if (/^[-*]\s+\[[ xX]\]\s+/.test(line)) {
+            if (!inList) { html += "<ul>"; inList = true; }
+            const checked = /^[-*]\s+\[[xX]\]/.test(line);
+            const body = line.replace(/^[-*]\s+\[[ xX]\]\s+/, "");
+            html += "<li>" + (checked ? "☑️ " : "⬜ ") + formatInline(body) + "</li>";
+          } else if (line.startsWith("- ") || line.startsWith("* ")) {
+            if (!inList) { html += "<ul>"; inList = true; }
+            html += "<li>" + formatInline(line.slice(2)) + "</li>";
+          } else {
+            if (inList) { html += "</ul>"; inList = false; }
+            html += "<p style='margin-bottom:6px;'>" + formatInline(line) + "</p>";
+          }
+        }
+        if (inList) html += "</ul>";
+        return html;
+      }
+
+      // --- Quota & Token UI Update ---
+      function updateQuotaUI(quota) {
+        if (!quota) return;
+        const usedToday = Number(quota.tokensUsedToday || 0);
+        const sessionUsed = Number(quota.sessionTokensUsed || 0);
+        const remaining = Number(quota.tokensRemaining ?? 1048576);
+        const budget = Number(quota.tokenBudget || 1048576);
+        const remPctStr = formatPercent(quota.remainingPercentage ?? 100);
+        const usedPctStr = formatPercent(quota.usedPercentage ?? 0);
+        const remRatio = Math.max(0, Math.min(100, Number(quota.remainingPercentage ?? 100)));
+
+        // Header bar
+        document.getElementById("hdrTokensUsed").textContent = formatNumber(usedToday);
+        document.getElementById("hdrPercentLeft").textContent = remPctStr + "%";
+        document.getElementById("hdrTokensLeft").textContent = formatNumber(remaining);
+        document.getElementById("hdrGaugeFill").style.width = Math.max(3, remRatio) + "%";
+
+        // Sidebar
+        document.getElementById("sideUsedTokens").textContent = formatNumber(usedToday);
+        document.getElementById("sideRemPct").textContent = remPctStr + "%";
+
+        // Studio Token Telemetry Card
+        document.getElementById("cardRemainingPct").textContent = remPctStr;
+        document.getElementById("cardUsedPct").textContent = usedPctStr;
+        document.getElementById("cardTokensUsedToday").textContent = formatNumber(usedToday);
+        document.getElementById("cardSessionTokens").textContent = formatNumber(sessionUsed);
+        document.getElementById("cardTokensRemaining").textContent = formatNumber(remaining);
+        document.getElementById("cardTokenBudget").textContent = formatNumber(budget);
+
+        const barFill = document.getElementById("cardQuotaBarFill");
+        barFill.style.width = Math.max(2, remRatio) + "%";
+        if (remRatio < 15) {
+          barFill.style.background = "linear-gradient(90deg, #ef4444, #f97316)";
+        } else if (remRatio < 40) {
+          barFill.style.background = "linear-gradient(90deg, #eab308, #10b981)";
+        } else {
+          barFill.style.background = "linear-gradient(90deg, #10b981, #34d399, #06b6d4)";
+        }
+
+        if (quota.lastCall) {
+          const lc = quota.lastCall;
+          const opName = lc.operation === "diarize" ? "음성 화자 분리" : "AI 핵심 요약";
+          const audioPart = lc.audioTokens > 0 ? " [오디오: " + formatNumber(lc.audioTokens) + ", 텍스트: " + formatNumber(lc.textTokens) + "]" : "";
+          document.getElementById("cardLastCallDetail").textContent =
+            "최근 요청 (" + opName + " • " + lc.model + "): 총 " + formatNumber(lc.totalTokens) +
+            " 토큰 소모 (입력: " + formatNumber(lc.promptTokens) + audioPart +
+            " / 생성: " + formatNumber(lc.candidatesTokens) + ")";
+        }
+
+        // Settings tiles
+        document.getElementById("statUsedToday").textContent = formatNumber(usedToday);
+        document.getElementById("statRemainingPct").textContent = remPctStr + "%";
+        document.getElementById("statRemainingCount").textContent = formatNumber(remaining);
+        document.getElementById("statAudioTokens").textContent = formatNumber(quota.audioTokensToday || 0);
+        document.getElementById("statTextOutTokens").textContent =
+          formatNumber(quota.textTokensToday || 0) + " / " + formatNumber(quota.candidatesTokensToday || 0);
+        document.getElementById("statRequestsToday").textContent = formatNumber(quota.requestsToday || 0) + "회";
+        document.getElementById("budgetInput").value = String(budget);
+      }
+
+      async function refreshStatus() {
+        const api = getHeimdallApi();
+        if (!api || !api.status) return;
+        const st = await api.status();
+        if (st && st.ok) {
+          const maskedEl = document.getElementById("maskedKeyText");
+          const srcLabel = document.getElementById("envKeySourceLabel");
+          if (st.hasApiKey) {
+            maskedEl.textContent = st.maskedKey;
+            srcLabel.textContent = st.isKeyFromEnv ? ".env 파일에서 보안 로드됨:" : "사용자 지정 API 키 활성:";
+          } else {
+            maskedEl.textContent = "미설정 (.env에 GEMINI_API_KEY 필요)";
+            srcLabel.textContent = "API 키 상태:";
+          }
+          if (st.quota) updateQuotaUI(st.quota);
+        }
+      }
+
+      // --- Combined Transcript Formatting ---
+      function buildCombinedTranscript() {
+        if (transcriptViewMode === 1 && manualRawTranscript.trim().length > 0) {
+          return manualRawTranscript;
+        }
+        if (segments.length === 0) {
+          return manualRawTranscript;
+        }
+        return segments.map((seg) => {
+          const pitchTag = seg.speakerPitchHz ? " [" + Math.round(seg.speakerPitchHz) + "Hz]" : "";
+          return "[" + seg.speakerName + pitchTag + " • " + seg.detectedLanguage + "] " + seg.timeStr + ":\n" + seg.text;
+        }).join("\n\n");
+      }
+
+      function renderSegments() {
+        segmentsList.innerHTML = "";
+        if (segments.length === 0 && pendingTranscriptions === 0) {
+          transcriptEmptyState.style.display = "block";
+        } else {
+          transcriptEmptyState.style.display = "none";
+        }
+
+        for (const seg of segments) {
+          const card = document.createElement("div");
+          card.className = "segment-card";
+          card.dataset.spk = String(seg.speakerId);
+
+          const color = speakerColorHex(seg.speakerId);
+          const pitchHtml = seg.speakerPitchHz
+            ? `<span class="segment-tag">${Math.round(seg.speakerPitchHz)} Hz</span>`
+            : "";
+
+          card.innerHTML = `
+            <div class="segment-top">
+              <span class="spk-dot" style="background:${color};"></span>
+              <span class="segment-spk" style="color:${color};">${escapeHtml(seg.speakerName)}</span>
+              ${pitchHtml}
+              <span class="segment-tag">${escapeHtml(seg.detectedLanguage)}</span>
+              <span class="segment-time">${escapeHtml(seg.timeStr)}</span>
+            </div>
+            <div class="segment-text">${escapeHtml(seg.text)}</div>
+          `;
+          segmentsList.appendChild(card);
+        }
+
+        const combined = buildCombinedTranscript();
+        if (transcriptViewMode === 0) {
+          rawTranscriptEditor.value = combined;
+        }
+        const words = combined.trim() ? combined.trim().split(/\s+/).length : 0;
+        wordCharCount.textContent = `${words}단어 / ${combined.length}자`;
+      }
+
+      function updateSpeakerButtonsUI() {
+        for (const id of [1, 2, 3]) {
+          const btn = document.getElementById("spkBtn" + id);
+          const nameEl = document.getElementById("spkName" + id);
+          const pitchEl = document.getElementById("spkPitch" + id);
+          const prof = speakerProfiles[id];
+          if (btn) btn.classList.toggle("active", currentSpeakerId === id);
+          if (nameEl && prof) nameEl.textContent = prof.name;
+          if (pitchEl && prof) pitchEl.textContent = pitchDescription(prof.averagePitchHz);
+        }
+      }
+
+      // --- Acoustic DSP: RMS, 16 Bands, Autocorrelation Pitch F0, Cough/Noise Gate ---
+      function estimateFundamentalPitch(samples, sampleRate) {
+        const n = samples.length;
+        if (n < 512 || sampleRate <= 0) return 0;
+        const minFreq = 75.0;
+        const maxFreq = 350.0;
+        const minLag = Math.max(1, Math.floor(sampleRate / maxFreq));
+        const maxLag = Math.min(Math.floor(n / 2), Math.floor(sampleRate / minFreq));
+        if (minLag >= maxLag) return 0;
+
+        let energy0 = 0;
+        for (let i = 0; i < maxLag; i++) {
+          energy0 += samples[i] * samples[i];
+        }
+        if (energy0 <= 0.0005) return 0;
+
+        let maxCorr = 0;
+        let bestLag = 0;
+        for (let lag = minLag; lag <= maxLag; lag += 2) {
+          let corr = 0;
+          for (let i = 0; i < maxLag; i++) {
+            corr += samples[i] * samples[i + lag];
+          }
+          if (corr > maxCorr) {
+            maxCorr = corr;
+            bestLag = lag;
+          }
+        }
+        const normCorr = maxCorr / energy0;
+        if (normCorr > 0.28 && bestLag > 0) {
+          return sampleRate / bestLag;
+        }
+        return 0;
+      }
+
+      function analyzeAudioFrame(samples, sampleRate) {
+        const len = samples.length;
+        if (!len) return null;
+
+        let sumSq = 0;
+        let peak = 0;
+        let zeroCrossings = 0;
+        for (let i = 0; i < len; i++) {
+          const s = samples[i];
+          sumSq += s * s;
+          const a = Math.abs(s);
+          if (a > peak) peak = a;
+          if (i > 0 && ((samples[i - 1] >= 0 && s < 0) || (samples[i - 1] < 0 && s >= 0))) {
+            zeroCrossings++;
+          }
+        }
+        const rms = Math.sqrt(sumSq / len);
+        const db = 20 * Math.log10(Math.max(rms, 0.00001));
+        const normLevel = Math.max(0, Math.min(1, (db + 60) / 60));
+        const zcr = zeroCrossings / len;
+        const crest = rms > 0.0001 ? peak / rms : 0;
+
+        const bands = new Array(16).fill(0.02);
+        const chunk = Math.max(1, Math.floor(len / 16));
+        for (let b = 0; b < 16; b++) {
+          const st = b * chunk;
+          const en = Math.min(len, st + chunk);
+          let bSq = 0;
+          for (let i = st; i < en; i++) bSq += samples[i] * samples[i];
+          const bRms = Math.sqrt(bSq / Math.max(1, en - st));
+          const bDb = 20 * Math.log10(Math.max(bRms, 0.0001));
+          bands[b] = Math.max(0.02, Math.min(1, (bDb + 55) / 55));
+        }
+
+        const pitch = estimateFundamentalPitch(samples, sampleRate);
+        const voiceActive = normLevel > 0.08 && (pitch > 65 || (normLevel > 0.22 && zcr < 0.24));
+
+        // Impulsive noise / cough / click check (high transient crest or unvoiced high-ZCR burst)
+        const threshold = 1.05 - suppressionSensitivity * 0.55;
+        const isTransientNoise = enableNoiseSuppression && normLevel > threshold && pitch === 0 && (zcr > 0.28 || crest > 6.2);
+
+        return { normLevel, bands, pitch, voiceActive, isTransientNoise, zcr };
+      }
+
+      function triggerNoiseSuppressionBanner(label) {
+        isNoiseDetected = true;
+        document.getElementById("noiseBannerLabel").textContent = label + " (차단됨 🔇)";
+        document.getElementById("noiseBanner").classList.add("visible");
+        document.getElementById("sideNoiseText").style.display = "block";
+
+        filteredEvents.unshift({ time: formatClock(new Date()), label });
+        if (filteredEvents.length > 8) filteredEvents.pop();
+        document.getElementById("filteredEventsList").textContent =
+          "최근 차단됨: " + filteredEvents.map((e) => `[${e.time}] ${e.label}`).join(" • ");
+
+        if (noiseTimeoutId) clearTimeout(noiseTimeoutId);
+        noiseTimeoutId = setTimeout(() => {
+          isNoiseDetected = false;
+          document.getElementById("noiseBanner").classList.remove("visible");
+          document.getElementById("sideNoiseText").style.display = "none";
+        }, 1300);
+      }
+
+      // Downsample Float32 PCM to 16kHz Int16 & encode WAV base64
+      function encodeWavBase64(chunksFloat32, inputSampleRate) {
+        let totalLen = 0;
+        for (const c of chunksFloat32) totalLen += c.length;
+        if (totalLen === 0) return null;
+
+        const merged = new Float32Array(totalLen);
+        let offset = 0;
+        for (const c of chunksFloat32) {
+          merged.set(c, offset);
+          offset += c.length;
+        }
+
+        const targetRate = 16000;
+        const ratio = inputSampleRate / targetRate;
+        const outLen = Math.max(1, Math.floor(merged.length / ratio));
+        const wavBuffer = new ArrayBuffer(44 + outLen * 2);
+        const view = new DataView(wavBuffer);
+
+        function writeStr(pos, str) {
+          for (let i = 0; i < str.length; i++) view.setUint8(pos + i, str.charCodeAt(i));
+        }
+
+        writeStr(0, "RIFF");
+        view.setUint32(4, 36 + outLen * 2, true);
+        writeStr(8, "WAVE");
+        writeStr(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, targetRate, true);
+        view.setUint32(28, targetRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeStr(36, "data");
+        view.setUint32(40, outLen * 2, true);
+
+        for (let i = 0; i < outLen; i++) {
+          const srcIdx = Math.min(merged.length - 1, Math.floor(i * ratio));
+          const s = Math.max(-1, Math.min(1, merged[srcIdx]));
+          view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+        }
+
+        const bytes = new Uint8Array(wavBuffer);
+        let binary = "";
+        const step = 0x8000;
+        for (let i = 0; i < bytes.length; i += step) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
+        }
+        return btoa(binary);
+      }
+
+      async function flushSpeechChunkForDiarization(sampleRate) {
+        if (speechChunks16k.length === 0 || speechFrameSamples < sampleRate * 0.45) {
+          speechChunks16k = [];
+          speechFrameSamples = 0;
+          utterancePitchSum = 0;
+          utterancePitchCount = 0;
+          return;
+        }
+
+        const chunksCopy = speechChunks16k;
+        const avgPitch = utterancePitchCount > 0 ? utterancePitchSum / utterancePitchCount : 0;
+        speechChunks16k = [];
+        speechFrameSamples = 0;
+        utterancePitchSum = 0;
+        utterancePitchCount = 0;
+
+        // Smart Acoustic Biometric Speaker Switch check
+        if (chkSmartDiarization.checked && avgPitch > 65) {
+          let bestId = currentSpeakerId;
+          let minDist = Infinity;
+          for (const id of [1, 2, 3]) {
+            const d = Math.abs(speakerProfiles[id].averagePitchHz - avgPitch);
+            if (d < minDist) {
+              minDist = d;
+              bestId = id;
+            }
+          }
+          const curDist = Math.abs(speakerProfiles[currentSpeakerId].averagePitchHz - avgPitch);
+          if (bestId !== currentSpeakerId && curDist > 26 && minDist < 24) {
+            currentSpeakerId = bestId;
+          }
+          const prof = speakerProfiles[currentSpeakerId];
+          prof.averagePitchHz = prof.averagePitchHz * 0.88 + avgPitch * 0.12;
+          prof.sampleCount += 1;
+          updateSpeakerButtonsUI();
+        }
+
+        const wavB64 = encodeWavBase64(chunksCopy, sampleRate);
+        if (!wavB64) return;
+
+        await sendAudioToHeimdall({
+          audioBase64: wavB64,
+          mimeType: "audio/wav",
+          detectedPitchHz: avgPitch
+        });
+      }
+
+      async function sendAudioToHeimdall({ audioBase64, filePath, mimeType, detectedPitchHz = 0 }) {
+        const api = getHeimdallApi();
+        if (!api || !api.transcribe) {
+          showError("Heimdall 백엔드 브리지를 찾을 수 없습니다.");
+          return;
+        }
+
+        pendingTranscriptions++;
+        liveSegmentPreview.textContent = "⚡ Heimdall 음향 화자 분리 및 다국어 전사 분석 중...";
+        liveSegmentPreview.classList.add("visible");
+        transcriptEmptyState.style.display = "none";
+
+        try {
+          const res = await api.transcribe({
+            audioBase64,
+            filePath,
+            mimeType,
+            locale: localeSelect.value,
+            speakerProfiles: Object.values(speakerProfiles),
+            activeSpeakerId: currentSpeakerId,
+            detectedPitchHz,
+            smartDiarization: chkSmartDiarization.checked,
+            model: engineSelect.value === "local-nl" ? "gemini-flash-lite-latest" : engineSelect.value
+          });
+
+          if (res && res.quota) updateQuotaUI(res.quota);
+
+          if (!res || !res.ok) {
+            showError((res && res.error) || "오디오 화자 분리 요청 실패");
+          } else if (!res.isNoiseOnly && Array.isArray(res.segments) && res.segments.length > 0) {
+            const nowStr = formatClock(new Date());
+            for (const s of res.segments) {
+              segments.push({
+                speakerId: s.speakerId || currentSpeakerId,
+                speakerName: s.speakerName || speakerProfiles[s.speakerId]?.name || `화자 ${s.speakerId || 1}`,
+                detectedLanguage: s.detectedLanguage || "🇰🇷 한국어",
+                speakerPitchHz: s.speakerPitchHz || (detectedPitchHz > 60 ? Math.round(detectedPitchHz) : null),
+                timeStr: nowStr,
+                text: s.text
+              });
+              if (s.detectedLanguage) {
+                langBadgeText.textContent = s.detectedLanguage;
+                document.getElementById("sideLangText").textContent = s.detectedLanguage;
+              }
+            }
+            renderSegments();
+          } else if (res.noiseLabel) {
+            triggerNoiseSuppressionBanner(res.noiseLabel);
+          }
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          pendingTranscriptions = Math.max(0, pendingTranscriptions - 1);
+          if (pendingTranscriptions === 0) {
+            liveSegmentPreview.classList.remove("visible");
+            renderSegments();
+          }
+        }
+      }
+
+      // --- Start / Stop Live Microphone ---
+      async function startRecording() {
+        if (isRecording) return;
+        showError("");
+
+        try {
+          const api = getHeimdallApi();
+          if (api && api.requestMic) {
+            const perm = await api.requestMic();
+            if (perm && perm.granted === false) {
+              showError("마이크 접근 권한이 거부되었습니다. macOS 시스템 설정 > 개인정보 보호 및 보안 > 마이크에서 Aether를 허용해주세요.");
+              return;
+            }
+          }
+
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showError("현재 환경에서 마이크 입력을 사용할 수 없습니다.");
+            return;
+          }
+
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+
+          const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContextCtor();
+          sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+          processorNode = audioCtx.createScriptProcessor(2048, 1, 1);
+
+          speechChunks16k = [];
+          speechFrameSamples = 0;
+          lastVoiceTimestamp = 0;
+          utterancePitchSum = 0;
+          utterancePitchCount = 0;
+
+          processorNode.onaudioprocess = (ev) => {
+            if (!isRecording) return;
+            const input = ev.inputBuffer.getChannelData(0);
+            const feats = analyzeAudioFrame(input, audioCtx.sampleRate);
+            if (!feats) return;
+
+            rawLevel = feats.normLevel;
+            audioLevel = audioLevel * 0.65 + feats.normLevel * 0.35;
+            for (let i = 0; i < 16; i++) {
+              frequencyBands[i] = frequencyBands[i] * 0.4 + feats.bands[i] * 0.6;
+            }
+
+            if (feats.isTransientNoise) {
+              triggerNoiseSuppressionBanner(feats.zcr > 0.32 ? "키보드/클릭 소음" : "기침/충격 소음");
+              return;
+            }
+
+            if (feats.pitch > 65) {
+              currentPitchHz = currentPitchHz === 0 ? feats.pitch : currentPitchHz * 0.7 + feats.pitch * 0.3;
+              document.getElementById("livePitchBadge").textContent = `피치: ${Math.round(currentPitchHz)} Hz`;
+              document.getElementById("sidePitchText").textContent = `🎙️ 피치: ${Math.round(currentPitchHz)} Hz`;
+            } else if (!feats.voiceActive) {
+              currentPitchHz = 0;
+              document.getElementById("livePitchBadge").textContent = "피치: 음성 대기";
+            }
+
+            isVoiceActive = feats.voiceActive;
+            hudRmsText.textContent = "RMS: " + audioLevel.toFixed(2);
+            hudRmsFill.style.width = Math.round(audioLevel * 100) + "%";
+
+            const now = Date.now();
+            if (feats.voiceActive) {
+              lastVoiceTimestamp = now;
+              speechChunks16k.push(new Float32Array(input));
+              speechFrameSamples += input.length;
+              if (feats.pitch > 65) {
+                utterancePitchSum += feats.pitch;
+                utterancePitchCount += 1;
+              }
+              if (pendingTranscriptions === 0) {
+                const spkName = speakerProfiles[currentSpeakerId]?.name || `화자 ${currentSpeakerId}`;
+                liveSegmentPreview.textContent = `🎙️ [${spkName}] 음성 감지 중... (${ (speechFrameSamples / audioCtx.sampleRate).toFixed(1) }초)`;
+                liveSegmentPreview.classList.add("visible");
+                transcriptEmptyState.style.display = "none";
+              }
+              // Max 11s continuous monologue slice for low-latency live diarization
+              if (speechFrameSamples >= audioCtx.sampleRate * 11) {
+                void flushSpeechChunkForDiarization(audioCtx.sampleRate);
+              }
+            } else if (speechFrameSamples > 0) {
+              const silenceMs = now - lastVoiceTimestamp;
+              if (silenceMs < 650) {
+                // Keep trailing tail of words
+                speechChunks16k.push(new Float32Array(input));
+              } else if (silenceMs >= 1150) {
+                void flushSpeechChunkForDiarization(audioCtx.sampleRate);
+              }
+            }
+          };
+
+          sourceNode.connect(processorNode);
+          processorNode.connect(audioCtx.destination);
+
+          isRecording = true;
+          recordingStartMs = Date.now();
+          recordingDurationSec = 0;
+          timerInterval = setInterval(() => {
+            recordingDurationSec = (Date.now() - recordingStartMs) / 1000;
+            hudTimerText.textContent = formatTimer(recordingDurationSec);
+          }, 100);
+
+          btnRecord.classList.remove("btn-cyan");
+          btnRecord.classList.add("btn-red");
+          btnRecordIcon.textContent = "⏹️";
+          btnRecordLabel.textContent = "음성 인식 중지";
+          hudStatusPill.classList.add("listening");
+          hudDot.classList.add("active");
+          hudStatusLabel.textContent = "LISTENING (MIC ACTIVE)";
+          document.getElementById("sidebarRecDot").classList.add("live");
+          document.getElementById("sideStatusDot").classList.add("active");
+          document.getElementById("sideStatusText").textContent = "음성 인식 중";
+        } catch (err) {
+          showError("마이크 시작 실패: " + err.message);
+        }
+      }
+
+      async function stopRecording() {
+        if (!isRecording) return;
+        isRecording = false;
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+
+        const sr = audioCtx ? audioCtx.sampleRate : 16000;
+        if (processorNode) {
+          try { processorNode.disconnect(); } catch {}
+          processorNode = null;
+        }
+        if (sourceNode) {
+          try { sourceNode.disconnect(); } catch {}
+          sourceNode = null;
+        }
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((t) => t.stop());
+          mediaStream = null;
+        }
+        if (audioCtx) {
+          try { await audioCtx.close(); } catch {}
+          audioCtx = null;
+        }
+
+        audioLevel = 0;
+        rawLevel = 0;
+        currentPitchHz = 0;
+        frequencyBands.fill(0.05);
+        hudRmsText.textContent = "RMS: 0.00";
+        hudRmsFill.style.width = "0%";
+        btnRecord.classList.remove("btn-red");
+        btnRecord.classList.add("btn-cyan");
+        btnRecordIcon.textContent = "🎙️";
+        btnRecordLabel.textContent = "마이크 녹음 및 화자 분리 시작";
+        hudStatusPill.classList.remove("listening");
+        hudDot.classList.remove("active");
+        hudStatusLabel.textContent = "STANDBY";
+        document.getElementById("sidebarRecDot").classList.remove("live");
+        document.getElementById("sideStatusDot").classList.remove("active");
+        document.getElementById("sideStatusText").textContent = "준비됨 (대기 중)";
+        document.getElementById("livePitchBadge").textContent = "피치: 대기 중";
+
+        await flushSpeechChunkForDiarization(sr);
+      }
+
+      // --- 60fps Canvas Visualizer Loop (Jarvis Wave, Siri Hologram, Cyber Spectrum) ---
+      const ctx2d = canvas && typeof canvas.getContext === "function" ? canvas.getContext("2d") : null;
+      function drawVisualizerFrame(ts) {
+        if (ctx2d) {
+          const rect = canvas.getBoundingClientRect ? canvas.getBoundingClientRect() : { width: 800, height: 215 };
+          const w = Math.max(300, Math.floor(rect.width || 800));
+          const h = Math.max(160, Math.floor(rect.height || 215));
+          if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+          }
+
+          ctx2d.clearRect(0, 0, w, h);
+          const t = (ts || 0) / 1000;
+
+          if (visualizerStyle === "jarvisWave") {
+            // HUD Grid
+            ctx2d.strokeStyle = "rgba(6, 182, 212, 0.05)";
+            ctx2d.lineWidth = 0.6;
+            for (let gx = 0; gx < w; gx += 40) {
+              ctx2d.beginPath(); ctx2d.moveTo(gx, 0); ctx2d.lineTo(gx, h); ctx2d.stroke();
+            }
+            for (let gy = 0; gy < h; gy += 30) {
+              ctx2d.beginPath(); ctx2d.moveTo(0, gy); ctx2d.lineTo(w, gy); ctx2d.stroke();
+            }
+
+            const midY = h / 2;
+            const activeAmp = Math.max(0.04, audioLevel) * (isRecording ? 62 : 8);
+            const baseAmp = isRecording ? 6 : 3;
+            const waves = [
+              { freq: 0.016, speed: 2.2, phase: 0.0, color: "rgba(6, 182, 212, 0.9)", width: 2.5 },
+              { freq: 0.024, speed: 1.6, phase: 1.8, color: "rgba(168, 85, 247, 0.8)", width: 2.1 },
+              { freq: 0.032, speed: 2.8, phase: 3.4, color: "rgba(59, 130, 246, 0.85)", width: 1.9 },
+              { freq: 0.012, speed: 1.2, phase: 4.8, color: "rgba(52, 211, 153, 0.6)", width: 1.5 }
+            ];
+
+            for (const cfg of waves) {
+              ctx2d.beginPath();
+              for (let x = 0; x <= w; x += 3) {
+                const env = Math.sin((x / w) * Math.PI);
+                const ph = t * cfg.speed + cfg.phase;
+                const y = midY + Math.sin(x * cfg.freq + ph) * Math.cos(x * 0.008 + ph * 0.5) * (baseAmp + activeAmp) * env;
+                if (x === 0) ctx2d.moveTo(x, y);
+                else ctx2d.lineTo(x, y);
+              }
+              ctx2d.strokeStyle = cfg.color;
+              ctx2d.lineWidth = cfg.width;
+              ctx2d.stroke();
+            }
+          } else if (visualizerStyle === "siriOrb") {
+            const cx = w / 2;
+            const cy = h / 2;
+            const scale = 1 + audioLevel * (isRecording ? 0.65 : 0.08);
+
+            const blobs = [
+              { r: 42 * scale, ox: Math.cos(t * 2.0) * 14 * scale, oy: Math.sin(t * 1.8) * 12 * scale, c: "rgba(6, 182, 212, 0.45)" },
+              { r: 40 * scale, ox: -Math.sin(t * 1.5) * 15 * scale, oy: Math.cos(t * 2.2) * 11 * scale, c: "rgba(168, 85, 247, 0.45)" },
+              { r: 32 * scale, ox: Math.sin(t * 2.7) * 9 * scale, oy: -Math.cos(t * 1.9) * 9 * scale, c: "rgba(52, 211, 153, 0.40)" }
+            ];
+            for (const b of blobs) {
+              const g = ctx2d.createRadialGradient(cx + b.ox, cy + b.oy, 2, cx + b.ox, cy + b.oy, b.r * 1.5);
+              g.addColorStop(0, b.c);
+              g.addColorStop(1, "rgba(0,0,0,0)");
+              ctx2d.fillStyle = g;
+              ctx2d.beginPath();
+              ctx2d.arc(cx + b.ox, cy + b.oy, b.r * 1.5, 0, Math.PI * 2);
+              ctx2d.fill();
+            }
+
+            ctx2d.strokeStyle = "rgba(103, 232, 249, 0.55)";
+            ctx2d.lineWidth = 2;
+            ctx2d.beginPath();
+            ctx2d.arc(cx, cy, 62 * scale, t, t + Math.PI * 1.65);
+            ctx2d.stroke();
+
+            ctx2d.strokeStyle = "rgba(192, 132, 252, 0.45)";
+            ctx2d.lineWidth = 1.5;
+            ctx2d.beginPath();
+            ctx2d.arc(cx, cy, 74 * scale, -t * 0.8, -t * 0.8 + Math.PI * 1.4);
+            ctx2d.stroke();
+          } else {
+            // Cyber Spectrum 16-band equalizer
+            const count = frequencyBands.length;
+            const barW = 14;
+            const gap = 8;
+            const totalW = count * barW + (count - 1) * gap;
+            const startX = (w - totalW) / 2;
+            const baseY = h - 38;
+
+            for (let i = 0; i < count; i++) {
+              const val = frequencyBands[i];
+              const bh = Math.max(8, val * (isRecording ? 130 : 20));
+              const x = startX + i * (barW + gap);
+              const y = baseY - bh;
+
+              const grad = ctx2d.createLinearGradient(x, y, x, baseY);
+              grad.addColorStop(0, "#06b6d4");
+              grad.addColorStop(0.55, "#3b82f6");
+              grad.addColorStop(1, "rgba(168, 85, 247, 0.8)");
+              ctx2d.fillStyle = grad;
+              ctx2d.fillRect(x, y, barW, bh);
+
+              ctx2d.fillStyle = "#67e8f9";
+              ctx2d.fillRect(x, y - 5, barW, 2);
+            }
+          }
+        }
+        if (typeof window.requestAnimationFrame === "function") {
+          window.requestAnimationFrame(drawVisualizerFrame);
+        }
+      }
+      if (ctx2d && typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(drawVisualizerFrame);
+      }
+
+      // --- Event Listeners ---
+      btnNavStudio.addEventListener("click", () => {
+        activeNav = "studio";
+        btnNavStudio.classList.add("active");
+        btnNavSettings.classList.remove("active");
+        viewStudio.style.display = "flex";
+        viewSettings.style.display = "none";
+      });
+
+      btnNavSettings.addEventListener("click", () => {
+        activeNav = "settings";
+        btnNavSettings.classList.add("active");
+        btnNavStudio.classList.remove("active");
+        viewSettings.style.display = "flex";
+        viewStudio.style.display = "none";
+        void refreshStatus();
+      });
+
+      for (const id of ["btnVisJarvis", "btnVisSiri", "btnVisSpectrum"]) {
+        const el = document.getElementById(id);
+        el.addEventListener("click", () => {
+          visualizerStyle = el.dataset.style;
+          document.querySelectorAll(".vis-hud-top .vis-mode-btn").forEach((b) => b.classList.remove("active"));
+          el.classList.add("active");
+        });
+      }
+
+      btnRecord.addEventListener("click", () => {
+        if (isRecording) void stopRecording();
+        else void startRecording();
+      });
+
+      btnUploadAudio.addEventListener("click", async () => {
+        showError("");
+        const api = getHeimdallApi();
+        if (api && api.pickAudio) {
+          const picked = await api.pickAudio();
+          if (picked && picked.ok && picked.filePath) {
+            await sendAudioToHeimdall({ filePath: picked.filePath });
+            return;
+          }
+          if (picked && picked.canceled) return;
+        }
+        audioFileInput.click();
+      });
+
+      audioFileInput.addEventListener("change", (ev) => {
+        const file = ev.target.files && ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const resultStr = String(reader.result || "");
+          const base64 = resultStr.includes(",") ? resultStr.split(",")[1] : resultStr;
+          await sendAudioToHeimdall({
+            audioBase64: base64,
+            mimeType: file.type || "audio/wav"
+          });
+          audioFileInput.value = "";
+        };
+        reader.readAsDataURL(file);
+      });
+
+      localeSelect.addEventListener("change", () => {
+        const selText = localeSelect.options[localeSelect.selectedIndex].text;
+        langBadgeText.textContent = selText;
+        document.getElementById("sideLangText").textContent = selText;
+      });
+
+      btnClear.addEventListener("click", () => {
+        segments = [];
+        manualRawTranscript = "";
+        rawTranscriptEditor.value = "";
+        hudTimerText.textContent = "00:00.0";
+        renderSegments();
+      });
+
+      for (const id of [1, 2, 3]) {
+        const btn = document.getElementById("spkBtn" + id);
+        btn.addEventListener("click", () => {
+          currentSpeakerId = id;
+          updateSpeakerButtonsUI();
+        });
+        btn.addEventListener("dblclick", () => {
+          const next = window.prompt ? window.prompt(`화자 ${id} 이름 변경:`, speakerProfiles[id].name) : null;
+          if (next && next.trim()) {
+            speakerProfiles[id].name = next.trim();
+            updateSpeakerButtonsUI();
+            renderSegments();
+          }
+        });
+      }
+
+      document.getElementById("btnModeCards").addEventListener("click", () => {
+        transcriptViewMode = 0;
+        document.getElementById("btnModeCards").classList.add("active");
+        document.getElementById("btnModeRaw").classList.remove("active");
+        transcriptCardsContainer.style.display = "flex";
+        rawTranscriptEditor.style.display = "none";
+      });
+
+      document.getElementById("btnModeRaw").addEventListener("click", () => {
+        rawTranscriptEditor.value = buildCombinedTranscript();
+        manualRawTranscript = rawTranscriptEditor.value;
+        transcriptViewMode = 1;
+        document.getElementById("btnModeRaw").classList.add("active");
+        document.getElementById("btnModeCards").classList.remove("active");
+        transcriptCardsContainer.style.display = "none";
+        rawTranscriptEditor.style.display = "block";
+      });
+
+      rawTranscriptEditor.addEventListener("input", () => {
+        manualRawTranscript = rawTranscriptEditor.value;
+        const words = manualRawTranscript.trim() ? manualRawTranscript.trim().split(/\s+/).length : 0;
+        wordCharCount.textContent = `${words}단어 / ${manualRawTranscript.length}자`;
+      });
+
+      document.getElementById("btnCopyTranscript").addEventListener("click", () => {
+        const text = buildCombinedTranscript();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          void navigator.clipboard.writeText(text);
+        }
+        showToast("전사 내용이 클립보드에 복사되었습니다!");
+      });
+
+      btnSummarize.addEventListener("click", async () => {
+        if (isSummarizing) return;
+        const text = buildCombinedTranscript().trim();
+        if (!text) {
+          showError("요약할 전사 내용이 없습니다. 먼저 마이크 녹음, 오디오 파일 불러오기, 또는 편집 탭에 텍스트를 입력해주세요.");
+          return;
+        }
+        showError("");
+        const api = getHeimdallApi();
+        if (!api || !api.summarize) {
+          showError("Heimdall 요약 API를 사용할 수 없습니다.");
+          return;
+        }
+
+        isSummarizing = true;
+        btnSummarize.disabled = true;
+        btnSummarizeLabel.textContent = "요약 분석 중...";
+
+        try {
+          const res = await api.summarize({
+            transcript: text,
+            languageHint: langBadgeText.textContent,
+            engine: engineSelect.value
+          });
+          if (res && res.quota) updateQuotaUI(res.quota);
+
+          if (!res || !res.ok) {
+            showError((res && res.error) || "요약 생성에 실패했습니다.");
+          } else {
+            lastSummaryMarkdown = res.markdown;
+            summaryEmptyState.style.display = "none";
+            summaryMarkdownContent.style.display = "block";
+            summaryMarkdownContent.innerHTML = renderMarkdownHtml(res.markdown);
+            btnCopySummary.style.display = "inline-flex";
+            btnSaveNibelungen.style.display = "inline-flex";
+          }
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          isSummarizing = false;
+          btnSummarize.disabled = false;
+          btnSummarizeLabel.textContent = "요약하기 (Summarize)";
+        }
+      });
+
+      btnCopySummary.addEventListener("click", () => {
+        if (!lastSummaryMarkdown) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          void navigator.clipboard.writeText(lastSummaryMarkdown);
+        }
+        showToast("요약 마크다운이 클립보드에 복사되었습니다!");
+      });
+
+      btnSaveNibelungen.addEventListener("click", async () => {
+        const api = getHeimdallApi();
+        if (!api || !api.saveToNibelungen) return;
+        const res = await api.saveToNibelungen({
+          transcript: buildCombinedTranscript(),
+          summary: lastSummaryMarkdown
+        });
+        if (res && res.ok) {
+          showToast("🗝️ Nibelungen 지식 그래프 노트로 저장되었습니다!");
+        } else {
+          showError((res && res.error) || "Nibelungen 저장 실패");
+        }
+      });
+
+      document.getElementById("btnDismissError").addEventListener("click", () => showError(""));
+
+      // Settings Synchronization
+      chkSmartDiarization.addEventListener("change", () => {
+        chkSettingsDiarization.checked = chkSmartDiarization.checked;
+      });
+      chkSettingsDiarization.addEventListener("change", () => {
+        chkSmartDiarization.checked = chkSettingsDiarization.checked;
+      });
+      chkNoiseSuppression.addEventListener("change", () => {
+        enableNoiseSuppression = chkNoiseSuppression.checked;
+      });
+      noiseSensitivitySlider.addEventListener("input", () => {
+        suppressionSensitivity = Number(noiseSensitivitySlider.value);
+        noiseSensitivityVal.textContent = suppressionSensitivity.toFixed(2);
+      });
+
+      // API Key Lock / Unlock Modal
+      const unlockModal = document.getElementById("unlockModal");
+      const btnToggleKeyLock = document.getElementById("btnToggleKeyLock");
+      function syncLockUI() {
+        const lbl = document.getElementById("keyLockStatusLabel");
+        const lockedBox = document.getElementById("lockedKeyContainer");
+        const unlockedBox = document.getElementById("unlockedKeyContainer");
+        if (isApiKeyLocked) {
+          lbl.textContent = "🔒 보안 잠금 활성화됨 (복사 및 변조 차단)";
+          lbl.style.color = "#4ade80";
+          btnToggleKeyLock.textContent = "🔓 잠금 해제 (Unlock)";
+          lockedBox.style.display = "flex";
+          unlockedBox.style.display = "none";
+        } else {
+          lbl.textContent = "⚠️ 수정 모드 활성화됨 (저장 후 자동 잠금)";
+          lbl.style.color = "#fb923c";
+          btnToggleKeyLock.textContent = "🔒 지금 다시 잠금 (Lock)";
+          lockedBox.style.display = "none";
+          unlockedBox.style.display = "flex";
+        }
+      }
+
+      btnToggleKeyLock.addEventListener("click", () => {
+        if (isApiKeyLocked) {
+          unlockModal.classList.add("open");
+        } else {
+          isApiKeyLocked = true;
+          syncLockUI();
+        }
+      });
+
+      document.getElementById("btnCancelUnlock").addEventListener("click", () => {
+        unlockModal.classList.remove("open");
+      });
+
+      document.getElementById("btnConfirmUnlock").addEventListener("click", () => {
+        unlockModal.classList.remove("open");
+        isApiKeyLocked = false;
+        syncLockUI();
+      });
+
+      document.getElementById("btnSaveApiKey").addEventListener("click", async () => {
+        const val = document.getElementById("apiKeyInput").value.trim();
+        if (!val) {
+          showError("저장할 Gemini API 키를 입력해주세요.");
+          return;
+        }
+        const api = getHeimdallApi();
+        if (api && api.setApiKey) {
+          const res = await api.setApiKey({ apiKey: val, persistToEnv: true });
+          if (res && res.ok) {
+            document.getElementById("apiKeyInput").value = "";
+            isApiKeyLocked = true;
+            syncLockUI();
+            await refreshStatus();
+            showToast("Gemini API 키가 안전하게 저장 및 잠금되었습니다!");
+          }
+        }
+      });
+
+      document.getElementById("btnSaveBudget").addEventListener("click", async () => {
+        const budget = Number(document.getElementById("budgetInput").value);
+        const api = getHeimdallApi();
+        if (api && api.setBudget) {
+          const res = await api.setBudget({ tokenBudget: budget });
+          if (res && res.quota) {
+            updateQuotaUI(res.quota);
+            showToast("일일 토큰 한도가 업데이트되었습니다!");
+          }
+        }
+      });
+
+      document.getElementById("btnResetSession").addEventListener("click", async () => {
+        const api = getHeimdallApi();
+        if (api && api.resetSession) {
+          const res = await api.resetSession();
+          if (res && res.quota) {
+            updateQuotaUI(res.quota);
+            showToast("세션 토큰 누적 카운터가 초기화되었습니다.");
+          }
+        }
+      });
+
+      // Boot
+      updateSpeakerButtonsUI();
+      renderSegments();
+      void refreshStatus();
+    })();
+  </script>
+</body>
+</html>

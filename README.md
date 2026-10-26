@@ -110,7 +110,14 @@
 * **Built-in Tor & Cloudflare DoH Presets**: 원클릭 익명성 테스트 및 보안 DNS 응답 감사.
 * **Live SQLite Database Studio**: 데이터베이스 테이블 스키마 자동 탐색, 인라인 SQL 쿼리 러너, 인터랙티브 데이터 그리드 뷰어.
 
-### 8. 💻 Aether CLI (`aether`) — Headless Document Engine
+### 8. 🎙️ Heimdall — Acoustic Biometric Diarization & AI Audio Summarizer
+> *“The all-hearing guardian capturing voices, separating speakers, and distilling clarity.”*
+
+* **Real-Time Acoustic DSP & 3 Cybernetic Visualizers**: 60fps HTML5 Canvas 기반 `Jarvis Wave`, `Siri Hologram`, `Cyber Spectrum` 실시간 음향 시각화 및 자기상관(Autocorrelation) 기본 주파수(F0 피치, 75~350Hz) 성문 추적.
+* **Biometric Speaker Diarization & Cough Filter**: 화자별 음향 피치 학습 자동 분리(`화자 1`, `화자 2`, `화자 3`) + 기침·타이핑 등 비조화 충격 소음 자동 배제 게이트, 실시간 마이크 녹음 및 오디오 파일(`.wav`, `.mp3`, `.m4a`, `.ogg`, `.flac`, `.webm`) 일괄 화자 분리 지원.
+* **Gemini Flash-Lite Executive Summary & Token Telemetry**: `.env`의 `GEMINI_API_KEY` 보안 연동(잠금/변조 방지 지원)을 통한 구조화된 회의 요약, 실시간 **소모 토큰 수(입력/오디오/생성)** 및 **잔여 토큰 백분율(`% Left`)** 정밀 모니터링, Nibelungen 지식 그래프 원클릭 연동.
+
+### 9. 💻 Aether CLI (`aether`) — Headless Document Engine
 > *“The same parser, the same writer, the same renderer — on your terminal.”*
 
 앱에서 사용하는 동일한 고성능 CJS 엔진(`genoffice.cjs`)을 헤드리스 CLI로 제공합니다.

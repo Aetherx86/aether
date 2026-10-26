@@ -320834,6 +320834,19 @@ function createMimisbrunnrView() {
   void view.webContents.loadFile(mimPath);
   return view;
 }
+function createHeimdallView() {
+  const view = new require$$1$3.WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false
+    }
+  });
+  const heimPath = path.resolve(__dirname, "../renderer/heimdall.html");
+  void view.webContents.loadFile(heimPath);
+  return view;
+}
 const MINDMAP_CHANNELS = {
   // ---- open and save (implemented) ----
   /** invoke → `string | null`: the path queued for this view, null for a new map */
@@ -325104,6 +325117,23 @@ class TabManager {
       kind: "browser",
       view,
       title: "Mímisbrunnr",
+      filePath: void 0
+    });
+    this.activateTab(id2);
+    return id2;
+  }
+  openHeimdallTab() {
+    const view = createHeimdallView();
+    const id2 = `t${this.nextId++}`;
+    this.shellWindow.contentView.addChildView(view);
+    view.setVisible(false);
+    this.trackHtmlFullScreen(view);
+    this.trackPaneFocus(view);
+    this.tabs.push({
+      id: id2,
+      kind: "browser",
+      view,
+      title: "Heimdall",
       filePath: void 0
     });
     this.activateTab(id2);
@@ -345821,6 +345851,11 @@ function registerTabsIpc() {
         click: () => tabManager?.openFafnirTab?.()
       },
       {
+        label: "Open Heimdall Audio Studio",
+        icon: menuIcons().pptx,
+        click: () => tabManager?.openHeimdallTab?.()
+      },
+      {
         label: "New Aetherum Browser Tab (Tor / Web / Proton)",
         icon: menuIcons().html,
         click: () => newBrowserTab()
@@ -345891,6 +345926,11 @@ function buildHomeMenu() {
           label: "Open Fafnir Vault",
           accelerator: "CmdOrCtrl+Shift+F",
           click: () => tabManager?.openFafnirTab?.()
+        },
+        {
+          label: "Open Heimdall Audio Studio",
+          accelerator: "CmdOrCtrl+Shift+H",
+          click: () => tabManager?.openHeimdallTab?.()
         },
         { type: "separator" },
         {
@@ -346983,6 +347023,8 @@ require$$1$3.app.whenReady().then(async () => {
         tabManager?.openFafnirTab?.();
       } else if (url === "aetherum://mimisbrunnr") {
         tabManager?.openMimisbrunnrTab?.();
+      } else if (url === "aetherum://heimdall") {
+        tabManager?.openHeimdallTab?.();
       } else {
         tabManager?.openBrowserTab(url || "aetherum://welcome");
       }
@@ -347001,6 +347043,9 @@ require$$1$3.app.whenReady().then(async () => {
     });
     require$$1$3.ipcMain.handle("hyper:mimisbrunnr:open-tab", () => {
       tabManager?.openMimisbrunnrTab?.();
+    });
+    require$$1$3.ipcMain.handle("hyper:heimdall:open-tab", () => {
+      tabManager?.openHeimdallTab?.();
     });
   } catch (extErr) {
     console.error("[HyperOffice Extension Error]", extErr);

@@ -881,6 +881,12 @@ function getAetherumPage(pageName = "welcome") {
       } catch (e) {
         return `<p style="padding:2rem;color:red;">Error loading Mímisbrunnr: ${e.message}</p>`;
       }
+    case "heimdall":
+      try {
+        return fs.readFileSync(path.resolve(__dirname, "../../renderer/heimdall.html"), "utf8");
+      } catch (e) {
+        return `<p style="padding:2rem;color:red;">Error loading Heimdall: ${e.message}</p>`;
+      }
     default:
       return getAboutPage();
   }

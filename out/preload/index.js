@@ -2199,6 +2199,19 @@ const hyperOfficeApi = {
     request: (payload) => electron.ipcRenderer.invoke("hyper:ratatoskr:request", payload),
     querySqlite: (params) => electron.ipcRenderer.invoke("hyper:ratatoskr:query-sqlite", params),
     listTables: (dbPath) => electron.ipcRenderer.invoke("hyper:ratatoskr:list-tables", dbPath)
+  },
+  heimdall: {
+    openTab: () => electron.ipcRenderer.invoke("hyper:heimdall:open-tab"),
+    status: () => electron.ipcRenderer.invoke("hyper:heimdall:status"),
+    getQuota: () => electron.ipcRenderer.invoke("hyper:heimdall:quota"),
+    setApiKey: (params) => electron.ipcRenderer.invoke("hyper:heimdall:set-key", params),
+    setBudget: (params) => electron.ipcRenderer.invoke("hyper:heimdall:set-budget", params),
+    resetSession: () => electron.ipcRenderer.invoke("hyper:heimdall:reset-session"),
+    requestMic: () => electron.ipcRenderer.invoke("hyper:heimdall:request-mic"),
+    transcribe: (params) => electron.ipcRenderer.invoke("hyper:heimdall:transcribe", params),
+    summarize: (params) => electron.ipcRenderer.invoke("hyper:heimdall:summarize", params),
+    pickAudio: () => electron.ipcRenderer.invoke("hyper:heimdall:pick-audio"),
+    saveToNibelungen: (params) => electron.ipcRenderer.invoke("hyper:heimdall:save-nibelungen", params)
   }
 };
 electron.contextBridge.exposeInMainWorld("hyperOffice", hyperOfficeApi);

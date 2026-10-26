@@ -54,7 +54,7 @@ function getEnvConfig(forceReload = false) {
     deepseek: fileVars.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY || "",
     openrouter: fileVars.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY || "",
     ollamaBase: fileVars.OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-    defaultModel: fileVars.DEFAULT_MODEL || process.env.DEFAULT_MODEL || "gemini-2.5-flash"
+    defaultModel: fileVars.DEFAULT_MODEL || process.env.DEFAULT_MODEL || "gemini-flash-lite-latest"
   };
   return cachedEnv;
 }
@@ -163,7 +163,7 @@ async function executeAiChat({ provider, model, system, user, messages, apiKey, 
   if (provider === "gemini") {
     const key = effectiveKey || config.gemini;
     if (!key) throw new Error("Gemini API Key not found in .env");
-    const m = model || "gemini-2.5-flash";
+    const m = model || "gemini-flash-lite-latest";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
     const contents = formattedMessages.map(msg => ({
       role: msg.role === "assistant" ? "model" : "user",
