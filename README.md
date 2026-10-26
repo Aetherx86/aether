@@ -80,12 +80,11 @@
 > *“Your private intellect running directly on Apple Silicon M4 unified memory.”*
 
 * **100% Airgapped Privacy**: 단 하나의 토큰도 외부 서버로 전송되지 않는 완벽한 오프라인 신경망 인텔리전스.
-* **Sovereign 3-Model Engine Suite**:
+* **Dual Sovereign Engine Suite (Strictly 2 Models)**:
   1. `PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit` — Apple MLX 네이티브 4-bit 직교 가중치 거절 제거(Abliterated) 9B 고속 모델 (`5.57 GiB`)
-  2. `PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit` — Apple MLX 네이티브 2-bit AWQ 멀티모달 직교 가중치 거절 제거(Abliterated) 27B 모델 (`10.28 GiB`)
-  3. `qwen2.5:7b` — 고속 Apple Metal 기반 Ollama 7B 엔진 (`4.7 GB`)
-* **Apple Silicon M4 Hardware & VRAM Guard**: 16GB 통일 메모리(Unified Memory) 내 스왑 방지를 위해 세 모델 전환 시 비활성 엔진의 VRAM을 즉시 자동 반환(`gc.collect()` + `mx.clear_cache()` / Ollama `keep_alive: 0`).
-* **Full Control Controls**: 3개 전용 모델 선택자(Model Selector), 온도 슬라이더, 사용자 정의 시스템 디렉티브(System Directive) 편집기 내장.
+  2. `qwen2.5:7b` — 고속 Apple Metal 기반 Ollama 7B 엔진 (`4.7 GB`)
+* **Apple Silicon M4 Hardware & VRAM Guard**: 16GB 통일 메모리(Unified Memory) 내 스왑 방지를 위해 두 모델 전환 시 비활성 엔진의 VRAM을 즉시 자동 반환(`gc.collect()` + `mx.clear_cache()` / Ollama `keep_alive: 0`).
+* **Full Control Controls**: 2개 전용 모델 선택자(Model Selector), 온도 슬라이더, 사용자 정의 시스템 디렉티브(System Directive) 편집기 내장.
 * **Multi-Task Neural Presets**:
   * ⚡ *Full Control*: 검열 및 거부 프로토콜 없는 무제한 직접 질의
   * 🛡️ *Yggdrasil Script Audit*: 셸 스크립트 및 런처 내 위험 명령어 사전 감사

@@ -138,7 +138,6 @@ async function main() {
   await runAsyncTest("Mímisbrunnr: Semantic Rules, Local LLM & Markdown Parser", async () => {
     const {
       MODEL_MLX_9B,
-      MODEL_MLX_27B,
       MODEL_QWEN_7B,
       ALLOWED_MODEL_IDS,
       executeMimisbrunnrChat,
@@ -152,17 +151,16 @@ async function main() {
     const hw = getHardwareInfo();
     assert.ok(hw && typeof hw.chip === "string", "Must return Apple Silicon hardware specs");
 
-    assert.strictEqual(ALLOWED_MODEL_IDS.length, 3, "Mímisbrunnr must allow strictly the three sovereign models");
+    assert.strictEqual(ALLOWED_MODEL_IDS.length, 2, "Mímisbrunnr must allow strictly two sovereign models");
     assert.deepStrictEqual(ALLOWED_MODEL_IDS, [
       "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit",
-      "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit",
       "qwen2.5:7b"
     ]);
 
     const llmStatus = await checkLocalLlm();
     assert.ok(typeof llmStatus.active === "boolean", "Local LLM status must report boolean active state");
     assert.strictEqual(llmStatus.privacyMode, "airgapped", "Privacy mode must be airgapped");
-    assert.deepStrictEqual(llmStatus.models, [MODEL_MLX_9B, MODEL_MLX_27B, MODEL_QWEN_7B], "Status models must contain strictly the three sovereign models");
+    assert.deepStrictEqual(llmStatus.models, [MODEL_MLX_9B, MODEL_QWEN_7B], "Status models must contain strictly the two sovereign models");
 
     // Edge Case: Email summarizer with missing headers
     const emailNormal = offlineEmailSummarizer("From: boss@corp.com\nSubject: Project Deadline\nPlease finalize the quarterly audit report by Friday.");
@@ -420,13 +418,8 @@ async function main() {
             model: activeTestModel,
             models: [
               "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit",
-              "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit",
               "qwen2.5:7b"
             ],
-            mlxModels: {
-              "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit": { installed: true, downloading: false, percent: 100 },
-              "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit": { installed: true, downloading: false, percent: 100 }
-            },
             mlxProgress: { installed: true, downloading: false, percent: 100 },
             ollamaReady: true,
             endpoint: "http://127.0.0.1:8088"
@@ -465,7 +458,7 @@ async function main() {
       assert.ok(emailModeBtn.classList.contains("active"), "Email mode must become active");
       assert.ok(dom.window.document.getElementById("promptInput").placeholder.toLowerCase().includes("mail"), "Placeholder must update for email mode");
 
-      // 3. Check Engine button click & strict 3-model dropdown check
+      // 3. Check Engine button click & strict 2-model dropdown check
       const checkEngineBtn = dom.window.document.getElementById("btnCheckEngine");
       assert.ok(checkEngineBtn, "Check Engine button must exist");
       checkEngineBtn.click();
@@ -478,9 +471,8 @@ async function main() {
       const optionValues = Array.from(selectModelEl.options).map(o => o.value);
       assert.deepStrictEqual(optionValues, [
         "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit",
-        "PocketAiHub/Qwen3.8-27B-Abliterated-MLX/2bit",
         "qwen2.5:7b"
-      ], "Model dropdown must contain strictly the three requested models");
+      ], "Model dropdown must contain strictly the two requested models");
 
       // 4. Send button & message execution
       const promptInput = dom.window.document.getElementById("promptInput");
