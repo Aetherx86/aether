@@ -5,15 +5,74 @@ const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
 
-const PYTHON_SCRIPT_PATH = fs.existsSync(path.join(__dirname, "../../../scripts/antigravity_council.py"))
-  ? path.join(__dirname, "../../../scripts/antigravity_council.py")
-  : (fs.existsSync(path.join(__dirname, "../../scripts/antigravity_council.py"))
-    ? path.join(__dirname, "../../scripts/antigravity_council.py")
-    : (fs.existsSync(path.join(process.cwd(), "scripts/antigravity_council.py"))
-      ? path.join(process.cwd(), "scripts/antigravity_council.py")
-      : (fs.existsSync("/Users/sushikim/Documents/antigravity_council.py")
-        ? "/Users/sushikim/Documents/antigravity_council.py"
-        : path.join(__dirname, "antigravity_council.py"))));
+const AETHER_HOME = path.join(os.homedir(), ".aether");
+const EXTRACTED_COUNCIL_SCRIPT = path.join(AETHER_HOME, "antigravity_council.py");
+
+function ensureAetherDir() {
+  if (!fs.existsSync(AETHER_HOME)) {
+    try {
+      fs.mkdirSync(AETHER_HOME, { recursive: true });
+    } catch {}
+  }
+}
+
+function resolveCouncilScriptPath() {
+  ensureAetherDir();
+
+  // 1. If running inside Electron and resourcesPath has unpacked scripts/
+  if (process.resourcesPath) {
+    const unpackedPath = path.join(process.resourcesPath, "scripts/antigravity_council.py");
+    if (fs.existsSync(unpackedPath) && !unpackedPath.includes(".asar")) {
+      return unpackedPath;
+    }
+  }
+
+  // 2. Direct filesystem candidates (development repo outside asar)
+  const devCandidates = [
+    path.join(__dirname, "../../../scripts/antigravity_council.py"),
+    path.join(__dirname, "../../scripts/antigravity_council.py"),
+    path.join(process.cwd(), "scripts/antigravity_council.py")
+  ];
+
+  for (const cand of devCandidates) {
+    try {
+      if (fs.existsSync(cand) && !cand.includes(".asar")) {
+        return cand;
+      }
+    } catch {}
+  }
+
+  // 3. If inside .asar, extract to real disk path in ~/.aether/antigravity_council.py
+  const asarCandidates = [
+    path.join(__dirname, "../../../scripts/antigravity_council.py"),
+    path.join(__dirname, "../../scripts/antigravity_council.py"),
+    path.join(__dirname, "antigravity_council.py")
+  ];
+
+  for (const asarCand of asarCandidates) {
+    try {
+      if (fs.existsSync(asarCand)) {
+        const content = fs.readFileSync(asarCand, "utf8");
+        fs.writeFileSync(EXTRACTED_COUNCIL_SCRIPT, content, { encoding: "utf8", mode: 0o755 });
+        return EXTRACTED_COUNCIL_SCRIPT;
+      }
+    } catch {}
+  }
+
+  // 4. Fallback to Documents if present
+  const docFallback = "/Users/sushikim/Documents/antigravity_council.py";
+  if (fs.existsSync(docFallback)) {
+    return docFallback;
+  }
+
+  if (fs.existsSync(EXTRACTED_COUNCIL_SCRIPT)) {
+    return EXTRACTED_COUNCIL_SCRIPT;
+  }
+
+  return EXTRACTED_COUNCIL_SCRIPT;
+}
+
+const PYTHON_SCRIPT_PATH = resolveCouncilScriptPath();
 
 const HIGH_TABLE_SEATS = [
   {
@@ -156,8 +215,9 @@ function registerHighTableIpc(ipcMain) {
       : HIGH_TABLE_SEATS.map(s => s.defaultModel);
 
     return new Promise((resolve) => {
+      const scriptPath = resolveCouncilScriptPath();
       const args = [
-        PYTHON_SCRIPT_PATH,
+        scriptPath,
         "--json-events",
         "--models",
         selectedModels.join(","),
@@ -171,9 +231,18 @@ function registerHighTableIpc(ipcMain) {
           ? "/opt/homebrew/bin/python3"
           : (fs.existsSync("/usr/bin/python3") ? "/usr/bin/python3" : "python3"));
 
+      let envKey = process.env.GEMINI_API_KEY || "";
+      if (!envKey) {
+        try {
+          const { resolveEnvConfig } = require("./env-agent");
+          envKey = resolveEnvConfig().gemini || "";
+        } catch {}
+      }
+
       const proc = spawn(pythonBin, args, {
         env: {
           ...process.env,
+          GEMINI_API_KEY: envKey,
           PYTHONUNBUFFERED: "1"
         }
       });
