@@ -50,6 +50,7 @@ const ALLOWED_MODEL_IDS = [MODEL_DEEPSEEK_14B, MODEL_MLX_9B, MODEL_QWEN_7B];
 
 const AETHER_HOME = path.join(os.homedir(), ".aether");
 const CONFIG_FILE = path.join(AETHER_HOME, "mimisbrunnr-config.json");
+const AIRLLM_ENV_PYTHON = path.join(os.homedir(), "airllm-env", "bin", "python");
 const MLX_ENV_PYTHON = path.join(AETHER_HOME, "mlx-env", "bin", "python3");
 const MLX_EXTRACTED_BRIDGE = path.join(AETHER_HOME, "mlx_bridge.py");
 
@@ -62,6 +63,7 @@ const DEEPSEEK_14B_STATUS_FILE = path.join(AETHER_HOME, "models", "deepseek-r1-1
 const DEEPSEEK_14B_TOTAL_BYTES = 8900000000;
 
 const MLX_PORT = 8088;
+let activeMlxPort = 8088;
 
 let selectedModelId = null;
 let mlxServerProc = null;
@@ -113,19 +115,38 @@ function isMlx9bDownloaded() {
 }
 
 function isDeepSeek14bDownloaded() {
-  const required = ["config.json", "tokenizer.json"];
-  try {
-    for (const f of required) {
-      const fp = path.join(DEEPSEEK_14B_DIR, f);
-      if (!fs.existsSync(fp) || fs.statSync(fp).size < 50) {
-        return false;
+  const hfHubDir = path.join(os.homedir(), ".cache", "huggingface", "hub");
+  const candidates = [
+    DEEPSEEK_14B_DIR,
+    path.join(hfHubDir, "models--mlx-community--DeepSeek-R1-Distill-Qwen-14B-4bit", "snapshots"),
+    path.join(hfHubDir, "models--outlier-ai--deepseek-r1-distill-qwen-14b-mlx-4bit", "snapshots")
+  ];
+
+  for (const cand of candidates) {
+    try {
+      if (!fs.existsSync(cand)) continue;
+      if (cand.endsWith("snapshots")) {
+        const snaps = fs.readdirSync(cand);
+        for (const s of snaps) {
+          const snapDir = path.join(cand, s);
+          const files = fs.readdirSync(snapDir);
+          const hasSafetensors = files.some((f) => f.endsWith(".safetensors"));
+          if (hasSafetensors && files.includes("config.json")) {
+            return true;
+          }
+        }
+      } else {
+        const files = fs.readdirSync(cand);
+        const hasSafetensors = files.some(
+          (f) => f.endsWith(".safetensors") && fs.statSync(path.join(cand, f)).size > 1000
+        );
+        if (hasSafetensors && fs.existsSync(path.join(cand, "config.json"))) {
+          return true;
+        }
       }
-    }
-    const files = fs.readdirSync(DEEPSEEK_14B_DIR);
-    return files.some((f) => f.endsWith(".safetensors") && fs.statSync(path.join(DEEPSEEK_14B_DIR, f)).size > 1000);
-  } catch {
-    return false;
+    } catch {}
   }
+  return false;
 }
 
 function isMlxModelDownloaded(modelId) {
@@ -224,6 +245,7 @@ function getExtractedMlxBridgePath() {
 }
 
 function resolveMlxPythonBin() {
+  if (fs.existsSync(AIRLLM_ENV_PYTHON)) return AIRLLM_ENV_PYTHON;
   if (fs.existsSync(MLX_ENV_PYTHON)) return MLX_ENV_PYTHON;
   if (fs.existsSync("/opt/homebrew/opt/python@3.13/bin/python3.13")) return "/opt/homebrew/opt/python@3.13/bin/python3.13";
   if (fs.existsSync("/opt/homebrew/bin/python3")) return "/opt/homebrew/bin/python3";
@@ -289,13 +311,13 @@ function probeOllamaQwen7b() {
   });
 }
 
-function probeMlxServer() {
+function probePort(port) {
   return new Promise((resolve) => {
     const req = http.get(
       {
         hostname: "127.0.0.1",
-        port: MLX_PORT,
-        path: "/health",
+        port,
+        path: "/v1/models",
         timeout: 650
       },
       (res) => {
@@ -304,24 +326,73 @@ function probeMlxServer() {
         res.on("end", () => {
           try {
             const json = JSON.parse(data);
+            const models = Array.isArray(json.data) ? json.data.map((m) => m.id) : [];
             resolve({
-              serverUp: Boolean(json.ok),
-              ready: Boolean(json.ready),
-              loadedModel: json.loadedModel,
-              state: json
+              serverUp: true,
+              port,
+              ready: true,
+              loadedModel: models[0] || null,
+              models
             });
           } catch {
-            resolve({ serverUp: false, ready: false });
+            resolve({ serverUp: true, port, ready: true });
           }
         });
       }
     );
-    req.on("error", () => resolve({ serverUp: false, ready: false }));
+    req.on("error", () => {
+      // Fallback probe to /health
+      const hReq = http.get(
+        {
+          hostname: "127.0.0.1",
+          port,
+          path: "/health",
+          timeout: 400
+        },
+        (res) => {
+          let data = "";
+          res.on("data", (c) => (data += c));
+          res.on("end", () => {
+            try {
+              const json = JSON.parse(data);
+              resolve({
+                serverUp: Boolean(json.ok),
+                port,
+                ready: Boolean(json.ready),
+                loadedModel: json.loadedModel,
+                state: json
+              });
+            } catch {
+              resolve({ serverUp: false, port, ready: false });
+            }
+          });
+        }
+      );
+      hReq.on("error", () => resolve({ serverUp: false, port, ready: false }));
+      hReq.on("timeout", () => {
+        hReq.destroy();
+        resolve({ serverUp: false, port, ready: false });
+      });
+    });
     req.on("timeout", () => {
       req.destroy();
-      resolve({ serverUp: false, ready: false });
+      resolve({ serverUp: false, port, ready: false });
     });
   });
+}
+
+async function probeMlxServer() {
+  const [res8080, res8088] = await Promise.all([probePort(8080), probePort(8088)]);
+  if (res8080.serverUp) {
+    activeMlxPort = 8080;
+    return res8080;
+  }
+  if (res8088.serverUp) {
+    activeMlxPort = 8088;
+    return res8088;
+  }
+  activeMlxPort = 8088;
+  return { serverUp: false, port: 8088, ready: false };
 }
 
 function unloadOllamaVram() {
@@ -469,7 +540,7 @@ async function checkLocalLlm() {
 
   const activeModel = currentChoice;
   const isMlxActive = activeModel === MODEL_DEEPSEEK_14B || activeModel === MODEL_MLX_9B;
-  const activeEndpointUrl = isMlxActive ? `http://127.0.0.1:${MLX_PORT}` : "http://127.0.0.1:11434";
+  const activeEndpointUrl = isMlxActive ? `http://127.0.0.1:${activeMlxPort || MLX_PORT}` : "http://127.0.0.1:11434";
   const runtimeType = isMlxActive ? "mlx" : "ollama";
 
   return {
@@ -640,7 +711,7 @@ async function queryMlx(prompt, systemPrompt = "", options = {}, modelId = MODEL
     const req = http.request(
       {
         hostname: "127.0.0.1",
-        port: MLX_PORT,
+        port: activeMlxPort || MLX_PORT,
         path: "/v1/chat/completions",
         method: "POST",
         headers: {

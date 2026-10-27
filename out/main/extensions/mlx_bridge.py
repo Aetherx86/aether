@@ -91,15 +91,32 @@ def is_spec_complete(spec: dict = None) -> bool:
     if spec is None:
         spec = get_spec()
     vdir: Path = spec["variant_dir"]
-    if not vdir.exists():
-        return False
-    for name in spec["required_files"]:
-        fp = vdir / name
-        if not fp.exists() or fp.stat().st_size < 50:
-            return False
-    # Verify at least one safetensors exists
-    has_weights = any(f.name.endswith(".safetensors") and f.stat().st_size > 1000 for f in vdir.glob("*.safetensors"))
-    return has_weights
+    if vdir.exists():
+        has_reqs = True
+        for name in spec["required_files"]:
+            fp = vdir / name
+            if not fp.exists() or fp.stat().st_size < 50:
+                has_reqs = False
+                break
+        if has_reqs and any(f.name.endswith(".safetensors") and f.stat().st_size > 1000 for f in vdir.glob("*.safetensors")):
+            return True
+
+    # Also check HuggingFace Hub cache
+    hf_cache = Path.home() / ".cache" / "huggingface" / "hub"
+    repo_sanitized = spec["repo_id"].replace("/", "--")
+    cand_dirs = [
+        hf_cache / f"models--{repo_sanitized}" / "snapshots",
+        hf_cache / "models--outlier-ai--deepseek-r1-distill-qwen-14b-mlx-4bit" / "snapshots",
+        hf_cache / "models--mlx-community--DeepSeek-R1-Distill-Qwen-14B-4bit" / "snapshots",
+    ]
+    for c in cand_dirs:
+        if c.exists():
+            for snap in c.iterdir():
+                if snap.is_dir():
+                    has_weights = any(f.name.endswith(".safetensors") for f in snap.glob("*.safetensors"))
+                    if has_weights and (snap / "config.json").exists():
+                        return True
+    return False
 
 
 def write_spec_status(spec: dict = None, **updates):

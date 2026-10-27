@@ -213,22 +213,27 @@ async def stream_with_fallback(
                     "temperature": temperature,
                     "max_tokens": 1024
                 }).encode("utf-8")
-                req = urllib.request.Request(
-                    "http://127.0.0.1:8088/v1/chat/completions",
-                    data=req_data,
-                    headers={"Content-Type": "application/json"}
-                )
-                try:
-                    with urllib.request.urlopen(req, timeout=120) as resp:
-                        res_json = json.loads(resp.read().decode("utf-8"))
-                        reply = res_json.get("choices", [{}])[0].get("message", {}).get("content", "")
-                        if EMIT_JSON:
-                            emit_event({"type": "chunk", "seat": seat_idx, "text": reply})
-                        else:
-                            print(reply, flush=True)
-                        return reply, model_name
-                except Exception as local_err:
-                    raise ClientError(f"Local MLX unreachable ({local_err})")
+                
+                last_mlx_err = None
+                for port in [8080, 8088]:
+                    req = urllib.request.Request(
+                        f"http://127.0.0.1:{port}/v1/chat/completions",
+                        data=req_data,
+                        headers={"Content-Type": "application/json"}
+                    )
+                    try:
+                        with urllib.request.urlopen(req, timeout=120) as resp:
+                            res_json = json.loads(resp.read().decode("utf-8"))
+                            reply = res_json.get("choices", [{}])[0].get("message", {}).get("content", "")
+                            if EMIT_JSON:
+                                emit_event({"type": "chunk", "seat": seat_idx, "text": reply})
+                            else:
+                                print(reply, flush=True)
+                            return reply, model_name
+                    except Exception as local_err:
+                        last_mlx_err = local_err
+                        continue
+                raise ClientError(f"Local MLX server unreachable on ports 8080/8088 ({last_mlx_err})")
 
             elif model_name == "qwen2.5:7b":
                 import urllib.request
