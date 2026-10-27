@@ -16,7 +16,7 @@ try {
 }
 
 console.log("==================================================================");
-console.log("🧪 [Aether Comprehensive 285-Point Master Verification Suite]");
+console.log("🧪 [Aether Comprehensive 286-Point Master Verification Suite]");
 console.log("   Testing every single nook, cranny, button, edge case, and tool");
 console.log("==================================================================");
 
@@ -356,16 +356,17 @@ async function main() {
 
   const mimisbrunnr = require("../out/main/extensions/mimisbrunnr");
 
-  test(36, "Strict 2-model whitelist: ALLOWED_MODEL_IDS has length exactly 2", () => {
-    assert.strictEqual(mimisbrunnr.ALLOWED_MODEL_IDS.length, 2);
+  test(36, "Strict sovereign whitelist: ALLOWED_MODEL_IDS has length exactly 3", () => {
+    assert.strictEqual(mimisbrunnr.ALLOWED_MODEL_IDS.length, 3);
   });
 
-  test(37, "Strict 2-model whitelist: Model 1 is PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit", () => {
-    assert.strictEqual(mimisbrunnr.ALLOWED_MODEL_IDS[0], "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit");
+  test(37, "Strict sovereign whitelist: Model 1 is mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit", () => {
+    assert.strictEqual(mimisbrunnr.ALLOWED_MODEL_IDS[0], "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit");
   });
 
-  test(38, "Strict 2-model whitelist: Model 2 is qwen2.5:7b", () => {
-    assert.strictEqual(mimisbrunnr.ALLOWED_MODEL_IDS[1], "qwen2.5:7b");
+  test(38, "Strict sovereign whitelist: Model 2 is PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit and Model 3 is qwen2.5:7b", () => {
+    assert.strictEqual(mimisbrunnr.ALLOWED_MODEL_IDS[1], "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit");
+    assert.strictEqual(mimisbrunnr.ALLOWED_MODEL_IDS[2], "qwen2.5:7b");
   });
 
   test(39, "Zero unabliterated or 27B models in Mímisbrunnr whitelist", () => {
@@ -383,15 +384,17 @@ async function main() {
     assert.strictEqual(mimisbrunnr.MODEL_QWEN_7B, "qwen2.5:7b");
   });
 
-  test(42, "normalizeMimisbrunnrModel correctly maps 'mlx' alias to MODEL_MLX_9B", () => {
+  test(42, "normalizeMimisbrunnrModel correctly maps 'deepseek' & 'r1' aliases to MODEL_DEEPSEEK_14B", () => {
+    assert.strictEqual(mimisbrunnr.normalizeMimisbrunnrModel("deepseek"), mimisbrunnr.MODEL_DEEPSEEK_14B);
+    assert.strictEqual(mimisbrunnr.normalizeMimisbrunnrModel("r1"), mimisbrunnr.MODEL_DEEPSEEK_14B);
+  });
+
+  test(43, "normalizeMimisbrunnrModel correctly maps 'mlx' alias to MODEL_MLX_9B", () => {
     assert.strictEqual(mimisbrunnr.normalizeMimisbrunnrModel("mlx"), mimisbrunnr.MODEL_MLX_9B);
   });
 
-  test(43, "normalizeMimisbrunnrModel correctly maps 'ollama' alias to MODEL_QWEN_7B", () => {
+  test(44, "normalizeMimisbrunnrModel correctly maps 'ollama' & 'qwen' aliases to MODEL_QWEN_7B", () => {
     assert.strictEqual(mimisbrunnr.normalizeMimisbrunnrModel("ollama"), mimisbrunnr.MODEL_QWEN_7B);
-  });
-
-  test(44, "normalizeMimisbrunnrModel correctly maps 'qwen' alias to MODEL_QWEN_7B", () => {
     assert.strictEqual(mimisbrunnr.normalizeMimisbrunnrModel("qwen"), mimisbrunnr.MODEL_QWEN_7B);
   });
 
@@ -418,9 +421,9 @@ async function main() {
     assert.strictEqual(status.privacyMode, "airgapped");
   });
 
-  await testAsync(48, "checkLocalLlm returns models list with strictly 2 sovereign models", async () => {
+  await testAsync(48, "checkLocalLlm returns models list with sovereign models including DeepSeek-R1 14B", async () => {
     const status = await mimisbrunnr.checkLocalLlm();
-    assert.deepStrictEqual(status.models, [mimisbrunnr.MODEL_MLX_9B, mimisbrunnr.MODEL_QWEN_7B]);
+    assert.deepStrictEqual(status.models, [mimisbrunnr.MODEL_DEEPSEEK_14B, mimisbrunnr.MODEL_MLX_9B, mimisbrunnr.MODEL_QWEN_7B]);
   });
 
   test(49, "Offline script debugger approves benign build commands", () => {
@@ -1681,8 +1684,9 @@ async function main() {
       assert.ok(dom.window.document.getElementById("encStatus"));
     });
 
-    await testAsync(246, "DOM mimisbrunnr.html: Displays strictly 2 sovereign model choices", async () => {
+    await testAsync(246, "DOM mimisbrunnr.html: Displays sovereign model choices including DeepSeek-R1 14B", async () => {
       const html = fs.readFileSync(path.join(rootDir, "out/renderer/mimisbrunnr.html"), "utf8");
+      assert.ok(html.includes("DeepSeek-R1-Distill-Qwen-14B-4bit"));
       assert.ok(html.includes("Qwen3.8-9B-Abliterated-MLX"));
       assert.ok(html.includes("qwen2.5:7b"));
     });
@@ -1985,6 +1989,33 @@ async function main() {
     assert.ok(html.includes("metaKey || e.ctrlKey"));
     assert.ok(html.includes("conveneCouncil()"));
     assert.ok(html.includes("Escape"));
+  });
+
+  test(286, "DeepSeek-R1 14B MLX sovereign integration: verified in mimisbrunnr, high-table, and mlx_bridge", () => {
+    // 1. mimisbrunnr.js
+    const mimisbrunnrJs = fs.readFileSync(path.join(rootDir, "out/main/extensions/mimisbrunnr.js"), "utf8");
+    assert.ok(mimisbrunnrJs.includes("MODEL_DEEPSEEK_14B"));
+    assert.ok(mimisbrunnrJs.includes("queryDeepSeek14b"));
+    assert.ok(mimisbrunnrJs.includes("isDeepSeek14bDownloaded"));
+
+    // 2. high-table.js
+    const highTableJs = fs.readFileSync(path.join(rootDir, "out/main/extensions/high-table.js"), "utf8");
+    assert.ok(highTableJs.includes("mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit"));
+
+    // 3. high-table.html
+    const highTableHtml = fs.readFileSync(path.join(rootDir, "out/renderer/high-table.html"), "utf8");
+    assert.ok(highTableHtml.includes("DeepSeek-R1-Distill-Qwen-14B-4bit"));
+    assert.ok(highTableHtml.includes("think-block"));
+
+    // 4. mimisbrunnr.html
+    const mimisbrunnrHtml = fs.readFileSync(path.join(rootDir, "out/renderer/mimisbrunnr.html"), "utf8");
+    assert.ok(mimisbrunnrHtml.includes("DeepSeek-R1-Distill-Qwen-14B-4bit"));
+    assert.ok(mimisbrunnrHtml.includes("think-box"));
+
+    // 5. mlx_bridge.py
+    const bridgePy = fs.readFileSync(path.join(rootDir, "out/main/extensions/mlx_bridge.py"), "utf8");
+    assert.ok(bridgePy.includes("DeepSeek-R1-Distill-Qwen-14B-4bit"));
+    assert.ok(bridgePy.includes("MODEL_SPECS"));
   });
 
   // =========================================================================

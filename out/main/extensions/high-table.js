@@ -107,6 +107,13 @@ const AVAILABLE_MODELS = [
     isLocal: true
   },
   {
+    id: "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit",
+    name: "DeepSeek R1 Distill Qwen 14B (MLX)",
+    badge: "Apple MLX 14B R1",
+    description: "Local 14B DeepSeek-R1 distilled reasoning engine (Apple Metal)",
+    isLocal: true
+  },
+  {
     id: "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit",
     name: "Qwen 3.8 9B Abliterated (MLX 4-bit)",
     badge: "Apple Silicon",

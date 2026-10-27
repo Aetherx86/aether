@@ -358,8 +358,9 @@
         </strong>
 
         <div style="margin-top:8px;">
-          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:3px;">Active Model (2 Sovereign Engines):</label>
+          <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:3px;">Active Model (3 Sovereign Engines):</label>
           <select id="selectModel" onchange="handleModelChange(this.value)" style="width:100%; background:#090d16; border:1px solid var(--border-light); color:#f1f5f9; padding:6px 8px; border-radius:6px; font-size:11.5px; outline:none; cursor:pointer;">
+            <option value="mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit">DeepSeek R1 Distill Qwen 14B (4-bit • MLX Reasoning)</option>
             <option value="PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit">Qwen 3.8 9B Abliterated MLX (4-bit • PocketAiHub)</option>
             <option value="qwen2.5:7b">Qwen 2.5 7B</option>
           </select>
@@ -393,11 +394,12 @@
       </div>
 
       <div class="info-card" id="localModelCard">
-        <strong>Apple Silicon Dual LLM Suite:</strong>
+        <strong>Apple Silicon Sovereign LLM Suite:</strong>
         <div id="modelCardContent">
-          <p style="margin-top:4px; font-size:11.5px; color:#38bdf8;">1. <strong>Qwen 3.8 9B Abliterated MLX</strong> (4-bit • PocketAiHub)</p>
-          <p style="margin-top:2px; font-size:11.5px; color:#10b981;">2. <strong>Qwen 2.5 7B</strong> (<code>qwen2.5:7b</code> • Apple Metal)</p>
-          <div class="code-snippet">PocketAiHub/Qwen3.8-9B-Abliterated-MLX/tree/main/4bit</div>
+          <p style="margin-top:4px; font-size:11.5px; color:#c084fc;">1. <strong>DeepSeek R1 Distill Qwen 14B</strong> (4-bit • MLX Reasoning)</p>
+          <p style="margin-top:2px; font-size:11.5px; color:#38bdf8;">2. <strong>Qwen 3.8 9B Abliterated MLX</strong> (4-bit • PocketAiHub)</p>
+          <p style="margin-top:2px; font-size:11.5px; color:#10b981;">3. <strong>Qwen 2.5 7B</strong> (<code>qwen2.5:7b</code> • Apple Metal)</p>
+          <div class="code-snippet">mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit</div>
         </div>
       </div>
     </div>
@@ -480,9 +482,11 @@
       promptInput.focus();
     }
 
+    const MODEL_DEEPSEEK_14B = "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit";
     const MODEL_MLX_9B = "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit";
     const MODEL_QWEN_7B = "qwen2.5:7b";
     const STRICT_MODEL_OPTIONS = [
+      { id: MODEL_DEEPSEEK_14B, label: "DeepSeek R1 Distill Qwen 14B (4-bit • MLX Reasoning)" },
       { id: MODEL_MLX_9B, label: "Qwen 3.8 9B Abliterated MLX (4-bit • PocketAiHub)" },
       { id: MODEL_QWEN_7B, label: "Qwen 2.5 7B" }
     ];
@@ -502,16 +506,16 @@
       await refreshStatus();
     }
 
-    async function triggerPrepareMlx() {
+    async function triggerPrepareMlx(targetModel = MODEL_DEEPSEEK_14B) {
       const api = getMimisApi();
       if (!api || typeof api.prepareMlx !== "function") return;
-      const btn = document.getElementById("btnPrepareMlx9b");
+      const btn = document.getElementById("btnPrepareMlx");
       if (btn) {
         btn.disabled = true;
         btn.textContent = "⏳ Starting 4-bit MLX Download...";
       }
       try {
-        await api.prepareMlx(MODEL_MLX_9B);
+        await api.prepareMlx(targetModel);
       } catch (e) {}
       await refreshStatus();
     }
@@ -519,7 +523,7 @@
     function renderModelSelect(selectedModel) {
       const selectModel = document.getElementById("selectModel");
       if (!selectModel) return;
-      const currentVal = selectedModel || selectModel.value || MODEL_QWEN_7B;
+      const currentVal = selectedModel || selectModel.value || MODEL_DEEPSEEK_14B;
       selectModel.innerHTML = "";
       STRICT_MODEL_OPTIONS.forEach((item) => {
         const opt = document.createElement("option");
@@ -531,6 +535,7 @@
     }
 
     function formatDisplayModel(modelId) {
+      if (modelId === MODEL_DEEPSEEK_14B) return "DeepSeek-R1-Distill-14B (4bit MLX)";
       if (modelId === MODEL_MLX_9B) return "Qwen3.8-9B-Abliterated-MLX (4bit)";
       return modelId;
     }
@@ -637,6 +642,11 @@
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+
+      // DeepSeek-R1 <think> reasoning chain
+      escaped = escaped.replace(/(?:&lt;|<)think(?:&gt;|>)([\s\S]*?)(?:&lt;|<)\/think(?:&gt;|>)/gi, (_m, thought) => {
+        return `<details class="think-box" open style="margin:8px 0;background:rgba(99,102,241,0.08);border-left:3px solid #818cf8;border-radius:0 6px 6px 0;padding:8px 12px;"><summary style="cursor:pointer;color:#a5b4fc;font-size:12px;font-weight:700;">🧠 DeepSeek-R1 Epistemic Reasoning</summary><div style="margin-top:6px;font-size:12.5px;color:#cbd5e1;line-height:1.55;font-style:italic;">${thought.trim().replace(/\n/g, '<br>')}</div></details>`;
+      });
 
       // Code blocks
       escaped = escaped.replace(/```([a-z0-9_-]*)\n([\s\S]*?)```/gi, (_match, lang, code) => {

@@ -160,7 +160,10 @@ POPULAR_MODELS = [
     ("gemini-3.5-flash", "Balanced performance & deep analysis"),
     ("gemini-3.8-flash", "Frontier reasoning model"),
     ("gemini-3-flash-preview", "Experimental lightweight preview"),
-    ("gemini-3.1-pro-preview", "Advanced reasoning (Quota dependent)")
+    ("gemini-3.1-pro-preview", "Advanced reasoning (Quota dependent)"),
+    ("mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit", "Apple MLX Local 14B DeepSeek-R1 Distilled Reasoning"),
+    ("PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit", "Apple MLX Local 9B Abliterated"),
+    ("qwen2.5:7b", "Ollama Local Metal 7B")
 ]
 
 # ANSI styling
@@ -199,6 +202,60 @@ async def stream_with_fallback(
 
     for model_name in chain:
         try:
+            if model_name.startswith("mlx-") or "Qwen3.8" in model_name or "DeepSeek" in model_name:
+                import urllib.request
+                req_data = json.dumps({
+                    "model": model_name,
+                    "messages": [
+                        {"role": "system", "content": system_instruction or ""},
+                        {"role": "user", "content": contents}
+                    ],
+                    "temperature": temperature,
+                    "max_tokens": 1024
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    "http://127.0.0.1:8088/v1/chat/completions",
+                    data=req_data,
+                    headers={"Content-Type": "application/json"}
+                )
+                try:
+                    with urllib.request.urlopen(req, timeout=120) as resp:
+                        res_json = json.loads(resp.read().decode("utf-8"))
+                        reply = res_json.get("choices", [{}])[0].get("message", {}).get("content", "")
+                        if EMIT_JSON:
+                            emit_event({"type": "chunk", "seat": seat_idx, "text": reply})
+                        else:
+                            print(reply, flush=True)
+                        return reply, model_name
+                except Exception as local_err:
+                    raise ClientError(f"Local MLX unreachable ({local_err})")
+
+            elif model_name == "qwen2.5:7b":
+                import urllib.request
+                req_data = json.dumps({
+                    "model": "qwen2.5:7b",
+                    "prompt": contents,
+                    "system": system_instruction or "",
+                    "stream": False,
+                    "options": {"temperature": temperature}
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    "http://127.0.0.1:11434/api/generate",
+                    data=req_data,
+                    headers={"Content-Type": "application/json"}
+                )
+                try:
+                    with urllib.request.urlopen(req, timeout=90) as resp:
+                        res_json = json.loads(resp.read().decode("utf-8"))
+                        reply = res_json.get("response", "")
+                        if EMIT_JSON:
+                            emit_event({"type": "chunk", "seat": seat_idx, "text": reply})
+                        else:
+                            print(reply, flush=True)
+                        return reply, model_name
+                except Exception as local_err:
+                    raise ClientError(f"Local Ollama unreachable ({local_err})")
+
             config = types.GenerateContentConfig(
                 temperature=temperature,
                 system_instruction=system_instruction

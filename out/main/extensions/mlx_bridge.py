@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Mímisbrunnr Apple Silicon MLX Bridge
-Serves strictly PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit (5.57 GiB • 4-bit affine)
-on localhost with 16GB Unified Memory cache hygiene.
+Serves sovereign Apple MLX models on localhost with 16GB Unified Memory cache hygiene:
+1. PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit (5.57 GiB • 4-bit affine)
+2. mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit (8.8 GiB • 4-bit Metal Reasoning)
 """
 
 import argparse
@@ -16,27 +17,57 @@ from pathlib import Path
 
 BASE_DIR = Path.home() / ".aether" / "models"
 MODEL_9B_4BIT = "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit"
+MODEL_DEEPSEEK_14B = "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit"
 
-SPEC_9B = {
-    "id": MODEL_9B_4BIT,
-    "repo_id": "PocketAiHub/Qwen3.8-9B-Abliterated-MLX",
-    "variant": "4bit",
-    "repo_dir": BASE_DIR / "Qwen3.8-9B-Abliterated-MLX",
-    "variant_dir": BASE_DIR / "Qwen3.8-9B-Abliterated-MLX" / "4bit",
-    "status_file": BASE_DIR / "qwen38-9b-4bit-status.json",
-    "total_bytes": 5977078438,
-    "required_files": [
-        "config.json",
-        "tokenizer.json",
-        "model.safetensors.index.json",
-        "model-00001-of-00002.safetensors",
-        "model-00002-of-00002.safetensors",
-    ],
+MODEL_SPECS = {
+    MODEL_9B_4BIT: {
+        "id": MODEL_9B_4BIT,
+        "repo_id": "PocketAiHub/Qwen3.8-9B-Abliterated-MLX",
+        "variant": "4bit",
+        "repo_dir": BASE_DIR / "Qwen3.8-9B-Abliterated-MLX",
+        "variant_dir": BASE_DIR / "Qwen3.8-9B-Abliterated-MLX" / "4bit",
+        "status_file": BASE_DIR / "qwen38-9b-4bit-status.json",
+        "total_bytes": 5977078438,
+        "allow_patterns": ["4bit/*", "LICENSE", "README.md"],
+        "required_files": [
+            "config.json",
+            "tokenizer.json",
+            "model.safetensors.index.json",
+            "model-00001-of-00002.safetensors",
+            "model-00002-of-00002.safetensors",
+        ],
+    },
+    MODEL_DEEPSEEK_14B: {
+        "id": MODEL_DEEPSEEK_14B,
+        "repo_id": "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit",
+        "variant": "",
+        "repo_dir": BASE_DIR / "DeepSeek-R1-Distill-Qwen-14B-4bit",
+        "variant_dir": BASE_DIR / "DeepSeek-R1-Distill-Qwen-14B-4bit",
+        "status_file": BASE_DIR / "deepseek-r1-14b-4bit-status.json",
+        "total_bytes": 8900000000,
+        "allow_patterns": ["*.json", "*.safetensors", "*.txt", "tokenizer*", "LICENSE", "README*"],
+        "required_files": [
+            "config.json",
+            "tokenizer.json",
+        ],
+    },
 }
 
 MODEL_LOCK = threading.Lock()
+CURRENT_MODEL_ID = MODEL_DEEPSEEK_14B
 LOADED_MODEL = None
 LOADED_PROCESSOR = None
+
+
+def get_spec(model_id: str = None) -> dict:
+    if not model_id:
+        return MODEL_SPECS.get(CURRENT_MODEL_ID, MODEL_SPECS[MODEL_DEEPSEEK_14B])
+    if model_id in MODEL_SPECS:
+        return MODEL_SPECS[model_id]
+    s = model_id.lower()
+    if "deepseek" in s or "14b" in s or "r1" in s:
+        return MODEL_SPECS[MODEL_DEEPSEEK_14B]
+    return MODEL_SPECS[MODEL_9B_4BIT]
 
 
 def compute_dir_bytes(directory: Path) -> int:
@@ -56,22 +87,30 @@ def compute_dir_bytes(directory: Path) -> int:
     return total
 
 
-def is_spec_complete() -> bool:
-    vdir: Path = SPEC_9B["variant_dir"]
-    for name in SPEC_9B["required_files"]:
+def is_spec_complete(spec: dict = None) -> bool:
+    if spec is None:
+        spec = get_spec()
+    vdir: Path = spec["variant_dir"]
+    if not vdir.exists():
+        return False
+    for name in spec["required_files"]:
         fp = vdir / name
-        if not fp.exists() or fp.stat().st_size < 100:
+        if not fp.exists() or fp.stat().st_size < 50:
             return False
-    return True
+    # Verify at least one safetensors exists
+    has_weights = any(f.name.endswith(".safetensors") and f.stat().st_size > 1000 for f in vdir.glob("*.safetensors"))
+    return has_weights
 
 
-def write_spec_status(**updates):
-    status_file: Path = SPEC_9B["status_file"]
+def write_spec_status(spec: dict = None, **updates):
+    if spec is None:
+        spec = get_spec()
+    status_file: Path = spec["status_file"]
     payload = {
         "status": "idle",
-        "model": SPEC_9B["id"],
+        "model": spec["id"],
         "downloadedBytes": 0,
-        "totalBytes": SPEC_9B["total_bytes"],
+        "totalBytes": spec["total_bytes"],
         "percent": 0.0,
         "error": None,
         "updatedAt": time.time(),
@@ -92,11 +131,14 @@ def write_spec_status(**updates):
         pass
 
 
-def download_variant() -> Path:
-    vdir: Path = SPEC_9B["variant_dir"]
-    total_bytes: int = SPEC_9B["total_bytes"]
-    if is_spec_complete():
+def download_variant(spec: dict = None) -> Path:
+    if spec is None:
+        spec = get_spec()
+    vdir: Path = spec["variant_dir"]
+    total_bytes: int = spec["total_bytes"]
+    if is_spec_complete(spec):
         write_spec_status(
+            spec,
             status="downloaded",
             downloadedBytes=total_bytes,
             percent=100.0,
@@ -108,14 +150,14 @@ def download_variant() -> Path:
 
     BASE_DIR.mkdir(parents=True, exist_ok=True)
     stop_monitor = threading.Event()
-    repo_dir: Path = SPEC_9B["repo_dir"]
-    variant_name: str = SPEC_9B["variant"]
+    repo_dir: Path = spec["repo_dir"]
 
     def monitor_progress():
         while not stop_monitor.is_set():
             current = compute_dir_bytes(repo_dir)
             pct = min(99.9, round((current / total_bytes) * 100.0, 2))
             write_spec_status(
+                spec,
                 status="downloading",
                 downloadedBytes=current,
                 totalBytes=total_bytes,
@@ -128,18 +170,19 @@ def download_variant() -> Path:
     monitor_thread.start()
     try:
         snapshot_download(
-            repo_id=SPEC_9B["repo_id"],
+            repo_id=spec["repo_id"],
             local_dir=str(repo_dir),
-            allow_patterns=[f"{variant_name}/*", "LICENSE", "README.md"],
+            allow_patterns=spec["allow_patterns"],
         )
     except Exception as exc:
         stop_monitor.set()
-        write_spec_status(status="error", error=str(exc))
+        write_spec_status(spec, status="error", error=str(exc))
         raise
     finally:
         stop_monitor.set()
 
     write_spec_status(
+        spec,
         status="downloaded",
         downloadedBytes=total_bytes,
         totalBytes=total_bytes,
@@ -149,22 +192,41 @@ def download_variant() -> Path:
     return vdir
 
 
-def ensure_model_loaded():
-    global LOADED_MODEL, LOADED_PROCESSOR
-    if LOADED_MODEL is not None and LOADED_PROCESSOR is not None:
+def ensure_model_loaded(target_model_id: str = None):
+    global LOADED_MODEL, LOADED_PROCESSOR, CURRENT_MODEL_ID
+    spec = get_spec(target_model_id)
+    target_id = spec["id"]
+
+    if LOADED_MODEL is not None and LOADED_PROCESSOR is not None and CURRENT_MODEL_ID == target_id:
         return LOADED_MODEL, LOADED_PROCESSOR
 
     with MODEL_LOCK:
-        if LOADED_MODEL is not None and LOADED_PROCESSOR is not None:
+        if LOADED_MODEL is not None and LOADED_PROCESSOR is not None and CURRENT_MODEL_ID == target_id:
             return LOADED_MODEL, LOADED_PROCESSOR
 
-        variant_path = download_variant()
-        write_spec_status(status="loading", percent=100.0, error=None)
+        # Unload previous model if switching
+        if LOADED_MODEL is not None:
+            LOADED_MODEL = None
+            LOADED_PROCESSOR = None
+            try:
+                import mlx.core as mx
+                gc.collect()
+                mx.clear_cache()
+            except Exception:
+                pass
+
+        CURRENT_MODEL_ID = target_id
+        variant_path = download_variant(spec)
+        write_spec_status(spec, status="loading", percent=100.0, error=None)
 
         import mlx.core as mx
-        from mlx_vlm import load
+        try:
+            from mlx_lm import load
+            model, processor = load(str(variant_path))
+        except Exception:
+            from mlx_vlm import load
+            model, processor = load(str(variant_path))
 
-        model, processor = load(str(variant_path))
         try:
             gc.collect()
             mx.clear_cache()
@@ -173,51 +235,40 @@ def ensure_model_loaded():
 
         LOADED_MODEL = model
         LOADED_PROCESSOR = processor
-        write_spec_status(status="serving", percent=100.0, error=None)
+        write_spec_status(spec, status="serving", percent=100.0, error=None)
         return LOADED_MODEL, LOADED_PROCESSOR
 
 
-def generate_chat_reply(messages, temperature=0.7, max_tokens=768) -> str:
+def generate_chat_reply(messages, model_id=None, temperature=0.7, max_tokens=768) -> str:
     import mlx.core as mx
-    from mlx_vlm import generate
-    from mlx_vlm.prompt_utils import apply_chat_template
 
-    model, processor = ensure_model_loaded()
+    spec = get_spec(model_id)
+    model, processor = ensure_model_loaded(spec["id"])
 
     with MODEL_LOCK:
-        try:
-            prompt = apply_chat_template(
-                processor,
-                model.config,
-                messages,
-                num_images=0,
-                enable_thinking=False,
-            )
-        except TypeError:
-            prompt = apply_chat_template(
-                processor,
-                model.config,
-                messages,
-                num_images=0,
-            )
-
         gen_kwargs = {
             "max_tokens": int(max_tokens),
             "temperature": float(temperature),
         }
+
         try:
-            result = generate(
-                model,
-                processor,
-                prompt,
-                enable_thinking=False,
-                **gen_kwargs,
-            )
-        except TypeError:
+            from mlx_lm import generate
+            from mlx_lm.prompt_utils import apply_chat_template
+            prompt = apply_chat_template(processor, model.config, messages)
+            result = generate(model, processor, prompt, **gen_kwargs)
+        except Exception:
+            from mlx_vlm import generate
+            from mlx_vlm.prompt_utils import apply_chat_template
+            try:
+                prompt = apply_chat_template(processor, model.config, messages, num_images=0)
+            except TypeError:
+                prompt = apply_chat_template(processor, model.config, messages)
             result = generate(model, processor, prompt, **gen_kwargs)
 
         text = result.text if hasattr(result, "text") else str(result)
-        if "<think>" in text and "</think>" in text:
+
+        # For Qwen 3.8 standard chat, strip think if requested, but for DeepSeek-R1 preserve <think>
+        if spec["id"] == MODEL_9B_4BIT and "<think>" in text and "</think>" in text:
             text = text.split("</think>", 1)[1].strip()
 
         try:
@@ -247,8 +298,11 @@ class MlxBridgeHandler(BaseHTTPRequestHandler):
                 {
                     "ok": True,
                     "ready": LOADED_MODEL is not None,
-                    "loadedModel": MODEL_9B_4BIT if LOADED_MODEL is not None else None,
-                    "installed": {MODEL_9B_4BIT: is_spec_complete()},
+                    "loadedModel": CURRENT_MODEL_ID if LOADED_MODEL is not None else None,
+                    "installed": {
+                        MODEL_9B_4BIT: is_spec_complete(MODEL_SPECS[MODEL_9B_4BIT]),
+                        MODEL_DEEPSEEK_14B: is_spec_complete(MODEL_SPECS[MODEL_DEEPSEEK_14B]),
+                    },
                 },
             )
             return
@@ -259,6 +313,7 @@ class MlxBridgeHandler(BaseHTTPRequestHandler):
                 {
                     "object": "list",
                     "data": [
+                        {"id": MODEL_DEEPSEEK_14B, "object": "model", "owned_by": "mlx-community"},
                         {"id": MODEL_9B_4BIT, "object": "model", "owned_by": "PocketAiHub"},
                     ],
                 },
@@ -281,17 +336,20 @@ class MlxBridgeHandler(BaseHTTPRequestHandler):
             return
 
         if self.path.startswith("/preload"):
-            threading.Thread(target=ensure_model_loaded, daemon=True).start()
-            self._send_json(200, {"ok": True, "preloading": MODEL_9B_4BIT})
+            req_model = body.get("model") or CURRENT_MODEL_ID
+            threading.Thread(target=ensure_model_loaded, args=(req_model,), daemon=True).start()
+            self._send_json(200, {"ok": True, "preloading": req_model})
             return
 
         if self.path.startswith("/v1/chat/completions"):
             try:
                 messages = body.get("messages") or []
+                req_model = body.get("model") or CURRENT_MODEL_ID
                 temperature = float(body.get("temperature", 0.7))
                 max_tokens = int(body.get("max_tokens", 768))
                 reply = generate_chat_reply(
                     messages,
+                    model_id=req_model,
                     temperature=temperature,
                     max_tokens=max_tokens,
                 )
@@ -300,7 +358,7 @@ class MlxBridgeHandler(BaseHTTPRequestHandler):
                     {
                         "id": f"mlx-{int(time.time())}",
                         "object": "chat.completion",
-                        "model": MODEL_9B_4BIT,
+                        "model": req_model,
                         "choices": [
                             {
                                 "index": 0,
@@ -318,22 +376,24 @@ class MlxBridgeHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Mímisbrunnr Qwen3.8-9B 4-bit MLX Bridge")
+    parser = argparse.ArgumentParser(description="Mímisbrunnr Apple Silicon MLX Bridge (DeepSeek-R1 14B & Qwen 9B)")
     parser.add_argument("--download-only", action="store_true")
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--preload", action="store_true")
-    parser.add_argument("--model", type=str, default=MODEL_9B_4BIT)
+    parser.add_argument("--model", type=str, default=MODEL_DEEPSEEK_14B)
     parser.add_argument("--port", type=int, default=8088)
     parser.add_argument("--host", type=str, default="127.0.0.1")
     args = parser.parse_args()
 
+    spec = get_spec(args.model)
+
     if args.download_only:
-        path = download_variant()
-        print(json.dumps({"ok": True, "model": MODEL_9B_4BIT, "path": str(path)}))
+        p = download_variant(spec)
+        print(json.dumps({"ok": True, "model": spec["id"], "path": str(p)}))
         return
 
-    if args.preload and is_spec_complete():
-        threading.Thread(target=ensure_model_loaded, daemon=True).start()
+    if args.preload and is_spec_complete(spec):
+        threading.Thread(target=ensure_model_loaded, args=(spec["id"],), daemon=True).start()
 
     server = ThreadingHTTPServer((args.host, args.port), MlxBridgeHandler)
     server.serve_forever()

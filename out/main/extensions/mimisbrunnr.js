@@ -7,15 +7,26 @@ const os = require("node:os");
 const { execSync, spawn } = require("node:child_process");
 
 // ============================================================================
-// STRICT TWO-MODEL SOVEREIGN SUITE FOR MÍMISBRUNNR
-// 1. PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit (4-bit Apple MLX • 5.57 GiB)
-// 2. qwen2.5:7b                                  (Ollama Metal • 4.7 GB)
+// SOVEREIGN MODEL SUITE FOR MÍMISBRUNNR (APPLE SILICON & METAL)
+// 1. mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit (14B Apple MLX • 8.8 GiB • Deep Reasoning)
+// 2. PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit     (4-bit Apple MLX • 5.57 GiB • Fast Sovereign)
+// 3. qwen2.5:7b                                      (Ollama Metal • 4.7 GB • Standby General)
 // ============================================================================
 
+const MODEL_DEEPSEEK_14B = "mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit";
 const MODEL_MLX_9B = "PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit";
 const MODEL_QWEN_7B = "qwen2.5:7b";
 
 const MIMISBRUNNR_MODELS = [
+  {
+    id: MODEL_DEEPSEEK_14B,
+    label: "DeepSeek R1 Distill Qwen 14B (4-bit • MLX Apple Silicon)",
+    shortName: "DeepSeek-R1-Distill-14B (4bit)",
+    runtime: "mlx",
+    endpoint: "http://127.0.0.1:8088",
+    hfUrl: "https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit",
+    sizeLabel: "8.8 GiB (4-bit Metal • Deep Reasoning)"
+  },
   {
     id: MODEL_MLX_9B,
     label: "Qwen 3.8 9B Abliterated MLX (4-bit • PocketAiHub)",
@@ -35,16 +46,22 @@ const MIMISBRUNNR_MODELS = [
   }
 ];
 
-const ALLOWED_MODEL_IDS = [MODEL_MLX_9B, MODEL_QWEN_7B];
+const ALLOWED_MODEL_IDS = [MODEL_DEEPSEEK_14B, MODEL_MLX_9B, MODEL_QWEN_7B];
 
 const AETHER_HOME = path.join(os.homedir(), ".aether");
 const CONFIG_FILE = path.join(AETHER_HOME, "mimisbrunnr-config.json");
 const MLX_ENV_PYTHON = path.join(AETHER_HOME, "mlx-env", "bin", "python3");
 const MLX_EXTRACTED_BRIDGE = path.join(AETHER_HOME, "mlx_bridge.py");
-const MLX_VARIANT_DIR = path.join(AETHER_HOME, "models", "Qwen3.8-9B-Abliterated-MLX", "4bit");
-const MLX_STATUS_FILE = path.join(AETHER_HOME, "models", "qwen38-9b-4bit-status.json");
+
+const MLX_9B_DIR = path.join(AETHER_HOME, "models", "Qwen3.8-9B-Abliterated-MLX", "4bit");
+const MLX_9B_STATUS_FILE = path.join(AETHER_HOME, "models", "qwen38-9b-4bit-status.json");
+const MLX_9B_TOTAL_BYTES = 5977078438;
+
+const DEEPSEEK_14B_DIR = path.join(AETHER_HOME, "models", "DeepSeek-R1-Distill-Qwen-14B-4bit");
+const DEEPSEEK_14B_STATUS_FILE = path.join(AETHER_HOME, "models", "deepseek-r1-14b-4bit-status.json");
+const DEEPSEEK_14B_TOTAL_BYTES = 8900000000;
+
 const MLX_PORT = 8088;
-const MLX_TOTAL_BYTES = 5977078438;
 
 let selectedModelId = null;
 let mlxServerProc = null;
@@ -62,6 +79,9 @@ function normalizeMimisbrunnrModel(raw) {
   if (!raw || typeof raw !== "string") return null;
   const s = raw.trim().toLowerCase();
   if (!s) return null;
+  if (s.includes("deepseek") || s.includes("r1") || s.includes("14b") || s.includes("distill")) {
+    return MODEL_DEEPSEEK_14B;
+  }
   if (s.includes("3.8") || s.includes("9b") || s.includes("4bit") || s.includes("mlx") || s.includes("pocketaihub")) {
     return MODEL_MLX_9B;
   }
@@ -81,7 +101,7 @@ function isMlx9bDownloaded() {
   ];
   try {
     for (const f of required) {
-      const fp = path.join(MLX_VARIANT_DIR, f);
+      const fp = path.join(MLX_9B_DIR, f);
       if (!fs.existsSync(fp) || fs.statSync(fp).size < 100) {
         return false;
       }
@@ -92,71 +112,69 @@ function isMlx9bDownloaded() {
   }
 }
 
-function readLatestXetBytes() {
+function isDeepSeek14bDownloaded() {
+  const required = ["config.json", "tokenizer.json"];
   try {
-    const logDir = path.join(os.homedir(), ".cache", "huggingface", "xet", "logs");
-    if (!fs.existsSync(logDir)) return 0;
-    const files = fs
-      .readdirSync(logDir)
-      .filter((f) => f.endsWith(".log"))
-      .map((f) => ({ name: f, mtime: fs.statSync(path.join(logDir, f)).mtimeMs }))
-      .sort((a, b) => b.mtime - a.mtime);
-    if (files.length === 0 || Date.now() - files[0].mtime > 60000) return 0;
-    const fp = path.join(logDir, files[0].name);
-    const stat = fs.statSync(fp);
-    const readLen = Math.min(stat.size, 32768);
-    const buf = Buffer.alloc(readLen);
-    const fd = fs.openSync(fp, "r");
-    fs.readSync(fd, buf, 0, readLen, stat.size - readLen);
-    fs.closeSync(fd);
-    const matches = [...buf.toString("utf8").matchAll(/observed bytes sent so far = (\d+)/g)];
-    if (matches.length > 0) {
-      return parseInt(matches[matches.length - 1][1], 10) || 0;
+    for (const f of required) {
+      const fp = path.join(DEEPSEEK_14B_DIR, f);
+      if (!fs.existsSync(fp) || fs.statSync(fp).size < 50) {
+        return false;
+      }
     }
-  } catch {}
-  return 0;
+    const files = fs.readdirSync(DEEPSEEK_14B_DIR);
+    return files.some((f) => f.endsWith(".safetensors") && fs.statSync(path.join(DEEPSEEK_14B_DIR, f)).size > 1000);
+  } catch {
+    return false;
+  }
 }
 
-function readMlxProgressState() {
-  const downloaded = isMlx9bDownloaded();
+function isMlxModelDownloaded(modelId) {
+  if (modelId === MODEL_DEEPSEEK_14B) {
+    return isDeepSeek14bDownloaded();
+  }
+  return isMlx9bDownloaded();
+}
+
+function readMlxProgressState(modelId = MODEL_DEEPSEEK_14B) {
+  const isDeepSeek = modelId === MODEL_DEEPSEEK_14B;
+  const statusFile = isDeepSeek ? DEEPSEEK_14B_STATUS_FILE : MLX_9B_STATUS_FILE;
+  const totalBytes = isDeepSeek ? DEEPSEEK_14B_TOTAL_BYTES : MLX_9B_TOTAL_BYTES;
+  const downloaded = isMlxModelDownloaded(modelId);
+
   let fileState = {};
   try {
-    if (fs.existsSync(MLX_STATUS_FILE)) {
-      fileState = JSON.parse(fs.readFileSync(MLX_STATUS_FILE, "utf8"));
+    if (fs.existsSync(statusFile)) {
+      fileState = JSON.parse(fs.readFileSync(statusFile, "utf8"));
     }
   } catch {}
 
   if (downloaded) {
     return {
-      model: MODEL_MLX_9B,
+      model: modelId,
       installed: true,
       downloading: false,
       status: fileState.status === "serving" || fileState.status === "loading" ? fileState.status : "ready",
       percent: 100,
-      downloadedBytes: MLX_TOTAL_BYTES,
-      totalBytes: MLX_TOTAL_BYTES,
+      downloadedBytes: totalBytes,
+      totalBytes: totalBytes,
       error: null
     };
   }
 
-  const isStale = fileState.updatedAt ? (Date.now() / 1000 - fileState.updatedAt > 45) : true;
+  const isStale = fileState.updatedAt ? Date.now() / 1000 - fileState.updatedAt > 45 : true;
   const activeStatus = fileState.status === "downloading" && !isStale;
   const downloading = Boolean(mlxDownloadProc) || activeStatus;
-  const xetBytes = downloading ? readLatestXetBytes() : 0;
-  const bestBytes = Math.min(
-    MLX_TOTAL_BYTES,
-    Math.max(typeof fileState.downloadedBytes === "number" ? fileState.downloadedBytes : 0, xetBytes)
-  );
-  const bestPct = Math.min(99.9, Number(((bestBytes / MLX_TOTAL_BYTES) * 100).toFixed(2)));
+  const bestBytes = Math.min(totalBytes, Math.max(typeof fileState.downloadedBytes === "number" ? fileState.downloadedBytes : 0, 0));
+  const bestPct = Math.min(99.9, Number(((bestBytes / totalBytes) * 100).toFixed(2)));
 
   return {
-    model: MODEL_MLX_9B,
+    model: modelId,
     installed: false,
     downloading,
-    status: downloading ? "downloading" : (fileState.status || "not_downloaded"),
+    status: downloading ? "downloading" : fileState.status || "not_downloaded",
     percent: Math.max(typeof fileState.percent === "number" ? fileState.percent : 0, bestPct),
     downloadedBytes: bestBytes,
-    totalBytes: MLX_TOTAL_BYTES,
+    totalBytes: totalBytes,
     error: fileState.error || null
   };
 }
@@ -173,12 +191,18 @@ function loadSavedModelSelection() {
       }
     }
   } catch {}
-  selectedModelId = isMlx9bDownloaded() ? MODEL_MLX_9B : MODEL_QWEN_7B;
+  if (isDeepSeek14bDownloaded()) {
+    selectedModelId = MODEL_DEEPSEEK_14B;
+  } else if (isMlx9bDownloaded()) {
+    selectedModelId = MODEL_MLX_9B;
+  } else {
+    selectedModelId = MODEL_DEEPSEEK_14B;
+  }
   return selectedModelId;
 }
 
 function saveModelSelection(modelId) {
-  const norm = normalizeMimisbrunnrModel(modelId) || MODEL_QWEN_7B;
+  const norm = normalizeMimisbrunnrModel(modelId) || MODEL_DEEPSEEK_14B;
   selectedModelId = norm;
   ensureAetherDir();
   try {
@@ -225,12 +249,12 @@ function getHardwareInfo() {
     arch: os.arch(),
     neuralEngine: chip.includes("Apple M") ? "16-Core Apple Neural Engine (ANE)" : "Standard CPU/GPU",
     metalSupported: process.platform === "darwin",
-    recommendedModel: `${MODEL_MLX_9B} • ${MODEL_QWEN_7B}`
+    recommendedModel: `${MODEL_DEEPSEEK_14B} • ${MODEL_MLX_9B} • ${MODEL_QWEN_7B}`
   };
 }
 
 // ============================================================================
-// RUNTIME PROBES & 16GB UNIFIED MEMORY GUARD
+// RUNTIME PROBES & MEMORY MANAGEMENT
 // ============================================================================
 
 function probeOllamaQwen7b() {
@@ -280,7 +304,12 @@ function probeMlxServer() {
         res.on("end", () => {
           try {
             const json = JSON.parse(data);
-            resolve({ serverUp: Boolean(json.ok), ready: Boolean(json.ready), state: json });
+            resolve({
+              serverUp: Boolean(json.ok),
+              ready: Boolean(json.ready),
+              loadedModel: json.loadedModel,
+              state: json
+            });
           } catch {
             resolve({ serverUp: false, ready: false });
           }
@@ -346,7 +375,9 @@ function unloadMlxVram() {
     );
     req.on("error", () => {
       if (mlxServerProc) {
-        try { mlxServerProc.kill("SIGTERM"); } catch {}
+        try {
+          mlxServerProc.kill("SIGTERM");
+        } catch {}
         mlxServerProc = null;
       }
       resolve(false);
@@ -360,19 +391,20 @@ function unloadMlxVram() {
   });
 }
 
-function startMlxDownloadBackground() {
-  if (isMlx9bDownloaded()) {
-    return { started: false, alreadyDownloaded: true, model: MODEL_MLX_9B, progress: readMlxProgressState() };
+function startMlxDownloadBackground(modelId = MODEL_DEEPSEEK_14B) {
+  const target = normalizeMimisbrunnrModel(modelId) || MODEL_DEEPSEEK_14B;
+  if (isMlxModelDownloaded(target)) {
+    return { started: false, alreadyDownloaded: true, model: target, progress: readMlxProgressState(target) };
   }
-  const cur = readMlxProgressState();
+  const cur = readMlxProgressState(target);
   if (cur.downloading) {
-    return { started: true, alreadyDownloading: true, model: MODEL_MLX_9B, progress: cur };
+    return { started: true, alreadyDownloading: true, model: target, progress: cur };
   }
 
   const pyBin = resolveMlxPythonBin();
   const scriptPath = getExtractedMlxBridgePath();
   try {
-    const child = spawn(pyBin, [scriptPath, "--download-only", "--model", MODEL_MLX_9B], {
+    const child = spawn(pyBin, [scriptPath, "--download-only", "--model", target], {
       detached: true,
       stdio: "ignore"
     });
@@ -381,23 +413,28 @@ function startMlxDownloadBackground() {
       if (mlxDownloadProc === child) mlxDownloadProc = null;
     });
     child.unref();
-    return { started: true, model: MODEL_MLX_9B, progress: readMlxProgressState() };
+    return { started: true, model: target, progress: readMlxProgressState(target) };
   } catch (err) {
-    return { started: false, model: MODEL_MLX_9B, error: err.message, progress: readMlxProgressState() };
+    return { started: false, model: target, error: err.message, progress: readMlxProgressState(target) };
   }
 }
 
-async function ensureMlxServerRunning({ preload = true } = {}) {
+async function ensureMlxServerRunning({ preload = true, modelId = null } = {}) {
+  const targetModel = modelId ? normalizeMimisbrunnrModel(modelId) : loadSavedModelSelection();
   const existing = await probeMlxServer();
-  if (existing.serverUp) return true;
 
-  // Free Ollama 7B VRAM before loading 5.57 GiB 9B MLX checkpoint on 16GB Unified Memory
+  if (existing.serverUp) {
+    if (!existing.loadedModel || existing.loadedModel === targetModel) {
+      return true;
+    }
+  }
+
   await unloadOllamaVram();
 
   const pyBin = resolveMlxPythonBin();
   const scriptPath = getExtractedMlxBridgePath();
-  const args = [scriptPath, "--serve", "--port", String(MLX_PORT), "--model", MODEL_MLX_9B];
-  if (preload && isMlx9bDownloaded()) {
+  const args = [scriptPath, "--serve", "--port", String(MLX_PORT), "--model", targetModel];
+  if (preload && isMlxModelDownloaded(targetModel)) {
     args.push("--preload");
   }
 
@@ -424,14 +461,16 @@ async function ensureMlxServerRunning({ preload = true } = {}) {
 async function checkLocalLlm() {
   const currentChoice = loadSavedModelSelection();
   const [ollamaInfo, mlxLive] = await Promise.all([probeOllamaQwen7b(), probeMlxServer()]);
-  const mlx9b = readMlxProgressState();
+  const deepseek14bProg = readMlxProgressState(MODEL_DEEPSEEK_14B);
+  const mlx9bProg = readMlxProgressState(MODEL_MLX_9B);
 
-  const mlxAvailable = mlx9b.installed || mlxLive.serverUp;
+  const mlxAvailable = deepseek14bProg.installed || mlx9bProg.installed || mlxLive.serverUp;
   const ollamaAvailable = ollamaInfo.daemonUp && ollamaInfo.installed;
 
   const activeModel = currentChoice;
-  const activeEndpointUrl = activeModel === MODEL_MLX_9B ? `http://127.0.0.1:${MLX_PORT}` : "http://127.0.0.1:11434";
-  const runtimeType = activeModel === MODEL_MLX_9B ? "mlx" : "ollama";
+  const isMlxActive = activeModel === MODEL_DEEPSEEK_14B || activeModel === MODEL_MLX_9B;
+  const activeEndpointUrl = isMlxActive ? `http://127.0.0.1:${MLX_PORT}` : "http://127.0.0.1:11434";
+  const runtimeType = isMlxActive ? "mlx" : "ollama";
 
   return {
     active: Boolean(mlxAvailable || ollamaAvailable),
@@ -440,22 +479,33 @@ async function checkLocalLlm() {
     modelCatalog: [
       {
         ...MIMISBRUNNR_MODELS[0],
-        installed: mlx9b.installed,
-        downloading: mlx9b.downloading,
-        percent: mlx9b.percent,
-        downloadedBytes: mlx9b.downloadedBytes,
-        totalBytes: mlx9b.totalBytes,
+        installed: deepseek14bProg.installed,
+        downloading: deepseek14bProg.downloading,
+        percent: deepseek14bProg.percent,
+        downloadedBytes: deepseek14bProg.downloadedBytes,
+        totalBytes: deepseek14bProg.totalBytes,
         serverUp: mlxLive.serverUp,
-        loadedInVram: mlxLive.ready,
-        error: mlx9b.error
+        loadedInVram: mlxLive.loadedModel === MODEL_DEEPSEEK_14B && mlxLive.ready,
+        error: deepseek14bProg.error
       },
       {
         ...MIMISBRUNNR_MODELS[1],
+        installed: mlx9bProg.installed,
+        downloading: mlx9bProg.downloading,
+        percent: mlx9bProg.percent,
+        downloadedBytes: mlx9bProg.downloadedBytes,
+        totalBytes: mlx9bProg.totalBytes,
+        serverUp: mlxLive.serverUp,
+        loadedInVram: mlxLive.loadedModel === MODEL_MLX_9B && mlxLive.ready,
+        error: mlx9bProg.error
+      },
+      {
+        ...MIMISBRUNNR_MODELS[2],
         installed: ollamaInfo.installed,
         daemonUp: ollamaInfo.daemonUp
       }
     ],
-    mlxProgress: mlx9b,
+    mlxProgress: isMlxActive && activeModel === MODEL_MLX_9B ? mlx9bProg : deepseek14bProg,
     ollamaReady: ollamaAvailable,
     endpoint: activeEndpointUrl,
     type: runtimeType,
@@ -469,21 +519,22 @@ async function selectMimisbrunnrModel(modelId) {
   const chosen = saveModelSelection(modelId);
   if (chosen === MODEL_QWEN_7B) {
     await unloadMlxVram();
-  } else if (chosen === MODEL_MLX_9B) {
+  } else {
     await unloadOllamaVram();
-    if (!isMlx9bDownloaded()) {
-      startMlxDownloadBackground();
+    if (!isMlxModelDownloaded(chosen)) {
+      startMlxDownloadBackground(chosen);
     } else {
-      await ensureMlxServerRunning({ preload: true });
+      await ensureMlxServerRunning({ preload: true, modelId: chosen });
     }
   }
   return await checkLocalLlm();
 }
 
-async function prepareMlxModel() {
-  saveModelSelection(MODEL_MLX_9B);
-  if (!isMlx9bDownloaded()) {
-    const dl = startMlxDownloadBackground();
+async function prepareMlxModel(modelId = null) {
+  const target = modelId ? normalizeMimisbrunnrModel(modelId) : loadSavedModelSelection();
+  saveModelSelection(target);
+  if (!isMlxModelDownloaded(target)) {
+    const dl = startMlxDownloadBackground(target);
     return {
       ok: true,
       action: "downloading",
@@ -491,17 +542,17 @@ async function prepareMlxModel() {
       status: await checkLocalLlm()
     };
   }
-  const started = await ensureMlxServerRunning({ preload: true });
+  const started = await ensureMlxServerRunning({ preload: true, modelId: target });
   return {
     ok: started,
     action: "serving",
-    model: MODEL_MLX_9B,
+    model: target,
     status: await checkLocalLlm()
   };
 }
 
 // ============================================================================
-// GENERATION ENGINES (MLX 9B 4-BIT & OLLAMA QWEN 2.5 7B)
+// INFERENCE ENGINES (MLX & OLLAMA)
 // ============================================================================
 
 function queryOllamaQwen7b(prompt, systemPrompt = "", options = {}) {
@@ -557,20 +608,21 @@ function queryOllamaQwen7b(prompt, systemPrompt = "", options = {}) {
   });
 }
 
-async function queryMlx9b(prompt, systemPrompt = "", options = {}) {
-  if (!isMlx9bDownloaded()) {
-    startMlxDownloadBackground();
-    const prog = readMlxProgressState();
-    const gbDone = (prog.downloadedBytes / (1024 ** 3)).toFixed(2);
-    const gbTotal = (prog.totalBytes / (1024 ** 3)).toFixed(2);
+async function queryMlx(prompt, systemPrompt = "", options = {}, modelId = MODEL_DEEPSEEK_14B) {
+  const targetModel = normalizeMimisbrunnrModel(modelId) || MODEL_DEEPSEEK_14B;
+  if (!isMlxModelDownloaded(targetModel)) {
+    startMlxDownloadBackground(targetModel);
+    const prog = readMlxProgressState(targetModel);
+    const gbDone = ((prog.downloadedBytes || 0) / 1024 ** 3).toFixed(2);
+    const gbTotal = ((prog.totalBytes || 1) / 1024 ** 3).toFixed(2);
     throw new Error(
-      `Qwen3.8-9B-Abliterated-MLX (4-bit) is downloading from PocketAiHub (${prog.percent}% • ${gbDone}/${gbTotal} GiB). Switch to qwen2.5:7b for instant replies while download finishes.`
+      `${targetModel} is downloading (${prog.percent}% • ${gbDone}/${gbTotal} GiB). Switch to qwen2.5:7b for instant replies while download completes.`
     );
   }
 
-  const up = await ensureMlxServerRunning({ preload: false });
+  const up = await ensureMlxServerRunning({ preload: false, modelId: targetModel });
   if (!up) {
-    throw new Error("Apple MLX bridge server failed to bind on 127.0.0.1:8088.");
+    throw new Error(`Apple MLX server failed to bind on 127.0.0.1:${MLX_PORT}.`);
   }
 
   return new Promise((resolve, reject) => {
@@ -579,10 +631,10 @@ async function queryMlx9b(prompt, systemPrompt = "", options = {}) {
     messages.push({ role: "user", content: prompt });
 
     const payload = JSON.stringify({
-      model: MODEL_MLX_9B,
+      model: targetModel,
       messages,
       temperature: options.temperature !== undefined ? parseFloat(options.temperature) : 0.7,
-      max_tokens: options.max_tokens || 768
+      max_tokens: options.max_tokens || 1024
     });
 
     const req = http.request(
@@ -617,11 +669,19 @@ async function queryMlx9b(prompt, systemPrompt = "", options = {}) {
     req.on("error", reject);
     req.on("timeout", () => {
       req.destroy();
-      reject(new Error("Qwen3.8-9B MLX generation timed out"));
+      reject(new Error(`${targetModel} MLX generation timed out`));
     });
     req.write(payload);
     req.end();
   });
+}
+
+function queryMlx9b(prompt, systemPrompt = "", options = {}) {
+  return queryMlx(prompt, systemPrompt, options, MODEL_MLX_9B);
+}
+
+function queryDeepSeek14b(prompt, systemPrompt = "", options = {}) {
+  return queryMlx(prompt, systemPrompt, options, MODEL_DEEPSEEK_14B);
 }
 
 // ============================================================================
@@ -698,9 +758,10 @@ function offlineKnowledgeResponder(prompt, task) {
 - **Sandbox Architecture**: Apple's on-device foundation model is locked inside private OS daemons (\`intelligenceplatformd\`).
 - **No Developer Prompt API**: Apple provides **no public raw text API** for third-party desktop apps.
 
-#### 2. Mímisbrunnr's Dual Sovereign Engines on your ${hw.chip} (${hw.memory}):
-1. **PocketAiHub / Qwen3.8-9B-Abliterated-MLX (\`4bit\` • 5.57 GiB)** — Fast 4-bit Apple MLX checkpoint with orthogonal refusal removal.
-2. **Qwen 2.5 7B (\`qwen2.5:7b\` • 4.7 GB)** — Fast Apple Metal Ollama engine.`;
+#### 2. Mímisbrunnr's Sovereign Engines on your ${hw.chip} (${hw.memory}):
+1. **DeepSeek-R1-Distill-Qwen-14B-4bit (\`14B\` • 8.8 GiB)** — Frontier reasoning with Chain of Thought on Apple Metal.
+2. **PocketAiHub / Qwen3.8-9B-Abliterated-MLX (\`4bit\` • 5.57 GiB)** — Fast 4-bit Apple MLX checkpoint.
+3. **Qwen 2.5 7B (\`qwen2.5:7b\` • 4.7 GB)** — Apple Metal Ollama engine.`;
   }
 
   if (
@@ -723,66 +784,12 @@ function offlineKnowledgeResponder(prompt, task) {
 - **Fafnir**: Zero-Knowledge AES-256-GCM encrypted document drive.
 - **Ratatoskr**: Visual REST API client and SQLite table inspector & query runner.
 - **Heimdall**: Acoustic biometric speaker diarization, AI summarizer, and live Gemini token telemetry.
-- **Mímisbrunnr**: Dual-model airgapped assistant powered strictly by \`PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit\` and \`qwen2.5:7b\`.`;
+- **Mímisbrunnr**: Sovereign airgapped assistant powered by \`DeepSeek-R1-Distill-Qwen-14B-4bit\`, \`PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit\`, and \`qwen2.5:7b\`.`;
   }
 
-  if (
-    task === "code" ||
-    lower.includes("code") ||
-    lower.includes("implement") ||
-    lower.includes("function") ||
-    lower.includes("python") ||
-    lower.includes("javascript") ||
-    lower.includes("rust")
-  ) {
-    if (lower.includes("python") || lower.includes("py")) {
-      return `### 💻 Mímisbrunnr Code Synthesis (Python / macOS)
-\`\`\`python
-import sys
-import json
-
-def run_task(query: str):
-    """
-    Airgapped local execution on Apple Silicon.
-    No network telemetry transmitted.
-    """
-    print(f"[Mímisbrunnr] Processing query: {query}")
-    return {"status": "success", "platform": sys.platform}
-
-if __name__ == "__main__":
-    result = run_task("${prompt.replace(/"/g, '\\"')}")
-    print(json.dumps(result, indent=2))
-\`\`\`
-*Generated offline using Mímisbrunnr embedded semantic synthesizer.*`;
-    }
-
-    return `### 💻 Mímisbrunnr Code Synthesis (Node.js / Modern JS)
-\`\`\`javascript
-import crypto from "node:crypto";
-
-export function executeAirgappedOperation(input) {
-  const hash = crypto.createHash("sha256").update(String(input)).digest("hex");
-  return {
-    success: true,
-    input,
-    sha256: hash,
-    timestamp: new Date().toISOString()
-  };
-}
-
-console.log(executeAirgappedOperation("${prompt.replace(/"/g, '\\"')}"));
-\`\`\`
-*Generated offline using Mímisbrunnr embedded semantic synthesizer.*`;
-  }
-
-  return `### 🧠 Mímisbrunnr Airgapped Intelligence
-**Query**: "${prompt}"
-
-#### 💡 Insight & Guidance
-- **Privacy Assurance**: Processed strictly in memory on **${hw.chip}** with zero cloud telemetry.
-- **Configured Sovereign Models**:
-  1. \`PocketAiHub/Qwen3.8-9B-Abliterated-MLX/4bit\` (5.57 GiB • Apple MLX 4-bit)
-  2. \`qwen2.5:7b\` (4.7 GB • Ollama Metal)`;
+  return `### 🧠 Mímisbrunnr Offline Response
+Received query on **${hw.chip}** (${hw.memory}).
+Airgapped local execution active. No network telemetry transmitted.`;
 }
 
 const CORE_SOVEREIGN_DIRECTIVE =
@@ -817,11 +824,30 @@ async function executeMimisbrunnrChat({
     }
 
     const genOpts = {
-      temperature: temperature !== null && temperature !== undefined ? temperature : 0.8,
+      temperature: temperature !== null && temperature !== undefined ? temperature : 0.7,
       ...options
     };
 
-    if (requestedModel === MODEL_MLX_9B) {
+    if (requestedModel === MODEL_DEEPSEEK_14B) {
+      try {
+        const resp = await queryDeepSeek14b(prompt, taskSysPrompt, genOpts);
+        return {
+          ok: true,
+          engine: `Apple MLX (${MODEL_DEEPSEEK_14B})`,
+          model: MODEL_DEEPSEEK_14B,
+          response: resp
+        };
+      } catch (mlxErr) {
+        if (String(mlxErr.message || "").includes("is downloading")) {
+          return {
+            ok: true,
+            engine: "Mímisbrunnr MLX Downloader",
+            model: MODEL_DEEPSEEK_14B,
+            response: `### ⬇️ Downloading DeepSeek R1 Distill Qwen 14B (4-bit MLX)\n\n${mlxErr.message}\n\n- **Source**: \`https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Qwen-14B-4bit\`\n- **Tip**: Select **Qwen 2.5 7B (\`qwen2.5:7b\`)** or **Qwen 3.8 9B** in the dropdown for immediate replies while download completes.`
+          };
+        }
+      }
+    } else if (requestedModel === MODEL_MLX_9B) {
       try {
         const resp = await queryMlx9b(prompt, taskSysPrompt, genOpts);
         return {
@@ -831,12 +857,12 @@ async function executeMimisbrunnrChat({
           response: resp
         };
       } catch (mlxErr) {
-        if (String(mlxErr.message || "").includes("is downloading from PocketAiHub")) {
+        if (String(mlxErr.message || "").includes("is downloading")) {
           return {
             ok: true,
             engine: "Mímisbrunnr MLX Downloader",
             model: MODEL_MLX_9B,
-            response: `### ⬇️ Downloading Qwen 3.8 9B Abliterated MLX (4-bit)\n\n${mlxErr.message}\n\n- **Source**: \`https://huggingface.co/PocketAiHub/Qwen3.8-9B-Abliterated-MLX/tree/main/4bit\`\n- **Tip**: Select **Qwen 2.5 7B (\`qwen2.5:7b\`)** in the **Active Model** dropdown to chat immediately while the 5.57 GiB MLX checkpoint finishes downloading.`
+            response: `### ⬇️ Downloading Qwen 3.8 9B Abliterated MLX (4-bit)\n\n${mlxErr.message}`
           };
         }
       }
@@ -858,12 +884,7 @@ async function executeMimisbrunnrChat({
   let response = "";
   if (task === "email" || prompt.toLowerCase().includes("email") || prompt.toLowerCase().includes("mail")) {
     response = offlineEmailSummarizer(prompt);
-  } else if (
-    task === "script" ||
-    prompt.toLowerCase().includes("bash") ||
-    prompt.toLowerCase().includes("zsh") ||
-    prompt.toLowerCase().includes("debug")
-  ) {
+  } else if (task === "script" || prompt.includes("#!/") || prompt.includes("rm -rf") || prompt.includes("curl ")) {
     response = offlineScriptDebugger(prompt);
   } else {
     response = offlineKnowledgeResponder(prompt, task);
@@ -871,7 +892,8 @@ async function executeMimisbrunnrChat({
 
   return {
     ok: true,
-    engine: "Mímisbrunnr Embedded Offline Engine",
+    engine: "Mímisbrunnr Sovereign Offline Engine",
+    model: "sovereign-fallback",
     response
   };
 }
@@ -889,8 +911,8 @@ function registerMimisbrunnrIpc(ipcMain) {
     return await selectMimisbrunnrModel(modelId);
   });
 
-  ipcMain.handle("hyper:mimisbrunnr:prepare-mlx", async () => {
-    return await prepareMlxModel();
+  ipcMain.handle("hyper:mimisbrunnr:prepare-mlx", async (_event, modelId) => {
+    return await prepareMlxModel(modelId);
   });
 
   ipcMain.handle("hyper:mimisbrunnr:chat", async (_event, payload) => {
@@ -899,12 +921,15 @@ function registerMimisbrunnrIpc(ipcMain) {
 }
 
 module.exports = {
+  MODEL_DEEPSEEK_14B,
   MODEL_MLX_9B,
   MODEL_QWEN_7B,
   MIMISBRUNNR_MODELS,
   ALLOWED_MODEL_IDS,
   normalizeMimisbrunnrModel,
   isMlx9bDownloaded,
+  isDeepSeek14bDownloaded,
+  isMlxModelDownloaded,
   checkLocalLlm,
   selectMimisbrunnrModel,
   prepareMlxModel,
@@ -912,6 +937,9 @@ module.exports = {
   getMimisbrunnrStatus: checkLocalLlm,
   executeMimisbrunnrChat,
   registerMimisbrunnrIpc,
+  queryMlx,
+  queryMlx9b,
+  queryDeepSeek14b,
   offlineEmailSummarizer,
   offlineScriptDebugger,
   offlineKnowledgeResponder
