@@ -17,3 +17,5 @@ hopper_full_code_dump.txt
 # OS / Temporary
 *.log
 /tmp/
+dist/
+*.dmg

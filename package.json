@@ -8,7 +8,8 @@
   "description": "Unified Aether Platform: Office, Yggdrasil, and Aetherum Tor Browser by Jeffrey Kim",
   "scripts": {
     "test": "node test/run-tests.js",
-    "pack": "pkill -f \"/Users/sushikim/Desktop/Aether.app\" 2>/dev/null || true; sleep 0.6; rm -rf /tmp/aether_pack && mkdir -p /tmp/aether_pack && cp -r package.json .env .env.example node_modules out scripts /tmp/aether_pack/ && npx @electron/asar pack /tmp/aether_pack /tmp/app.asar && mv -f /tmp/app.asar /Users/sushikim/Desktop/Aether.app/Contents/Resources/app.asar && rm -rf /Users/sushikim/Desktop/Aether.app/Contents/Resources/scripts && cp -r scripts /Users/sushikim/Desktop/Aether.app/Contents/Resources/scripts && codesign --force --deep --sign - /Users/sushikim/Desktop/Aether.app && xattr -cr /Users/sushikim/Desktop/Aether.app"
+    "pack": "pkill -f \"/Users/sushikim/Desktop/Aether.app\" 2>/dev/null || true; sleep 0.6; rm -rf /tmp/aether_pack && mkdir -p /tmp/aether_pack && cp -r package.json .env .env.example node_modules out scripts /tmp/aether_pack/ && npx @electron/asar pack /tmp/aether_pack /tmp/app.asar && mv -f /tmp/app.asar /Users/sushikim/Desktop/Aether.app/Contents/Resources/app.asar && rm -rf /Users/sushikim/Desktop/Aether.app/Contents/Resources/scripts && cp -r scripts /Users/sushikim/Desktop/Aether.app/Contents/Resources/scripts && codesign --force --deep --sign - /Users/sushikim/Desktop/Aether.app && xattr -cr /Users/sushikim/Desktop/Aether.app",
+    "dmg": "bash scripts/build-dmg.sh"
   },
   "main": "out/main/index.js",
   "desktopName": "aether.desktop",

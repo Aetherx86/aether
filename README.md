@@ -5,11 +5,11 @@
 
 **Unified Office Engine • Multi-Tab Tor Browser • Airgapped Local AI • Zero-Knowledge Vault • Anti-DPI VPN • Autonomous Agent**
 
-[![GitLab CI/CD](https://img.shields.io/badge/GitLab_CI%2FCD-278%2F278_Passing-10b981?style=for-the-badge&logo=gitlab)](https://gitlab.com/jk9576/aether)
+[![GitLab CI/CD](https://img.shields.io/badge/GitLab_CI%2FCD-286%2F286_Passing-10b981?style=for-the-badge&logo=gitlab)](https://gitlab.com/jk9576/aether)
 [![Version](https://img.shields.io/badge/Release-v0.0.1_Stable-6366f1?style=for-the-badge)](https://gitlab.com/jk9576/aether/-/releases)
 [![Security](https://img.shields.io/badge/Security-AES--256--GCM_%7C_Tor_Native-f43f5e?style=for-the-badge&logo=torproject)](https://gitlab.com/jk9576/aether)
 [![Hardware](https://img.shields.io/badge/Accelerated-Apple_Silicon_M4_%7C_ANE-0ea5e9?style=for-the-badge&logo=apple)](https://gitlab.com/jk9576/aether)
-[![Tests](https://img.shields.io/badge/Test_Suite-278_Tests_%7C_100%25_Green-3b82f6?style=for-the-badge)](https://gitlab.com/jk9576/aether)
+[![Tests](https://img.shields.io/badge/Test_Suite-286_Tests_%7C_100%25_Green-3b82f6?style=for-the-badge)](https://gitlab.com/jk9576/aether)
 [![License](https://img.shields.io/badge/License-Apache_2.0-8b5cf6?style=for-the-badge)](LICENSE.txt)
 
 <br/>
@@ -197,39 +197,64 @@ aether mcp install all
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start & Installation
 
-### 1. 다운로드 및 실행 (macOS)
+### Option 1: One-Line Installer Script (macOS)
+The fastest way to install Aether, bypass macOS Gatekeeper quarantine, initialize `~/.aether`, and register the `aether` CLI:
+
 ```sh
-# 최신 릴리스 패키지 실행
-open /Applications/Aether.app
-# 또는 바탕화면 실행
-open /Users/$USER/Desktop/Aether.app
+curl -fsSL https://gitlab.com/jk9576/aether/-/raw/main/install.sh | bash
+```
+*(Or clone the repository and run `./install.sh` directly)*
+
+### Option 2: Drag-and-Drop Disk Image (.dmg)
+1. Download **`Aether-0.0.1-arm64.dmg`** from the [GitLab Releases](https://gitlab.com/jk9576/aether/-/releases).
+2. Double-click to mount the DMG image.
+3. Drag **Aether.app** into the **Applications** shortcut.
+4. Launch via Spotlight, Launchpad, or Terminal:
+   ```sh
+   xattr -cr /Applications/Aether.app
+   open /Applications/Aether.app
+   ```
+
+### Option 3: Local Packaging & DMG Build
+```sh
+# 1. Package the macOS application bundle
+npm run pack
+
+# 2. Build the compressed installer DMG (dist/Aether-0.0.1-arm64.dmg)
+npm run dmg
 ```
 
-### 2. CLI 전역 환경변수 등록
+### 3. CLI Launcher Usage
 ```sh
-aether install-cli
-# 또는 심볼릭 링크 수동 등록
-ln -sf /Applications/Aether.app/Contents/Resources/cli/aether ~/.local/bin/aether
-```
+# Launch Aether desktop application
+aether
 
-### 3. 전체 테스트 스위트 실행
-```sh
-npm test
+# Convene The High Table deliberation directly
+aether high-table
+
+# Open sovereign Mímisbrunnr AI
+aether mimisbrunnr
+
+# Open Aetherum Tor Privacy Browser
+aether browser https://check.torproject.org
+
+# View version and help
+aether --help
 ```
 
 ---
 
-## 🧪 Comprehensive 278-Point Master Verification Suite
+## 🧪 Comprehensive 286-Point Master Verification Suite
 
-Aether는 기능 누락, 모델 타임아웃, IPC 충돌, UI 프리컨디션 버그를 원천 방지하기 위해 **15개 서브시스템, 총 278개 단일 assertion 테스트**로 구성된 마스터 테스트 스위트를 구동합니다.
+Aether는 기능 누락, 모델 타임아웃, IPC 충돌, UI 프리컨디션 버그를 원천 방지하기 위해 **15개 서브시스템, 총 286개 단일 assertion 테스트**로 구성된 마스터 테스트 스위트를 구동합니다.
 
 ```sh
 $ npm test
 
 ==================================================================
-🧪 [Aether Comprehensive 278-Point Master Verification Suite]
+🧪 [Aether Comprehensive 286-Point Master Verification Suite]
    Testing every single nook, cranny, button, edge case, and tool
 ==================================================================
 
